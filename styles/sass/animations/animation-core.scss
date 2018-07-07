@@ -1,0 +1,71 @@
+@mixin style-concatenated($name, $values, $separator) {
+    $text: '';
+    @if length($values) > 1 {
+        @for $i from 1 through length($values) - 1 {
+            $text: $text + nth($values, $i) + $separator;
+        }
+    }
+    $text: $text + nth($values, length($values));
+    #{$name}: #{$text};
+}
+
+@mixin animation-call(
+    $animation-delays, 
+    $animation-directions, 
+    $animation-durations, 
+    $animation-iteration-counts, 
+    $animation-names, 
+    $animation-play-states, 
+    $animation-timing-functions,
+    $animation-fill-modes
+) {
+    $separator: ', ';
+    @if $animation-delays and length($animation-delays) > 0 {
+        @include style-concatenated('animation-delay', $animation-delays, $separator);
+    }
+    @if $animation-directions and length($animation-directions) > 0 {
+        @include style-concatenated('animation-direction', $animation-directions, $separator);
+    }
+    @if $animation-durations and length($animation-durations) > 0 {
+        @include style-concatenated('animation-duration', $animation-durations, $separator);
+    }
+    @if $animation-iteration-counts and length($animation-iteration-counts) > 0 {
+        @include style-concatenated('animation-iteration-count', $animation-iteration-counts, $separator);
+    }
+    @if $animation-names and length($animation-names) > 0 {
+        @include style-concatenated('animation-name', $animation-names, $separator);
+    }
+    @if $animation-play-states and length($animation-play-states) > 0 {
+        @include style-concatenated('animation-play-state', $animation-play-states, $separator);
+    }
+    @if $animation-timing-functions and length($animation-timing-functions) > 0 {
+        @include style-concatenated('animation-timing-function', $animation-timing-functions, $separator);
+    }
+    @if $animation-fill-modes and length($animation-fill-modes) > 0 {
+        @include style-concatenated('animation-fill-mode', $animation-fill-modes, $separator);
+    }
+}
+
+@mixin transitions($properties, $old-values, $new-values, $seconds, $trasition-function, $trigger) {
+    $i: 0;
+    $transition-text: '';
+    @if length($properties) > 1 {
+        @for $i from 1 through length($properties) - 1 {
+            #{nth($properties, $i)}: #{nth($old-values, $i)};
+            $transition-text: $transition-text + nth($properties, $i) + ' ' + nth($seconds, $i) + 's, ';
+        }
+    }
+
+    #{nth($properties, length($properties))}: #{nth($old-values, length($properties))};
+    $transition-text: $transition-text + nth($properties, length($properties)) + ' ' + nth($seconds, length($properties)) + 's';
+
+    &#{$trigger} {
+        @for $i from 1 through length($properties) {
+            #{nth($properties, $i)}: #{nth($new-values, $i)};
+        }
+
+        -webkit-transition: #{$transition-text};
+        transition: #{$transition-text};
+        transition-timing-function: #{$trasition-function};
+    }
+}

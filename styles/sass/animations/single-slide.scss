@@ -1,0 +1,64 @@
+@keyframes sora-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+@keyframes sora-fade-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+.sora-fade-in-animation {
+    @include animation-call(
+        null,
+        null,
+        ('1000ms'),
+        null,
+        ('sora-fade-in'),
+        null,
+        'ease-in',
+        ('backwards')
+    );
+}
+
+.sora-fade-out-animation {
+    @include animation-call(
+        null,
+        null,
+        ('1000ms'),
+        null,
+        ('sora-fade-out'),
+        null,
+        'ease-out',
+        ('backwards')
+    );
+}
+
+.sora-fade-in-before {
+    @include transitions(
+        ('opacity'),
+        ('0'),
+        ('1'),
+        (1),
+        'ease-in',
+        '.sora-fade-in'
+    );
+}
+
+.sora-fade-out-before {
+    @include transitions(
+        ('opacity'),
+        ('1'),
+        ('0'),
+        (1),
+        'ease-out',
+        '.sora-fade-out'
+    );
+}

@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "noImplicitAny": true,
+        "removeComments": true,
+        "declaration": false,
+        "target": "es6"
+    },
+    "exclude" : [
+
+    ],
+    "include": [
+        "src/**/*.ts"
+    ]
+}
