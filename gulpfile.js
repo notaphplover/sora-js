@@ -63,8 +63,8 @@ gulp.task(TASKS.COMPILE_TYPESCRIPT_TEST, function () {
 gulp.task(TASKS.BUILD_DEV, gulp.series(TASKS.COMPILE_TYPESCRIPT_SRC, function() {
 
     return browserify(
-        { 
-            entries: PATHS.BROWSERIFY_ENTRY, 
+        {
+            entries: PATHS.BROWSERIFY_ENTRY,
             debug: true,
             standalone: MODULE_NAME,
         })
@@ -80,8 +80,8 @@ gulp.task(TASKS.BUILD_PROD, gulp.series(TASKS.COMPILE_TYPESCRIPT_SRC, function()
     process.env.NODE_ENV = 'production';
 
     return browserify(
-        { 
-            entries: PATHS.BROWSERIFY_ENTRY, 
+        {
+            entries: PATHS.BROWSERIFY_ENTRY,
             debug: false,
             standalone: MODULE_NAME,
         })
@@ -97,11 +97,11 @@ gulp.task(TASKS.BUILD_PROD, gulp.series(TASKS.COMPILE_TYPESCRIPT_SRC, function()
 gulp.task(TASKS.COMPILE_SASS, function () {
     return gulp.src(PATHS.SASS_ENTRY)
         .pipe(sass().on(
-            'error', 
+            'error',
             function(error) {
                 console.log(error.toString());
             }
-            
+
         ))
         .pipe(gulp.dest(PATHS.CSS_DESTINATION_FOLDER))
         .on('error', function(error) {
@@ -119,9 +119,7 @@ gulp.task(TASKS.TEST, gulp.series(TASKS.COMPILE_TYPESCRIPT_TEST, function (cb) {
         ],
         coverageDirectory: PATHS.TS_TEST_TEMP_FOLDER + '/output',
         moduleFileExtensions: ['js', 'jsx', 'json', 'ts', 'tsx'],
-        testRegex: [
-            PATHS.TEST_REGEX,
-        ],
+        testRegex: PATHS.TEST_REGEX,
         scriptPreprocessor: './node_modules/babel-jest',
         unmockedModulePathPatterns: [
             './node_modules/*'
@@ -133,13 +131,13 @@ gulp.task(TASKS.TEST, gulp.series(TASKS.COMPILE_TYPESCRIPT_TEST, function (cb) {
 
         console.log('\n');
         console.log('\x1b[33m%s\x1b[0m','Discovering tests ...\n');
-  
+
         for (var i = 0; i < results.testResults.length; ++i) {
             var testResult = results.testResults[i];
             var innerTestsResults = testResult.testResults;
 
             console.log('\x1b[33m%s\x1b[0m', '    ' + innerTestsResults.length + ' Tests were found at ' + testResult.testFilePath + '.\n');
-            
+
             for(var j = 0; j < innerTestsResults.length; ++j) {
                 var innerTestsResult = innerTestsResults[j];
                 var testDuration = innerTestsResult.duration;
