@@ -41,6 +41,10 @@ export namespace CarouselBasic {
          * Leave slide status.
          */
         leaveSlideStatus : ISingleSlideCarouselSlideAnimationStatus;
+        /**
+         * Promise resolved once Sora has ended the handling of the animation.
+         */
+        soraHandlerStatus : Promise<void>;
     }
     
     /**
@@ -219,26 +223,30 @@ export namespace CarouselBasic {
             this.elements[newActiveIndex].classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
 
             //Animate!
-            var enterAnimationStatus : ISingleSlideCarouselSlideAnimationStatus = this.handleAnimationOverSlide(this.elements[oldActiveIndex], options.leaveAnimation);
-            var leaveAnimationStatus : ISingleSlideCarouselSlideAnimationStatus = this.handleAnimationOverSlide(this.elements[newActiveIndex], options.enterAnimation);
+            var enterAnimationStatus : ISingleSlideCarouselSlideAnimationStatus = this.handleAnimationOverSlide(this.elements[newActiveIndex], options.enterAnimation);
+            var leaveAnimationStatus : ISingleSlideCarouselSlideAnimationStatus = this.handleAnimationOverSlide(this.elements[oldActiveIndex], options.leaveAnimation);
             var that = this;
 
-            Promise.all([
-                enterAnimationStatus.elementAnimationStatus,
-                leaveAnimationStatus.elementAnimationStatus,
-            ]).then(function(slideAnimationStatus : ISingleSlideCarouselAnimateElementOptions[]) {
-                that.elements[oldActiveIndex].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
-                that.elements[oldActiveIndex].classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-                that.elements[newActiveIndex].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-                that.activeIndex = options.index;
-                that.currentAnimation = null;
-            }).catch(function(ex) {
-                throw ex;
+            var soraHandlerStatus : Promise<void> = new Promise<void>(function(resolve, reject) {
+                Promise.all([
+                    enterAnimationStatus.elementAnimationStatus,
+                    leaveAnimationStatus.elementAnimationStatus,
+                ]).then(function(slideAnimationStatus : ISingleSlideCarouselAnimateElementOptions[]) {
+                    that.elements[oldActiveIndex].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
+                    that.elements[oldActiveIndex].classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                    that.elements[newActiveIndex].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                    that.activeIndex = options.index;
+                    that.currentAnimation = null;
+                    resolve();
+                }).catch(function(err) {
+                    reject(err);
+                });
             });
 
             return {
                 enterSlideStatus: enterAnimationStatus,
                 leaveSlideStatus: leaveAnimationStatus,
+                soraHandlerStatus: soraHandlerStatus,
             };
         }
 

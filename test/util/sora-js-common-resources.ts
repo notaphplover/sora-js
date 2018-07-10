@@ -6,8 +6,8 @@ const puppeteer = require('puppeteer');
 
 export namespace SoraJsUtils {
 
-    export const SORA_JS_CSS_PATH = __dirname + '/../../../../dist/css/sora.css';
-    export const SORA_JS_JS_PATH = __dirname + '/../../../../dist/js/bundle.dev.js';
+    export const SORA_JS_CSS_PATH = 'http://localhost:8080/dist/css/sora.css';
+    export const SORA_JS_JS_PATH = 'http://localhost:8080/dist/js/bundle.dev.js';
 
     export class SoraJsCommonresources {
 

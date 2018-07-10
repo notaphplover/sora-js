@@ -157,7 +157,7 @@ export namespace HtmlUtils {
          * @param cssResourcesPaths Css resource paths.
          * @param jsResourcesPaths Js Resource paths.
          */
-        public loadResourcesFromPaths(cssResourcesPaths : string[], jsResourcesPaths : string[]) : void {
+        public loadResourcesAsPaths(cssResourcesPaths : string[], jsResourcesPaths : string[]) : void {
             for(var i = 0; i < cssResourcesPaths.length; ++i)
                 this.cssData.push({
                     content : cssResourcesPaths[i],
@@ -168,6 +168,26 @@ export namespace HtmlUtils {
                 this.jsData.push({
                     content : jsResourcesPaths[i],
                     type: ResourceType.PATH,
+                });
+        }
+
+        /**
+         * Loads Resources from paths.
+         *
+         * @param cssResourcesPaths Css resource paths.
+         * @param jsResourcesPaths Js Resource paths.
+         */
+        public loadResourcesAsUris(cssResourcesPaths : string[], jsResourcesPaths : string[]) : void {
+            for(var i = 0; i < cssResourcesPaths.length; ++i)
+                this.cssData.push({
+                    content : cssResourcesPaths[i],
+                    type: ResourceType.URI,
+                });
+
+            for(var i = 0; i < jsResourcesPaths.length; ++i)
+                this.jsData.push({
+                    content : jsResourcesPaths[i],
+                    type: ResourceType.URI,
                 });
         }
 

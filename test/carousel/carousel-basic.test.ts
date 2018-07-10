@@ -10,11 +10,56 @@ const puppeteer = require('puppeteer');
 var commonResourcesManager = new SoraJsUtils.SoraJsCommonresources();
 var browser : any;
 
+var expressServer : any;
+
 beforeAll(
-    () =>
-        commonResourcesManager.getPuppeteerBrowser()
-            .then(browserResponse => browser = browserResponse)
-            .catch(err => { throw new Error(err); })
+    () => {
+        var express = require('express');
+        var app = express();
+
+        app.use('/dist', express.static(__dirname + '/../../../../dist'));
+
+        //prepare test pages
+
+        var htmlBuilder = new HtmlUtils.HtmlBuilder();
+        htmlBuilder.loadResourcesAsUris([SoraJsUtils.SORA_JS_CSS_PATH], [SoraJsUtils.SORA_JS_JS_PATH])
+        htmlBuilder.setHtmlData(
+`
+<div id="sora-carousel">
+<div class="sora-wrapper">
+    <div class="sora-slide">
+        Content1
+    </div> \
+    <div class="sora-slide">
+        Content 2
+    </div> \
+    <div class="sora-slide">
+        Content 3
+    </div>
+</div>
+</div>
+`
+        );
+
+        app.get('/test-mustBeAbleToGoToSlides', function(req : any, res : any){
+            res.send(htmlBuilder.buildHTML());
+        });
+
+        let port : number = 8080;
+
+        return Promise.all([
+            new Promise<void>(function(resolve, reject) {
+                app.listen(port, function () {
+                    console.log('app listening on port ' + port + '...');
+                    expressServer = app;
+                    resolve();
+                });
+            }),
+            commonResourcesManager.getPuppeteerBrowser()
+                .then(browserResponse => browser = browserResponse)
+                .catch(err => { throw new Error(err); }),
+        ]);
+    }
 );
 
 describe('SingleSlideCarousel Tests', () => {
@@ -52,33 +97,12 @@ describe('SingleSlideCarousel Tests', () => {
     });
 
     it('mustBeAbleToGoToSlides', async () => {
-        var htmlBuilder = new HtmlUtils.HtmlBuilder();
-        htmlBuilder.loadResourcesFromPaths([SoraJsUtils.SORA_JS_CSS_PATH], [SoraJsUtils.SORA_JS_JS_PATH])
-        htmlBuilder.setHtmlData(
-`
-<div id="sora-carousel">
-<div class="sora-wrapper">
-    <div class="sora-slide">
-        Content1
-    </div> \
-    <div class="sora-slide">
-        Content 2
-    </div> \
-    <div class="sora-slide">
-        Content 3
-    </div>
-</div>
-</div>
-`
-        );
-
         var page = await browser.newPage();
 
-        var pageManager = new PuppeteerHtmlUtils.PuppeteerPageManager();
-        await pageManager.setPageContent(page, htmlBuilder.buildHTML());
+        await page.goto('http://localhost:8080/test-mustBeAbleToGoToSlides');
 
-        var evaluationResult : any = await page.evaluate(function () {
-            function goNext(carousel : CarouselBasic.SingleSlideCarousel) : Promise<CarouselBasic.ISingleSlideCarouselAnimateElementOptions[]> {
+        var evaluationResult : any = page.evaluate(function () {
+            function goNext(carousel : CarouselBasic.SingleSlideCarousel) : CarouselBasic.ISingleSlideCarouselGoToAnimationStatus {
                 var goNextActionStatus = carousel.handle((window as any).sora.actions.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT, {
                     enterAnimation: {
                         slideStyles: [
@@ -91,13 +115,10 @@ describe('SingleSlideCarousel Tests', () => {
                         ],
                     },
                 });
-                return Promise.all([
-                    goNextActionStatus.enterSlideStatus.elementAnimationStatus,
-                    goNextActionStatus.leaveSlideStatus.elementAnimationStatus,
-                ]);
+                return goNextActionStatus;
             }
 
-            function goPrevious(carousel : CarouselBasic.SingleSlideCarousel) : Promise<CarouselBasic.ISingleSlideCarouselAnimateElementOptions[]> {
+            function goPrevious(carousel : CarouselBasic.SingleSlideCarousel) : CarouselBasic.ISingleSlideCarouselGoToAnimationStatus {
                 var goNextActionStatus = carousel.handle((window as any).sora.actions.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_PREVIOUS, {
                     enterAnimation: {
                         slideStyles: [
@@ -110,10 +131,7 @@ describe('SingleSlideCarousel Tests', () => {
                         ],
                     },
                 });
-                return Promise.all([
-                    goNextActionStatus.enterSlideStatus.elementAnimationStatus,
-                    goNextActionStatus.leaveSlideStatus.elementAnimationStatus,
-                ]);
+                return goNextActionStatus;
             }
 
             try {
@@ -122,14 +140,17 @@ describe('SingleSlideCarousel Tests', () => {
                 var children = divElement.querySelectorAll('.' + (window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.WRAPPER + ' > .' + (window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE);
 
                 return new Promise<boolean>(function(resolve, reject) {
-                    goNext(carousel).then(function(carouselAnimations) {
-                        resolve(carouselAnimations[0].element.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE));
+                    var animationStatus = goNext(carousel);
+                    Promise.all([
+                        animationStatus.enterSlideStatus.elementAnimationStatus,
+                        animationStatus.leaveSlideStatus.elementAnimationStatus,
+                        animationStatus.soraHandlerStatus,
+                    ]).then(function(animationStatusPromisesResponses) {
+                        resolve(animationStatusPromisesResponses[0].element.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE));
                     }).catch(function(err) {
                         reject(err);
                     });
                 });
-
-                return
             } catch (ex) {
                 return ex.message;
             }
