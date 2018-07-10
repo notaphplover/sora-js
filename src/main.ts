@@ -1,4 +1,5 @@
-import { CarouselBasic } from './carousel/carousel-basic'
+require('core-js/fn/promise');
+import { CarouselBasic } from './carousel/carousel-basic';
 
 var sora = function () {
     return {

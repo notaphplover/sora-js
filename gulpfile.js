@@ -10,6 +10,20 @@ const sourcemaps = require('gulp-sourcemaps');
 const ts = require('gulp-typescript');
 const uglify = require('gulp-uglify');
 
+const BABEL_OPTIONS = {
+    presets: [
+        ['env', {
+            targets: {
+                browsers: [
+                    'ie >= 11',
+                    'last 2 versions', 
+                    'safari >= 11', 
+                ],
+            }
+        }]
+    ]
+};
+
 const TASKS = {
     BUILD_DEV: 'build-dev',
     BUILD_PROD: 'build-prod',
@@ -52,9 +66,7 @@ gulp.task(TASKS.COMPILE_TYPESCRIPT_TEST, function () {
     var tsResult = tsProjectTest.src().pipe(sourcemaps.init()).pipe(tsProjectTest());
     return tsResult
         .js
-        .pipe(babel({
-            presets: ['es2015'],
-        }))
+        .pipe(babel(BABEL_OPTIONS))
         .pipe(sourcemaps.write('', { debug: false, includeContent: true, sourceRoot: '' }))
         .pipe(gulp.dest(PATHS.TS_TEST_TEMP_FOLDER))
     ;
@@ -68,7 +80,7 @@ gulp.task(TASKS.BUILD_DEV, gulp.series(TASKS.COMPILE_TYPESCRIPT_SRC, function() 
             debug: true,
             standalone: MODULE_NAME,
         })
-        .transform('babelify', { presets: ['es2015'] })
+        .transform('babelify', BABEL_OPTIONS)
         .bundle()
         .pipe(source(path.join(PATHS.JS_DESTINATION_FOLDER, PATHS.BUNDLE_DEV)))
         .pipe(buffer())
@@ -85,7 +97,7 @@ gulp.task(TASKS.BUILD_PROD, gulp.series(TASKS.COMPILE_TYPESCRIPT_SRC, function()
             debug: false,
             standalone: MODULE_NAME,
         })
-        .transform('babelify', { presets: ['es2015'] })
+        .transform('babelify', BABEL_OPTIONS)
         .bundle()
         .pipe(source(path.join(PATHS.JS_DESTINATION_FOLDER, PATHS.BUNDLE_PROD)))
         .pipe(buffer())
