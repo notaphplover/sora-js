@@ -138,7 +138,7 @@ gulp.task(TASKS.TEST, gulp.series(TASKS.COMPILE_TYPESCRIPT_TEST, function (cb) {
 
             console.log('\x1b[33m%s\x1b[0m', '    ' + innerTestsResults.length + ' Tests were found at ' + testResult.testFilePath + '.\n');
 
-            for(var j = 0; j < innerTestsResults.length; ++j) {
+            for (var j = 0; j < innerTestsResults.length; ++j) {
                 var innerTestsResult = innerTestsResults[j];
                 var testDuration = innerTestsResult.duration;
                 var testName = innerTestsResult.fullName;

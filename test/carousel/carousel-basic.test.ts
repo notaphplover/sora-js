@@ -1,7 +1,6 @@
 import { CarouselBasic } from '../../src/carousel/carousel-basic'
 import { SoraJsUtils } from '../util/sora-js-common-resources'
 import { HtmlUtils } from '../util/html-builder';
-import { PuppeteerHtmlUtils } from '../util/puppeteer-page-manager';
 
 const fs = require('fs');
 
@@ -146,7 +145,48 @@ describe('SingleSlideCarousel Tests', () => {
                         animationStatus.leaveSlideStatus.elementAnimationStatus,
                         animationStatus.soraHandlerStatus,
                     ]).then(function(animationStatusPromisesResponses) {
-                        resolve(animationStatusPromisesResponses[0].element.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE));
+                        var oldActiveElement = animationStatusPromisesResponses[1].element;
+                        var newActiveElement = animationStatusPromisesResponses[0].element;
+                        
+                        var conditions : boolean = 
+                            newActiveElement === children[1]
+                            && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
+                            && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                            && oldActiveElement === children[0]
+                            && !oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
+                            && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                        ;
+
+                        if (conditions) {
+                            var animationStatus = goPrevious(carousel);
+
+                            Promise.all([
+                                animationStatus.enterSlideStatus.elementAnimationStatus,
+                                animationStatus.leaveSlideStatus.elementAnimationStatus,
+                                animationStatus.soraHandlerStatus,
+                            ]).then(function(animationStatusPromisesResponses) {
+                                var oldActiveElement = animationStatusPromisesResponses[1].element;
+                                var newActiveElement = animationStatusPromisesResponses[0].element;
+                                
+                                var conditions : boolean = 
+                                    newActiveElement === children[0]
+                                    && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
+                                    && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                                    && oldActiveElement === children[1]
+                                    && !oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
+                                    && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                                ;
+
+                                resolve(
+                                    conditions
+                                );
+                            }).catch(function(err) {
+                                reject(err);
+                            });
+                        } else
+                            resolve(
+                                false
+                            );
                     }).catch(function(err) {
                         reject(err);
                     });
