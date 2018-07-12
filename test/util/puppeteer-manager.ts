@@ -1,15 +1,11 @@
-import { HtmlUtils } from './html-builder';
-import { PuppeteerHtmlUtils } from './puppeteer-page-manager';
-import { resolve } from 'path';
-
 const puppeteer = require('puppeteer');
 
-export namespace SoraJsUtils {
+export namespace PuppeterManagement {
 
     export const SORA_JS_CSS_PATH = 'http://localhost:8080/dist/css/sora.css';
     export const SORA_JS_JS_PATH = 'http://localhost:8080/dist/js/bundle.dev.js';
 
-    export class SoraJsCommonresources {
+    export class PuppeteerManager {
 
         //#region Attributes
 
@@ -23,7 +19,7 @@ export namespace SoraJsUtils {
         /**
          * Creates a new instance.
          */
-        public constructor() { }
+        protected constructor() { }
 
         /**
          * Returns the chromiun browser.
@@ -37,7 +33,7 @@ export namespace SoraJsUtils {
          * Initializes the browser managed by this instance.
          * @returns Promise fullfilled once the browser is loaded.
          */
-        protected initBrowser() : Promise<any> {
+        public initBrowser() : Promise<any> {
             var that = this;
             if (this.browser == null) {
                 const browserOptions = {
@@ -76,5 +72,18 @@ export namespace SoraJsUtils {
                     });
             })
         }
+
+        //#region SINGLETON
+
+        /**
+         * Singleton instance
+         */
+        protected static instance : PuppeteerManager = new PuppeteerManager();
+
+        public static getInstance() : PuppeteerManager {
+            return this.instance;
+        }
+
+        //#endregion
     }
 }

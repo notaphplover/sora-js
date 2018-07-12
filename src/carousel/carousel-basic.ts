@@ -225,23 +225,26 @@ export namespace CarouselBasic {
             var that = this;
 
             //Animate!
-            var enterAnimationStatus : ISingleSlideCarouselSlideAnimationStatus = this.handleAnimationOverSlide(this.elements[newActiveIndex], options.enterAnimation, null);
+            var enterAnimationStatus : ISingleSlideCarouselSlideAnimationStatus = this.handleAnimationOverSlide(this.elements[newActiveIndex], options.enterAnimation);
             var leaveAnimationStatus : ISingleSlideCarouselSlideAnimationStatus = 
                 this.handleAnimationOverSlide(
                     this.elements[oldActiveIndex], 
-                    options.leaveAnimation,
-                    function() {
-                        /*
-                         * Hide the slide as soon as it leaves.
-                         */
-                        that.elements[oldActiveIndex].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
-                    }
+                    options.leaveAnimation
                 );
+            
+            var hideLeaveSlideAfterAnimationEnds = new Promise<ISingleSlideCarouselAnimateElementOptions>(function(resolve, reject) {
+                leaveAnimationStatus.elementAnimationStatus.then(function(animationOptions) {
+                    that.elements[oldActiveIndex].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
+                    resolve(animationOptions);
+                }).catch(function(err) {
+                    reject(err);
+                });
+            });
 
             var soraHandlerStatus : Promise<void> = new Promise<void>(function(resolve, reject) {
                 Promise.all([
                     enterAnimationStatus.elementAnimationStatus,
-                    leaveAnimationStatus.elementAnimationStatus,
+                    hideLeaveSlideAfterAnimationEnds,
                 ]).then(function(slidesAnimationStatus : ISingleSlideCarouselAnimateElementOptions[]) {
                     that.elements[oldActiveIndex].classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
                     that.elements[newActiveIndex].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
@@ -266,7 +269,7 @@ export namespace CarouselBasic {
          * @param animation Animation options.
          * @returns Promise of handling the animation. The promise is resolved as soon as all the transitions are finished.
          */
-        private handleAnimationOverSlide(element : HTMLElement, animation : SoraAnimation.ICarouselAnimation, callBackOnClear : () => void) : ISingleSlideCarouselSlideAnimationStatus {
+        private handleAnimationOverSlide(element : HTMLElement, animation : SoraAnimation.ICarouselAnimation) : ISingleSlideCarouselSlideAnimationStatus {
             var childrenStatus : ISingleSlideCarouselSlideChildrenAnimationOptions = {};
 
             if (animation.childrenStyles) {
@@ -282,8 +285,7 @@ export namespace CarouselBasic {
                                 {
                                     element: childrenElements[j] as HTMLElement, 
                                     styles: animationObject.styles,
-                                },
-                                null
+                                }
                             )
                         );
                 }
@@ -296,8 +298,7 @@ export namespace CarouselBasic {
                     {
                         element: element, 
                         styles: animation.slideStyles,
-                    },
-                    callBackOnClear
+                    }
                 ),
                 childrenAnimationStatus : childrenStatus,
             }
@@ -308,7 +309,7 @@ export namespace CarouselBasic {
          * @param element Element to be animated.
          * @param styles Collection os styles to apply.
          */
-        private handleAnimationOverElement(elementAnimation : ISingleSlideCarouselAnimateElementOptions, callBackOnClear : () => void) : Promise<ISingleSlideCarouselAnimateElementOptions> {
+        private handleAnimationOverElement(elementAnimation : ISingleSlideCarouselAnimateElementOptions) : Promise<ISingleSlideCarouselAnimateElementOptions> {
             var element : HTMLElement = elementAnimation.element;
             var styles : string[] = elementAnimation.styles;
 
@@ -339,9 +340,6 @@ export namespace CarouselBasic {
                                         element.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
                                         that.unregisterAnimationListener(element, clearFunction);
 
-                                        if (callBackOnClear != null)
-                                            callBackOnClear();
-
                                         resolve({
                                             element: element,
                                             styles: styles,
@@ -364,9 +362,6 @@ export namespace CarouselBasic {
                             element.classList.remove(styles[0]);
                             element.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
                             that.unregisterAnimationListener(element, clearFunction);
-                            
-                            if (callBackOnClear != null)
-                                callBackOnClear();
 
                             resolve({
                                 element: element,

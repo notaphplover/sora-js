@@ -1,65 +1,5 @@
 import { CarouselBasic } from '../../src/carousel/carousel-basic'
-import { SoraJsUtils } from '../util/sora-js-common-resources'
-import { HtmlUtils } from '../util/html-builder';
-
-const fs = require('fs');
-
-const puppeteer = require('puppeteer');
-
-var commonResourcesManager = new SoraJsUtils.SoraJsCommonresources();
-var browser : any;
-
-var expressServer : any;
-
-beforeAll(
-    () => {
-        var express = require('express');
-        var app = express();
-
-        app.use('/dist', express.static(__dirname + '/../../../../dist'));
-
-        //prepare test pages
-
-        var htmlBuilder = new HtmlUtils.HtmlBuilder();
-        htmlBuilder.loadResourcesAsUris([SoraJsUtils.SORA_JS_CSS_PATH], [SoraJsUtils.SORA_JS_JS_PATH])
-        htmlBuilder.setHtmlData(
-`
-<div id="sora-carousel">
-<div class="sora-wrapper">
-    <div class="sora-slide">
-        Content1
-    </div> \
-    <div class="sora-slide">
-        Content 2
-    </div> \
-    <div class="sora-slide">
-        Content 3
-    </div>
-</div>
-</div>
-`
-        );
-
-        app.get('/test-mustBeAbleToGoToSlides', function(req : any, res : any){
-            res.send(htmlBuilder.buildHTML());
-        });
-
-        let port : number = 8080;
-
-        return Promise.all([
-            new Promise<void>(function(resolve, reject) {
-                app.listen(port, function () {
-                    console.log('app listening on port ' + port + '...');
-                    expressServer = app;
-                    resolve();
-                });
-            }),
-            commonResourcesManager.getPuppeteerBrowser()
-                .then(browserResponse => browser = browserResponse)
-                .catch(err => { throw new Error(err); }),
-        ]);
-    }
-);
+import { PuppeterManagement } from '../util/puppeteer-manager'
 
 describe('SingleSlideCarousel Tests', () => {
     it('mustBeInitializable', () => {
@@ -96,6 +36,7 @@ describe('SingleSlideCarousel Tests', () => {
     });
 
     it('mustBeAbleToGoToSlides', async () => {
+        var browser = await PuppeterManagement.PuppeteerManager.getInstance().getPuppeteerBrowser();
         var page = await browser.newPage();
 
         await page.goto('http://localhost:8080/test-mustBeAbleToGoToSlides');

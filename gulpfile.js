@@ -125,11 +125,9 @@ gulp.task(TASKS.COMPILE_SASS, function () {
 gulp.task(TASKS.TEST, gulp.series(TASKS.COMPILE_TYPESCRIPT_TEST, function (cb) {
     process.env.NODE_ENV = 'test';
     var JEST_OPTIONS = {
-        collectCoverage: true,
-        collectCoverageFrom: [
-            PATHS.TEST_COVERAGE_DOMAIN,
-        ],
         coverageDirectory: PATHS.TS_TEST_TEMP_FOLDER + '/output',
+        globalSetup: __dirname + '/test/tmp/test/jest-global-setup',
+        globalTeardown: __dirname + '/test/tmp/test/jest-global-teardown',
         moduleFileExtensions: ['js', 'jsx', 'json', 'ts', 'tsx'],
         testRegex: PATHS.TEST_REGEX,
         scriptPreprocessor: './node_modules/babel-jest',
