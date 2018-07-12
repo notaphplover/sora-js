@@ -327,7 +327,7 @@ export namespace CarouselBasic {
                     for (var i = 1; i < styles.length; ++i) {
                         animationFunctions.push(function(index) {
                             return function() {
-                                that.elements[that.activeIndex].classList.remove(styles[index - 1]);
+                                element.classList.remove(styles[index - 1]);
                                 
                                 that.unregisterAnimationListener(element, animationFunctions[index - 1]);
                                 
@@ -349,7 +349,7 @@ export namespace CarouselBasic {
                                     that.registerAnimationListener(element, clearFunction);
                                 }
 
-                                that.elements[that.activeIndex].classList.add(styles[index]);
+                                element.classList.add(styles[index]);
                             }
                         } (i));
                     }

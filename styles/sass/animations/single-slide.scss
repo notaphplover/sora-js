@@ -40,25 +40,3 @@
         ('both')
     );
 }
-
-.sora-fade-in-before {
-    @include transitions(
-        ('opacity'),
-        ('0'),
-        ('1'),
-        (1),
-        'ease-in',
-        '.sora-fade-in'
-    );
-}
-
-.sora-fade-out-before {
-    @include transitions(
-        ('opacity'),
-        ('1'),
-        ('0'),
-        (1),
-        'ease-out',
-        '.sora-fade-out'
-    );
-}

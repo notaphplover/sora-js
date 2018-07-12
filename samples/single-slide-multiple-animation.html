@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <title>Single slide carousel</title>
+        
+        <!-- sora.js has no dependencies, but with these ones we can achive a sample clean and easy to understand -->
+
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css">
+
+        <!-- Sora CSS -->
+        <link rel="stylesheet" href="../dist/css/sora.css">
+
+        <style>
+            @keyframes sora-fade-in-test {
+                from {
+                    opacity: 0; }
+                to {
+                    opacity: 1; } }
+            
+            @keyframes sora-size-in-test {
+                from {
+                    width: 25%; }
+                to {
+                    width: 100%; }
+            }
+        
+            @keyframes sora-fade-out-test {
+                from {
+                    opacity: 1; }
+                to {
+                    opacity: 0; } }
+    
+            .sora-fade-in-animation-test-1 {
+                animation-duration: 500ms;
+                animation-name: sora-fade-in-test;
+                animation-timing-function: ease-in;
+                animation-fill-mode: both; }
+
+            .sora-wrapper .sora-slide.sora-fade-in-animation-test-1 {
+                width: 25%; }
+
+            .sora-fade-in-animation-test-2 {
+                animation-duration: 500ms;
+                animation-name: sora-size-in-test;
+                animation-timing-function: ease-in;
+                animation-fill-mode: both;
+                opacity: 1; }
+        
+            .sora-fade-out-animation-test {
+                animation-duration: 1000ms;
+                animation-name: sora-fade-out-test;
+                animation-timing-function: ease-out;
+                animation-fill-mode: both; }
+        </style>
+
+        <!-- JQuery -->
+        <script src="node_modules/jquery/dist/jquery.js"></script>
+        <!-- Popper JS -->
+        <script src="node_modules/popper.js/dist/umd/popper.js"></script>
+        <!-- Bootstrap JS -->
+        <script src="node_modules/bootstrap/dist/js/bootstrap.js"></script>
+
+        <!-- sora JS -->
+        <script src="../dist/js/bundle.dev.js"></script>
+
+        <!-- Sample JS -->
+        <script>
+            //1. Just create the carousel
+            $(function() {
+                var carousel = new sora.SingleSlideCarousel(document.getElementById('my-sora-carousel'), {
+                    index: 0
+                });
+
+                var enterAnimation = {
+                    slideStyles: [
+                        'sora-fade-in-animation-test-1',
+                        'sora-fade-in-animation-test-2',
+                    ],
+                };
+
+                var leaveAnimation = {
+                    slideStyles: [
+                        'sora-fade-out-animation',
+                    ],
+                };
+
+                function goNext() {
+                    return carousel.handle(sora.actions.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT, {
+                        enterAnimation: enterAnimation,
+                        leaveAnimation: leaveAnimation,
+                    });
+                }
+
+                function goPrevoius() {
+                    return carousel.handle(sora.actions.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_PREVIOUS, {
+                        enterAnimation: enterAnimation,
+                        leaveAnimation: leaveAnimation,
+                    });
+                }
+
+                function goNextAuto(time) {
+                    var animationStatus = goNext();
+                    var entrerStatus = animationStatus.enterSlideStatus;
+                    var leaveStatus = animationStatus.leaveSlideStatus;
+
+                    Promise.all([
+                        entrerStatus.elementAnimationStatus,
+                        leaveStatus.elementAnimationStatus,
+                        new Promise(function(resolve, reject) {
+                            setTimeout(function() {
+                                resolve({});
+                            }, time);
+                        }),
+                    ]).then(function() {
+                        goNextAuto(time);
+                    }).catch(function(err) {
+                        throw err;
+                    });
+                }
+
+                goNextAuto(3000);
+            });
+        </script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <div class="text-center">
+                        <h1>Single slide carousel examples</h1>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div id="my-sora-carousel">
+                        <div class="sora-wrapper">
+                            <div class="sora-slide">
+                                <img class="img-fluid w-100" src="http://placekitten.com/g/800/400" alt="Kitten 1">
+                            </div>
+                            <div class="sora-slide">
+                                <img class="img-fluid w-100" src="http://placekitten.com/g/801/401" alt="Kitten 2">
+                            </div>
+                            <div class="sora-slide">
+                                <img class="img-fluid w-100" src="http://placekitten.com/g/802/401" alt="Kitten 3">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

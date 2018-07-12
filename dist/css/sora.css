@@ -32,19 +32,3 @@
   animation-name: sora-fade-out;
   animation-timing-function: ease-out;
   animation-fill-mode: both; }
-
-.sora-fade-in-before {
-  opacity: 0; }
-  .sora-fade-in-before.sora-fade-in {
-    opacity: 1;
-    -webkit-transition: opacity 1s;
-    transition: opacity 1s;
-    transition-timing-function: ease-in; }
-
-.sora-fade-out-before {
-  opacity: 1; }
-  .sora-fade-out-before.sora-fade-out {
-    opacity: 0;
-    -webkit-transition: opacity 1s;
-    transition: opacity 1s;
-    transition-timing-function: ease-out; }

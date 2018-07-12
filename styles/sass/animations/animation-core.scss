@@ -45,27 +45,3 @@
         @include style-concatenated('animation-fill-mode', $animation-fill-modes, $separator);
     }
 }
-
-@mixin transitions($properties, $old-values, $new-values, $seconds, $trasition-function, $trigger) {
-    $i: 0;
-    $transition-text: '';
-    @if length($properties) > 1 {
-        @for $i from 1 through length($properties) - 1 {
-            #{nth($properties, $i)}: #{nth($old-values, $i)};
-            $transition-text: $transition-text + nth($properties, $i) + ' ' + nth($seconds, $i) + 's, ';
-        }
-    }
-
-    #{nth($properties, length($properties))}: #{nth($old-values, length($properties))};
-    $transition-text: $transition-text + nth($properties, length($properties)) + ' ' + nth($seconds, length($properties)) + 's';
-
-    &#{$trigger} {
-        @for $i from 1 through length($properties) {
-            #{nth($properties, $i)}: #{nth($new-values, $i)};
-        }
-
-        -webkit-transition: #{$transition-text};
-        transition: #{$transition-text};
-        transition-timing-function: #{$trasition-function};
-    }
-}

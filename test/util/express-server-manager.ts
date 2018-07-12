@@ -1,4 +1,4 @@
-import { HtmlUtils } from '../util/html-builder';
+import { handleCarouselBasicPages } from './express-pages/carousel-basic';
 
 export namespace ExpressUtils {
 
@@ -44,29 +44,7 @@ export namespace ExpressUtils {
 
         //prepare test pages
 
-        var htmlBuilder = new HtmlUtils.HtmlBuilder();
-        htmlBuilder.loadResourcesAsUris([SORA_JS_CSS_URI], [SORA_JS_JS_URI])
-        htmlBuilder.setHtmlData(
-`
-<div id="sora-carousel">
-<div class="sora-wrapper">
-<div class="sora-slide">
-    Content1
-</div> \
-<div class="sora-slide">
-    Content 2
-</div> \
-<div class="sora-slide">
-    Content 3
-</div>
-</div>
-</div>
-`
-        );
-
-        app.get('/test-mustBeAbleToGoToSlides', function(req : any, res : any){
-            res.send(htmlBuilder.buildHTML());
-        });
+        handleCarouselBasicPages(app);
 
         return new Promise<void>(function(resolve, reject) {
             expressServer = app.listen(EXPRESS_PORT, function () {
