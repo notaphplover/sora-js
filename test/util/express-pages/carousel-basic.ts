@@ -4,7 +4,10 @@ import { ExpressUtils } from '../express-server-manager';
 export function handleCarouselBasicPages(app : any) {
     mustBeAbleToGoToSlidesPage(app);
     mustBeAbleToRunComplexAnimations(app);
+    mustBeAbleToHandleChildrenAnimations(app);
 }
+
+//#region Pages Tests
 
 function mustBeAbleToGoToSlidesPage(app : any) {
     var htmlBuilder = new HtmlUtils.HtmlBuilder();
@@ -83,17 +86,17 @@ function mustBeAbleToRunComplexAnimations(app : any) {
     htmlBuilder.setHtmlData(
 `
 <div id="sora-carousel">
-<div class="sora-wrapper">
-<div class="sora-slide">
-    Content1
-</div> \
-<div class="sora-slide">
-    Content 2
-</div> \
-<div class="sora-slide">
-    Content 3
-</div>
-</div>
+    <div class="sora-wrapper">
+        <div class="sora-slide">
+            Content1
+        </div> \
+        <div class="sora-slide">
+            Content 2
+        </div> \
+        <div class="sora-slide">
+            Content 3
+        </div>
+    </div>
 </div>
 `
     );
@@ -102,3 +105,47 @@ function mustBeAbleToRunComplexAnimations(app : any) {
         res.send(htmlBuilder.buildHTML());
     });
 }
+
+function mustBeAbleToHandleChildrenAnimations(app : any) {
+    var htmlBuilder = new HtmlUtils.HtmlBuilder();
+    htmlBuilder.loadResourcesAsUris([ExpressUtils.SORA_JS_CSS_URI], [ExpressUtils.SORA_JS_JS_URI]);
+    htmlBuilder.loadResourcesFromText([
+`
+@keyframes sora-color-to-blue-in-test {
+    from {
+        color: inherit; }
+    to {
+        color: #00f; } }
+
+.sora-color-to-blue-animation-test {
+    animation-duration: 1000ms;
+    animation-name: sora-color-to-blue-in-test;
+    animation-timing-function: ease-in;
+    animation-fill-mode: both; }
+`
+    ],[]);
+
+    htmlBuilder.setHtmlData(
+`
+<div id="sora-carousel">
+    <div class="sora-wrapper">
+        <div class="sora-slide">
+            <span class="slide-text">Content 1</span>
+        </div> \
+        <div class="sora-slide">
+            <span class="slide-text">Content 2</span>
+        </div> \
+        <div class="sora-slide">
+            <span class="slide-text">Content 3</span>
+        </div>
+    </div>
+</div>
+`
+    );
+
+    app.get('/test-mustBeAbleToHandleChildrenAnimations', function(req : any, res : any){
+        res.send(htmlBuilder.buildHTML());
+    });
+}
+
+//#endregion
