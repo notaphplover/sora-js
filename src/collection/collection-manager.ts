@@ -1,4 +1,4 @@
-import { EventEmitter } from "events";
+import { EventEmitter } from 'events';
 
 export const COLLECTION_MANAGER_EVENTS = {
     collectionAfterChange: 'coll.ch.a',
@@ -86,6 +86,15 @@ export class CollectionManager<T> {
     public constructor(collection : T[], eventEmitter : EventEmitter) {
         this.collection = collection;
         this.eventEmitter = eventEmitter;
+    }
+
+    /**
+     * Returns the collection of elements managed.
+     * This is the real collection managed by the instance. 
+     * Only read operations should be performed directly in the collection.
+     */
+    public getCollection() : T[] {
+        return this.collection;
     }
 
     /**

@@ -9,21 +9,11 @@ export namespace CarouselBase {
      * 2. Any carousel has a topology.
      * 3. Any carousel has transitions.
      */
-    export abstract class CarouselBase<TElems> {
-        /**
-         * Elements of the carousel
-         * 1. Any carousel has elements.
-         * 2. Any carousel has a topology.
-         */
-        protected elements : TElems;
-
+    export abstract class CarouselBase {
         /**
          * Creates a new carousel.
-         * @param elements 
          */
-        public constructor(elements : TElems) {
-            this.elements = elements;
-        }
+        public constructor() { }
 
         /**
          * Carousel handler.

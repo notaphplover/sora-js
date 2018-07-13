@@ -1,6 +1,7 @@
 import { CarouselBase } from './carousel-base'
 import { SoraAnimation } from './animation/carousel-animation'
 import { EventEmitter } from 'events';
+import { CollectionManager, COLLECTION_MANAGER_EVENTS, CollectionChangeEventArgs } from '../collection/collection-manager';
 
 export namespace CarouselBasic {
 
@@ -121,7 +122,7 @@ export namespace CarouselBasic {
     /**
      * Represents a carousel with a single active slide at a time.
      */
-    export class SingleSlideCarousel extends CarouselBase.CarouselBase<HTMLElement[]> {
+    export class SingleSlideCarousel extends CarouselBase.CarouselBase {
 
         //#region Attributes
 
@@ -135,6 +136,11 @@ export namespace CarouselBasic {
          */
         protected currentAnimation : ISingleSlideCarouselGotoOptions;
 
+        /**
+         * collection manager
+         */
+        protected elementsManager : CollectionManager<HTMLElement>
+
         //#endregion
 
         //#region Events
@@ -142,7 +148,7 @@ export namespace CarouselBasic {
         /**
          * Event emitter for this instance
          */
-        protected eventEmiter : EventEmitter;
+        protected eventEmitter : EventEmitter;
 
         //#endregion
 
@@ -151,6 +157,8 @@ export namespace CarouselBasic {
          * @param element DOM element associated to the carousel.
          */
         public constructor(element : HTMLElement, options: ISingleSlideCarouselCreationOptions) {
+            super();
+
             if (element == null)
                 throw new Error('The element must not be null.');
 
@@ -166,13 +174,12 @@ export namespace CarouselBasic {
                     children.push(soraWrapper.children[i] as HTMLElement);
             }
 
-            super(children);
-
             this.activeIndex = options.index || 0;
             this.currentAnimation = null;
-            this.eventEmiter = new EventEmitter();
+            this.eventEmitter = new EventEmitter();
+            this.elementsManager = new CollectionManager<HTMLElement>(children, this.eventEmitter);
 
-            if (this.activeIndex < 0 || this.activeIndex >= this.elements.length)
+            if (this.activeIndex < 0 || this.activeIndex >= this.elementsManager.getCollection().length)
                 throw new Error('Invalid options.index. There is no element with index ' + options.index + '.');
 
             for (var i = 0; i < children.length; ++i) {
@@ -189,7 +196,7 @@ export namespace CarouselBasic {
          * Obtains the active slide of the carousel
          */
         public getActiveElement() : HTMLElement {
-            return this.elements[this.activeIndex];
+            return this.elementsManager.getCollection()[this.activeIndex];
         }
 
         /**
@@ -203,9 +210,10 @@ export namespace CarouselBasic {
          * Obtains the slide elements of the carousel.
          */
         public getChildren() : HTMLElement[] {
-            var elementsClone : HTMLElement[] = new Array(this.elements.length);
+            var elements = this.elementsManager.getCollection();
+            var elementsClone : HTMLElement[] = new Array(elements.length);
             for(var i = 0; i < elementsClone.length; ++i) 
-                elementsClone[i] = this.elements[i]
+                elementsClone[i] = elements[i]
 
             return elementsClone;
         }
@@ -224,117 +232,17 @@ export namespace CarouselBasic {
                     
                     return this.handleGoTo(options as ISingleSlideCarouselGotoOptions);
                 case SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT:
-                    options.index = (this.activeIndex + 1) % this.elements.length;
+                    options.index = (this.activeIndex + 1) % this.elementsManager.getCollection().length;
                     return this.handle(SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO, options);
                 case SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_PREVIOUS:
-                    options.index = ((this.activeIndex - 1) % this.elements.length + this.elements.length) % this.elements.length;
+                    var elementsLength = this.elementsManager.getCollection().length;
+                    options.index = ((this.activeIndex - 1) % elementsLength + elementsLength) % elementsLength;
                     return this.handle(SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO, options);
             }
         }
 
         //#endregion
-
-        //#region Protected
-
-        protected internalInsertSlide(elements : {[index : number] : HTMLElement}) : void {
-            var keys : number[] = new Array();
-            for (var elemIndex in elements) {
-                var numberElemIndex = Number(elemIndex);
-                if (numberElemIndex < 0)
-                throw new Error('The index param should be greater or equals zero.');
-            
-                if (numberElemIndex > this.elements.length)
-                    throw new Error('The index param should be less or equals the number of elements of the collection.');
-            
-                keys.push(numberElemIndex);
-            }
-
-            keys = keys.sort(function(number1, number2) {
-                return number1 - number2;
-            });
-
-            if (keys.length == 0)
-                return;
-
-            var newElements : HTMLElement[] = new Array(this.elements.length + keys.length);
-
-            var indexMap : {[oldIndex : number] : number} = {};
-
-            if (keys.length == 1) {
-                var index = keys[0];
-                var element = elements[index];
-
-                for (var i = 0; i < index; ++i) {
-                    newElements[i] = this.elements[i];
-                    indexMap[i] = i;
-                }
-                
-                newElements[index] = element
-
-                for(var i = index + 1; i < newElements.length; ++i) {
-                    newElements[i] = this.elements[i - 1];
-                    indexMap[i - 1] = i;
-                }
-            } else {
-                for (var i = 0; i < keys[0]; ++i) {
-                    newElements[i] = this.elements[i];
-                    indexMap[i] = i;
-                }
-
-                newElements[keys[0]] = elements[keys[0]]
-
-                for (var i = 1; i < keys.length; ++i) {
-                    var indexPrevious = keys[i - 1];
-                    var index = keys[i];
-                    for (var j = indexPrevious + 1; j < index; ++j) {
-                        newElements[j] = this.elements[j - i];
-                        indexMap[j - i] = j;
-                    }
-
-                    newElements[index] = elements[index];
-                }
-
-                for (var i = keys[keys.length - 1] + 1; i < newElements.length; ++i) {
-                    newElements[i] = this.elements[i - keys.length];
-                    indexMap[i - keys.length] = i;
-                }
-            }
-
-            var changeEventArgs = function() {
-                var preventDefault = false;
-
-                function getIndexMap() : {[oldIndex : number] : number} {
-                    return Object.assign({}, indexMap);
-                }
-
-                function getNewElements() : {[index : number] : HTMLElement} {
-                    return Object.assign({}, newElements);
-                }
-
-                function getPreventDefault() : boolean {
-                    return preventDefault;
-                }
-
-                function setPreventDefault() : void {
-                    preventDefault = true;
-                }
-
-                return {
-                    getPreventDefault: getPreventDefault,
-                    setPreventDefault: setPreventDefault,
-                };
-            } ();
-
-            this.eventEmiter.emit('change.b', changeEventArgs);
-
-            if (!changeEventArgs.getPreventDefault())
-                this.elements = newElements;
-
-            this.eventEmiter.emit('change.a', changeEventArgs);
-        }
-
-        //#endregion
-
+        
         //#region Private
 
         /**
@@ -342,7 +250,7 @@ export namespace CarouselBasic {
          * @param options Options with the index and the custom animation to display.
          */
         private handleGoTo(options : ISingleSlideCarouselGotoOptions) : ISingleSlideCarouselGoToAnimationStatus {
-            if (options.index < 0 || options.index >= this.elements.length)
+            if (options.index < 0 || options.index >= this.elementsManager.getCollection().length)
                 throw new Error('Invalid index. There is no element with index ' + options.index + '.');
 
             if (options.index == this.activeIndex)
@@ -354,24 +262,38 @@ export namespace CarouselBasic {
                 throw new Error('It\'s not allowed to start an animation while an existing animation over an slide element is active');
             }
 
-            var oldActiveIndex : number = this.activeIndex;
+            var oldActiveElement = this.elementsManager.getCollection()[this.activeIndex];
             var newActiveIndex : number = options.index;
 
-            this.elements[newActiveIndex].classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
+            that.eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, function(eventArgs : CollectionChangeEventArgs<HTMLElement>) {
+                var indexMap = eventArgs.getIndexMap();
+                if (indexMap[that.activeIndex] == null || indexMap[newActiveIndex] == null)
+                    eventArgs.setPreventDefault();
+            });
+
+            that.eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionAfterChange, function(eventArgs : CollectionChangeEventArgs<HTMLElement>) {
+                var indexMap = eventArgs.getIndexMap();
+                newActiveIndex = indexMap[newActiveIndex];
+                that.activeIndex = indexMap[that.activeIndex];
+            });
+
+            var newActiveElement = this.elementsManager.getCollection()[newActiveIndex];
+
+            newActiveElement.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
 
             var that = this;
 
             //Animate!
-            var enterAnimationStatus : ISingleSlideCarouselSlideAnimationStatus = this.handleAnimationOverSlide(this.elements[newActiveIndex], options.enterAnimation);
+            var enterAnimationStatus : ISingleSlideCarouselSlideAnimationStatus = this.handleAnimationOverSlide(newActiveElement, options.enterAnimation);
             var leaveAnimationStatus : ISingleSlideCarouselSlideAnimationStatus = 
                 this.handleAnimationOverSlide(
-                    this.elements[oldActiveIndex], 
+                    oldActiveElement, 
                     options.leaveAnimation
                 );
             
             var hideLeaveSlideAfterAnimationEnds = new Promise<ISingleSlideCarouselAnimateElementOptions>(function(resolve, reject) {
                 leaveAnimationStatus.elementAnimationStatus.then(function(animationOptions) {
-                    that.elements[oldActiveIndex].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
+                    oldActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
                     resolve(animationOptions);
                 }).catch(function(err) {
                     reject(err);
@@ -383,9 +305,9 @@ export namespace CarouselBasic {
                     enterAnimationStatus.elementAnimationStatus,
                     hideLeaveSlideAfterAnimationEnds,
                 ]).then(function(slidesAnimationStatus : ISingleSlideCarouselAnimateElementOptions[]) {
-                    that.elements[oldActiveIndex].classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-                    that.elements[newActiveIndex].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-                    that.activeIndex = options.index;
+                    oldActiveElement.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                    newActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                    that.activeIndex = newActiveIndex;
                     that.currentAnimation = null;
                     resolve();
                 }).catch(function(err) {
