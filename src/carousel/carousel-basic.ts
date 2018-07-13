@@ -236,7 +236,7 @@ export namespace CarouselBasic {
 
         //#region Protected
 
-        protected internalInsertSlide(elements : {[index : number] : HTMLElement}) {
+        protected internalInsertSlide(elements : {[index : number] : HTMLElement}) : void {
             var keys : number[] = new Array();
             for (var elemIndex in elements) {
                 var numberElemIndex = Number(elemIndex);
