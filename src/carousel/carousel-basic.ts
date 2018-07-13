@@ -1,5 +1,6 @@
 import { CarouselBase } from './carousel-base'
 import { SoraAnimation } from './animation/carousel-animation'
+import { EventEmitter } from 'events';
 
 export namespace CarouselBasic {
 
@@ -122,7 +123,7 @@ export namespace CarouselBasic {
      */
     export class SingleSlideCarousel extends CarouselBase.CarouselBase<HTMLElement[]> {
 
-        /* #region Attributes */
+        //#region Attributes
 
         /**
          * Active index of the elements of the carousel.
@@ -134,7 +135,16 @@ export namespace CarouselBasic {
          */
         protected currentAnimation : ISingleSlideCarouselGotoOptions;
 
-        /* #endregion */
+        //#endregion
+
+        //#region Events
+
+        /**
+         * Event emitter for this instance
+         */
+        protected eventEmiter : EventEmitter;
+
+        //#endregion
 
         /**
          * Creates a new instance of this class.
@@ -160,6 +170,7 @@ export namespace CarouselBasic {
 
             this.activeIndex = options.index || 0;
             this.currentAnimation = null;
+            this.eventEmiter = new EventEmitter();
 
             if (this.activeIndex < 0 || this.activeIndex >= this.elements.length)
                 throw new Error('Invalid options.index. There is no element with index ' + options.index + '.');
@@ -172,7 +183,32 @@ export namespace CarouselBasic {
             }
         }
 
-        /* #region Public */
+        //#region Public
+
+        /**
+         * Obtains the active slide of the carousel
+         */
+        public getActiveElement() : HTMLElement {
+            return this.elements[this.activeIndex];
+        }
+
+        /**
+         * Obtains the active index in the elements array of the carousel
+         */
+        public getActiveIndex() : number {
+            return this.activeIndex;
+        }
+
+        /**
+         * Obtains the slide elements of the carousel.
+         */
+        public getChildren() : HTMLElement[] {
+            var elementsClone : HTMLElement[] = new Array(this.elements.length);
+            for(var i = 0; i < elementsClone.length; ++i) 
+                elementsClone[i] = this.elements[i]
+
+            return elementsClone;
+        }
 
         /**
          * Carousel handler.
@@ -196,9 +232,110 @@ export namespace CarouselBasic {
             }
         }
 
-        /* #endregion */
+        //#endregion
 
-        /* #region Private */
+        //#region Protected
+
+        protected internalInsertSlide(elements : {[index : number] : HTMLElement}) {
+            var keys : number[] = new Array();
+            for (var elemIndex in elements) {
+                var numberElemIndex = Number(elemIndex);
+                if (numberElemIndex < 0)
+                throw new Error('The index param should be greater or equals zero.');
+            
+                if (numberElemIndex > this.elements.length)
+                    throw new Error('The index param should be less or equals the number of elements of the collection.');
+            
+                keys.push(numberElemIndex);
+            }
+
+            keys = keys.sort(function(number1, number2) {
+                return number1 - number2;
+            });
+
+            if (keys.length == 0)
+                return;
+
+            var newElements : HTMLElement[] = new Array(this.elements.length + keys.length);
+
+            var indexMap : {[oldIndex : number] : number} = {};
+
+            if (keys.length == 1) {
+                var index = keys[0];
+                var element = elements[index];
+
+                for (var i = 0; i < index; ++i) {
+                    newElements[i] = this.elements[i];
+                    indexMap[i] = i;
+                }
+                
+                newElements[index] = element
+
+                for(var i = index + 1; i < newElements.length; ++i) {
+                    newElements[i] = this.elements[i - 1];
+                    indexMap[i - 1] = i;
+                }
+            } else {
+                for (var i = 0; i < keys[0]; ++i) {
+                    newElements[i] = this.elements[i];
+                    indexMap[i] = i;
+                }
+
+                newElements[keys[0]] = elements[keys[0]]
+
+                for (var i = 1; i < keys.length; ++i) {
+                    var indexPrevious = keys[i - 1];
+                    var index = keys[i];
+                    for (var j = indexPrevious + 1; j < index; ++j) {
+                        newElements[j] = this.elements[j - i];
+                        indexMap[j - i] = j;
+                    }
+
+                    newElements[index] = elements[index];
+                }
+
+                for (var i = keys[keys.length - 1] + 1; i < newElements.length; ++i) {
+                    newElements[i] = this.elements[i - keys.length];
+                    indexMap[i - keys.length] = i;
+                }
+            }
+
+            var changeEventArgs = function() {
+                var preventDefault = false;
+
+                function getIndexMap() : {[oldIndex : number] : number} {
+                    return Object.assign({}, indexMap);
+                }
+
+                function getNewElements() : {[index : number] : HTMLElement} {
+                    return Object.assign({}, newElements);
+                }
+
+                function getPreventDefault() : boolean {
+                    return preventDefault;
+                }
+
+                function setPreventDefault() : void {
+                    preventDefault = true;
+                }
+
+                return {
+                    getPreventDefault: getPreventDefault,
+                    setPreventDefault: setPreventDefault,
+                };
+            } ();
+
+            this.eventEmiter.emit('change.b', changeEventArgs);
+
+            if (!changeEventArgs.getPreventDefault())
+                this.elements = newElements;
+
+            this.eventEmiter.emit('change.a', changeEventArgs);
+        }
+
+        //#endregion
+
+        //#region Private
 
         /**
          * Handles the GoTo operation.
@@ -399,6 +536,6 @@ export namespace CarouselBasic {
             element.removeEventListener('webkitAnimationEnd', listener);
         }
 
-        /* #endregion */
+        //#endregion
     }
 }
