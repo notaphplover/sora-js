@@ -207,15 +207,11 @@ export namespace CarouselBasic {
         }
 
         /**
-         * Obtains the slide elements of the carousel.
+         * Returns the collection manager of the instance.
+         * @returns Collection manager of the slide elements.
          */
-        public getChildren() : HTMLElement[] {
-            var elements = this.elementsManager.getCollection();
-            var elementsClone : HTMLElement[] = new Array(elements.length);
-            for(var i = 0; i < elementsClone.length; ++i) 
-                elementsClone[i] = elements[i]
-
-            return elementsClone;
+        public getElementsManager() : CollectionManager<HTMLElement> {
+            return this.elementsManager;
         }
 
         /**
@@ -265,13 +261,15 @@ export namespace CarouselBasic {
             var oldActiveElement = this.elementsManager.getCollection()[this.activeIndex];
             var newActiveIndex : number = options.index;
 
-            that.eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, function(eventArgs : CollectionChangeEventArgs<HTMLElement>) {
+            var that = this;
+
+            this.eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, function(eventArgs : CollectionChangeEventArgs<HTMLElement>) {
                 var indexMap = eventArgs.getIndexMap();
                 if (indexMap[that.activeIndex] == null || indexMap[newActiveIndex] == null)
                     eventArgs.setPreventDefault();
             });
 
-            that.eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionAfterChange, function(eventArgs : CollectionChangeEventArgs<HTMLElement>) {
+            this.eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionAfterChange, function(eventArgs : CollectionChangeEventArgs<HTMLElement>) {
                 var indexMap = eventArgs.getIndexMap();
                 newActiveIndex = indexMap[newActiveIndex];
                 that.activeIndex = indexMap[that.activeIndex];
@@ -281,10 +279,10 @@ export namespace CarouselBasic {
 
             newActiveElement.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
 
-            var that = this;
-
             //Animate!
-            var enterAnimationStatus : ISingleSlideCarouselSlideAnimationStatus = this.handleAnimationOverSlide(newActiveElement, options.enterAnimation);
+            var enterAnimationStatus : ISingleSlideCarouselSlideAnimationStatus = 
+                this.handleAnimationOverSlide(newActiveElement, options.enterAnimation);
+                
             var leaveAnimationStatus : ISingleSlideCarouselSlideAnimationStatus = 
                 this.handleAnimationOverSlide(
                     oldActiveElement, 

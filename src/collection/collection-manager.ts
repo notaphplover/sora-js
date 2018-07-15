@@ -102,6 +102,15 @@ export class CollectionManager<T> {
      * @param elements Collection of index-element pairs representing the elements to be inserted.
      * @returns eventArgs. Event arguments passed to the chage events.
      */
+    public insertElements(elements : {[index : number] : T}) : CollectionChangeEventArgs<T> {
+        return this.internalInsertElements(elements);
+    }
+
+    /**
+     * Inserts a collection of elements at the selected indexes.
+     * @param elements Collection of index-element pairs representing the elements to be inserted.
+     * @returns eventArgs. Event arguments passed to the chage events.
+     */
     protected internalInsertElements(elements : {[index : number] : T}) : CollectionChangeEventArgs<T> {
         var keys : number[] = new Array();
         for (var elemIndex in elements) {
