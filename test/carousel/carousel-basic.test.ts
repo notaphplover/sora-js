@@ -146,7 +146,7 @@ describe('SingleSlideCarousel Tests', () => {
         var browser = await PuppeterManagement.PuppeteerManager.getInstance().getPuppeteerBrowser();
         var page = await browser.newPage();
 
-        await page.goto('http://localhost:8080/test-mustBeAbleToGoToSlides');
+        await page.goto('http://localhost:8080/test-mustBeAbleToGoToSlidesWhileAddingElements');
 
         var evaluationResult : any = page.evaluate(function () {
             function goNext(carousel : CarouselBasic.SingleSlideCarousel) : CarouselBasic.ISingleSlideCarouselGoToAnimationStatus {
@@ -188,7 +188,23 @@ describe('SingleSlideCarousel Tests', () => {
                 return new Promise<boolean>(function(resolve, reject) {
                     var animationStatus = goNext(carousel);
 
-                    //TODO: Call insert elements and check
+                    var element0 = document.createElement('div');
+                    element0.innerHTML = 'New Content 0';
+                    var element1 = document.createElement('div');
+                    element1.innerHTML = 'New Content 1';
+                    var element2 = document.createElement('div');
+                    element2.innerHTML = 'New Content 2';
+                    var element3 = document.createElement('div');
+                    element3.innerHTML = 'New Content 3';
+                    carousel.getElementsManager().insertElements({
+                        0: element0,
+                        1: element1,
+                        2: element2,
+                        3: element3,
+                    });
+
+                    if (carousel.getElementsManager().getCollection().length != 7)
+                        resolve(false);
 
                     Promise.all([
                         animationStatus.enterSlideStatus.elementAnimationStatus,
@@ -199,10 +215,10 @@ describe('SingleSlideCarousel Tests', () => {
                         var newActiveElement = animationStatusPromisesResponses[0].element;
                         
                         var conditions : boolean = 
-                            newActiveElement === carousel.getElementsManager().getCollection()[1]
+                            newActiveElement === carousel.getElementsManager().getCollection()[5]
                             && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
                             && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
-                            && oldActiveElement === carousel.getElementsManager().getCollection()[0]
+                            && oldActiveElement === carousel.getElementsManager().getCollection()[4]
                             && !oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
                             && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
                         ;
@@ -219,10 +235,10 @@ describe('SingleSlideCarousel Tests', () => {
                                 var newActiveElement = animationStatusPromisesResponses[0].element;
                                 
                                 var conditions : boolean = 
-                                    newActiveElement === carousel.getElementsManager().getCollection()[0]
+                                    newActiveElement === carousel.getElementsManager().getCollection()[4]
                                     && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
                                     && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
-                                    && oldActiveElement === carousel.getElementsManager().getCollection()[1]
+                                    && oldActiveElement === carousel.getElementsManager().getCollection()[5]
                                     && !oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
                                     && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
                                 ;
