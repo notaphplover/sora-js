@@ -22,6 +22,13 @@ export namespace CarouselBasic {
     }
 
     /**
+     * Arguments for the event emitted.
+     */
+    export interface ISingleSlideCarouselCancelAnimationEventArgs {
+        activeIndex : number;
+    }
+
+    /**
      * Options for creating a carousel.
      */
     export interface ISingleSlideCarouselCreationOptions {
@@ -98,6 +105,22 @@ export namespace CarouselBasic {
     /* #region Constants */
 
     /**
+     * Actions avaiable for the SingleSlideCarousel.
+     */
+    export const SINGLE_SLIDE_CAROUSEL_ACTIONS = {
+        GO_TO: 'to',
+        GO_TO_NEXT: 'next',
+        GO_TO_PREVIOUS: 'prev',
+    };
+
+    /**
+     * Events directly handled by the carousel.
+     */
+    export const SINGLE_SLIDE_CAROUSEL_EVENTS = {
+        ON_CANCEL_ANIMATION: 'car.anim.cancel',
+    };
+
+    /**
      * Carousel classes used for multiple purposes.
      */
     export const SINGLE_SLIDE_CAROUSEL_STYLES = {
@@ -106,15 +129,6 @@ export namespace CarouselBasic {
         SLIDE: 'sora-slide',
         SLIDE_ACTIVE: 'sora-slide-active',
         WRAPPER: 'sora-wrapper',
-    };
-
-    /**
-     * Actions avaiable for the SingleSlideCarousel.
-     */
-    export const SINGLE_SLIDE_CAROUSEL_ACTIONS = {
-        GO_TO: 'to',
-        GO_TO_NEXT: 'next',
-        GO_TO_PREVIOUS: 'prev',
     };
 
     /* #endregion */
@@ -191,6 +205,19 @@ export namespace CarouselBasic {
         }
 
         //#region Public
+
+        /**
+         * Forces the carousel to change its active slide. Any animation will be canceled in the process.
+         * @param activeIndex Index of the new active slide of the carousel.
+         */
+        public forceActiveSlide(activeIndex : number) {
+            var eventArgs : ISingleSlideCarouselCancelAnimationEventArgs = {
+                activeIndex: activeIndex,
+            };
+
+            this.eventEmitter.emit(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, eventArgs);
+            this.resetCarouselStructure(activeIndex);
+        }
 
         /**
          * Obtains the active slide of the carousel
@@ -388,57 +415,51 @@ export namespace CarouselBasic {
             var that = this;
             return new Promise<ISingleSlideCarouselAnimateElementOptions>(function(resolve, reject) {
                 try {
-                    var animationFunctions : (() => void)[] = new Array();
+                    var animationFunctions : ((event : TransitionEvent) => void)[] = new Array();
+                    var currentAnimationIndex : number = null;
+                    var onAnimationCancel = function(args : ISingleSlideCarouselCancelAnimationEventArgs) {
+                        element.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
+                        
+                        if (currentAnimationIndex != null)
+                            element.classList.remove(styles[currentAnimationIndex]);
+
+                        that.unregisterAnimationListener(element, animationFunctions[currentAnimationIndex]);
+                        element.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
+
+                        that.eventEmitter.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onAnimationCancel);
+                    };
+
+                    that.eventEmitter.on(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onAnimationCancel);
 
                     for (var i = 1; i < styles.length; ++i) {
                         animationFunctions.push(function(index) {
-                            return function() {
+                            return function(event : TransitionEvent) {
                                 element.classList.remove(styles[index - 1]);
-                                
                                 that.unregisterAnimationListener(element, animationFunctions[index - 1]);
-                                
-                                if (index < styles.length - 1) {
-                                    that.registerAnimationListener(element, animationFunctions[index]);
-                                } else {
-                                    var clearFunction = function() {
-                                        element.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
-                                        element.classList.remove(styles[index]);
-                                        element.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
-                                        that.unregisterAnimationListener(element, clearFunction);
-
-                                        resolve({
-                                            element: element,
-                                            styles: styles,
-                                        });
-                                    };
-                                    //add the clear listener
-                                    that.registerAnimationListener(element, clearFunction);
-                                }
-
+                                that.registerAnimationListener(element, animationFunctions[index]);
                                 element.classList.add(styles[index]);
+                                currentAnimationIndex = index;
                             }
                         } (i));
                     }
 
-                    if (animationFunctions.length > 0) {
-                        that.registerAnimationListener(element, animationFunctions[0]);
-                    } else {
-                        var clearFunction = function(event : TransitionEvent) {
-                            element.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
-                            element.classList.remove(styles[0]);
-                            element.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
-                            that.unregisterAnimationListener(element, clearFunction);
+                    //add the clear function
+                    animationFunctions.push(function(event : TransitionEvent) {
+                        element.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
+                        element.classList.remove(styles[styles.length - 1]);
+                        element.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
+                        that.unregisterAnimationListener(element, animationFunctions[animationFunctions.length - 1]);
+                        currentAnimationIndex = null;
 
-                            resolve({
-                                element: element,
-                                styles: styles,
-                            });
-                        };
-                        //add the clear listener
-                        that.registerAnimationListener(element, clearFunction);
-                    }
+                        resolve({
+                            element: element,
+                            styles: styles,
+                        });
+                    });
 
+                    that.registerAnimationListener(element, animationFunctions[0]);
                     element.classList.add(styles[0]);
+                    currentAnimationIndex = 0;
                 } catch (ex) {
                     reject(ex);
                 }
@@ -463,6 +484,30 @@ export namespace CarouselBasic {
         private unregisterAnimationListener(element : HTMLElement, listener : (element : TransitionEvent) => void) : void {
             element.removeEventListener('animationend', listener);
             element.removeEventListener('webkitAnimationEnd', listener);
+        }
+
+        //#endregion
+
+        //#region Protected
+
+        /**
+         * Resets the carousel structure. Sets a new active element for the carousel.
+         * @param activeIndex Current active index.
+         */
+        protected resetCarouselStructure(activeIndex : number) {
+            //This operation is atomic in a single-thread environment, so we can store the collection.
+            var collection = this.elementsManager.getCollection();
+            for (var i = 0; i < collection.length; ++i) {
+                while(collection[i].classList.length > 0)
+                    collection[i].classList.remove(collection[i].classList.item(0));
+
+                collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE);
+
+                if (activeIndex === i)
+                    collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                else
+                    collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
+            }
         }
 
         //#endregion
