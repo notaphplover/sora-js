@@ -263,19 +263,22 @@ export namespace CarouselBasic {
 
             var that = this;
 
-            this.eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, function(eventArgs : CollectionChangeEventArgs<HTMLElement>) {
+            var onBeforeChange = function(eventArgs : CollectionChangeEventArgs<HTMLElement>) {
                 var indexMap = eventArgs.getIndexMap();
                 if (indexMap[that.activeIndex] == null || indexMap[newActiveIndex] == null)
                     eventArgs.setPreventDefault();
-            });
+            };
 
-            this.eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionAfterChange, function(eventArgs : CollectionChangeEventArgs<HTMLElement>) {
+            var onAfterChange = function(eventArgs : CollectionChangeEventArgs<HTMLElement>) {
                 if (!eventArgs.getPreventDefault()) {
                     var indexMap = eventArgs.getIndexMap();
                     newActiveIndex = indexMap[newActiveIndex];
                     that.activeIndex = indexMap[that.activeIndex];
                 }
-            });
+            };
+
+            this.eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, onBeforeChange);
+            this.eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionAfterChange, onAfterChange);
 
             var newActiveElement = this.elementsManager.getCollection()[newActiveIndex];
 
@@ -309,6 +312,10 @@ export namespace CarouselBasic {
                     newActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
                     that.activeIndex = newActiveIndex;
                     that.currentAnimation = null;
+
+                    that.eventEmitter.removeListener(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, onBeforeChange);
+                    that.eventEmitter.removeListener(COLLECTION_MANAGER_EVENTS.collectionAfterChange, onAfterChange);
+
                     resolve();
                 }).catch(function(err) {
                     reject(err);
