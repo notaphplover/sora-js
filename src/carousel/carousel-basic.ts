@@ -427,6 +427,11 @@ export namespace CarouselBasic {
                         element.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
 
                         that.eventEmitter.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onAnimationCancel);
+
+                        resolve({
+                            element: element,
+                            styles: styles,
+                        });
                     };
 
                     that.eventEmitter.on(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onAnimationCancel);

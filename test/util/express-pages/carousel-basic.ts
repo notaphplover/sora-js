@@ -6,6 +6,7 @@ import { ExpressUtils } from '../express-server-manager';
  * @param app Express application.
  */
 export function handleCarouselBasicPages(app : any) {
+    mustBeAbleToCancelAnimation(app);
     mustBeAbleToGoToSlidesPage(app);
     mustBeAbleToGoToSlidesWhileAddingElements(app);
     mustBeAbleToGoToSlidesWhileRemovingAnimationElements(app);
@@ -15,6 +16,32 @@ export function handleCarouselBasicPages(app : any) {
 }
 
 //#region Pages Tests
+
+function mustBeAbleToCancelAnimation(app : any) {
+    var htmlBuilder = new HtmlUtils.HtmlBuilder();
+    htmlBuilder.loadResourcesAsUris([ExpressUtils.SORA_JS_CSS_URI], [ExpressUtils.SORA_JS_JS_URI])
+    htmlBuilder.setHtmlData(
+`
+<div id="sora-carousel">
+    <div class="sora-wrapper">
+    <div class="sora-slide">
+        Content1
+    </div> \
+    <div class="sora-slide">
+        Content 2
+    </div> \
+    <div class="sora-slide">
+        Content 3
+    </div>
+    </div>
+</div>
+`
+    );
+
+    app.get('/test-mustBeAbleToCancelAnimation', function(req : any, res : any){
+        res.send(htmlBuilder.buildHTML());
+    });
+}
 
 function mustBeAbleToGoToSlidesPage(app : any) {
     var htmlBuilder = new HtmlUtils.HtmlBuilder();
