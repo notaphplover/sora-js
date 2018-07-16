@@ -270,9 +270,11 @@ export namespace CarouselBasic {
             });
 
             this.eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionAfterChange, function(eventArgs : CollectionChangeEventArgs<HTMLElement>) {
-                var indexMap = eventArgs.getIndexMap();
-                newActiveIndex = indexMap[newActiveIndex];
-                that.activeIndex = indexMap[that.activeIndex];
+                if (!eventArgs.getPreventDefault()) {
+                    var indexMap = eventArgs.getIndexMap();
+                    newActiveIndex = indexMap[newActiveIndex];
+                    that.activeIndex = indexMap[that.activeIndex];
+                }
             });
 
             var newActiveElement = this.elementsManager.getCollection()[newActiveIndex];

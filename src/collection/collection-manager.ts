@@ -209,6 +209,11 @@ export class CollectionManager<T> {
         return changeEventArgs;
     }
 
+    /**
+     * Attemps to change the collection managed by this instance.
+     * @param changeEventArgs Change event args to send on the change events.
+     * @param newElements New elements to manage if the change is not prevented.
+     */
     protected internalTryToChangeCollection(changeEventArgs : CollectionChangeEventArgs<T>, newElements : T[]) : void {
         this.eventEmitter.emit(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, changeEventArgs);
 

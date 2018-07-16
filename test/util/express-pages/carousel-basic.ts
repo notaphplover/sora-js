@@ -1,9 +1,15 @@
 import { HtmlUtils } from '../../util/html-builder';
 import { ExpressUtils } from '../express-server-manager';
 
+/**
+ * Adds listeners for each test case of the SingleSlideCarousel test collection.
+ * @param app Express application.
+ */
 export function handleCarouselBasicPages(app : any) {
     mustBeAbleToGoToSlidesPage(app);
     mustBeAbleToGoToSlidesWhileAddingElements(app);
+    mustBeAbleToGoToSlidesWhileRemovingAnimationElements(app);
+    mustBeAbleToGoToSlidesWhileRemovingOtherElements(app);
     mustBeAbleToHandleChildrenAnimations(app);
     mustBeAbleToRunComplexAnimations(app);
 }
@@ -58,6 +64,58 @@ function mustBeAbleToGoToSlidesWhileAddingElements(app : any) {
     );
 
     app.get('/test-mustBeAbleToGoToSlidesWhileAddingElements', function(req : any, res : any){
+        res.send(htmlBuilder.buildHTML());
+    });
+}
+
+function mustBeAbleToGoToSlidesWhileRemovingAnimationElements(app : any) {
+    var htmlBuilder = new HtmlUtils.HtmlBuilder();
+    htmlBuilder.loadResourcesAsUris([ExpressUtils.SORA_JS_CSS_URI], [ExpressUtils.SORA_JS_JS_URI])
+    htmlBuilder.setHtmlData(
+`
+<div id="sora-carousel">
+    <div class="sora-wrapper">
+    <div class="sora-slide">
+        Content1
+    </div> \
+    <div class="sora-slide">
+        Content 2
+    </div> \
+    <div class="sora-slide">
+        Content 3
+    </div>
+    </div>
+</div>
+`
+    );
+
+    app.get('/test-mustBeAbleToGoToSlidesWhileRemovingAnimationElements', function(req : any, res : any){
+        res.send(htmlBuilder.buildHTML());
+    });
+}
+
+function mustBeAbleToGoToSlidesWhileRemovingOtherElements(app : any) {
+    var htmlBuilder = new HtmlUtils.HtmlBuilder();
+    htmlBuilder.loadResourcesAsUris([ExpressUtils.SORA_JS_CSS_URI], [ExpressUtils.SORA_JS_JS_URI])
+    htmlBuilder.setHtmlData(
+`
+<div id="sora-carousel">
+    <div class="sora-wrapper">
+    <div class="sora-slide">
+        Content1
+    </div> \
+    <div class="sora-slide">
+        Content 2
+    </div> \
+    <div class="sora-slide">
+        Content 3
+    </div>
+    </div>
+</div>
+`
+    );
+
+    app.get('/test-mustBeAbleToGoToSlidesWhileRemovingOtherElements', function(req : any, res : any){
         res.send(htmlBuilder.buildHTML());
     });
 }
