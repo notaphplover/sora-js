@@ -13,7 +13,7 @@ export class CollectionChangeEventArgs<T> {
     /**
      * new Elements array
      */
-    protected newElements : {[index : number] : T};
+    protected newElements : T[];
     
     /**
      * Flag to prevent the default action (update the collection)
@@ -25,7 +25,7 @@ export class CollectionChangeEventArgs<T> {
      * @param indexMap Index map, from old indexes to new indexes.
      * @param newElements New Elements array.
      */
-    public constructor(indexMap : {[oldIndex : number] : number}, newElements : {[index : number] : T}) {
+    public constructor(indexMap : {[oldIndex : number] : number}, newElements : T[]) {
         this.indexMap = indexMap;
         this.newElements = newElements;
         this.preventDefault = false;
@@ -176,14 +176,53 @@ export class CollectionManager<T> {
         }
 
         var changeEventArgs = new CollectionChangeEventArgs<T>(indexMap, newElements);
-        
+        this.internalTryToChangeCollection(changeEventArgs, newElements);
+
+        return changeEventArgs;
+    }
+
+    /**
+     * Removes elements of the collection.
+     * @param indexes Indexes of the collection to be removed.
+     */
+    protected internalRemoveElements(indexes : number[]) : CollectionChangeEventArgs<T> {
+        //Sort indexes.
+        indexes = indexes.sort(function(number1, number2) {
+            return number1 - number2;
+        });
+
+        var indexMap : {[oldIndex : number] : number} = {};
+        var newElements : T[] = new Array();
+        var counter = 0;
+        for (var i = 0; i < this.collection.length; ++i) {
+            if (indexes[counter] == i)
+                ++counter;
+            else {
+                newElements[i - counter] = this.collection[i];
+                indexMap[i] = i - counter;
+            }
+        }
+
+        var changeEventArgs = new CollectionChangeEventArgs<T>(indexMap, newElements);
+        this.internalTryToChangeCollection(changeEventArgs, newElements);
+
+        return changeEventArgs;
+    }
+
+    protected internalTryToChangeCollection(changeEventArgs : CollectionChangeEventArgs<T>, newElements : T[]) : void {
         this.eventEmitter.emit(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, changeEventArgs);
 
         if (!changeEventArgs.getPreventDefault())
             this.collection = newElements;
 
         this.eventEmitter.emit(COLLECTION_MANAGER_EVENTS.collectionAfterChange, changeEventArgs);
+    }
 
-        return changeEventArgs;
+    /**
+     * Removes elements of the collection.
+     * @param indexes Indexes of the collection to be removed.
+     */
+    public removeElements(indexes : number[]) : CollectionChangeEventArgs<T> {
+        return this.internalRemoveElements(indexes);
     }
 }

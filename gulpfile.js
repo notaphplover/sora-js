@@ -129,6 +129,7 @@ gulp.task(TASKS.TEST, gulp.series(TASKS.COMPILE_TYPESCRIPT_TEST, function (cb) {
         globalSetup: __dirname + '/test/tmp/test/jest-global-setup',
         globalTeardown: __dirname + '/test/tmp/test/jest-global-teardown',
         moduleFileExtensions: ['js', 'jsx', 'json', 'ts', 'tsx'],
+        runInBand: true,
         testRegex: PATHS.TEST_REGEX,
         scriptPreprocessor: './node_modules/babel-jest',
         unmockedModulePathPatterns: [

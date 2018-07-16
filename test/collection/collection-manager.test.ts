@@ -51,7 +51,7 @@ describe('Collection Manager Tests', () => {
             expect(actual[i]).toBe(expected[i]);
     });
 
-    it('mustBeAbleToPreventDefaultAction', () => {
+    it('mustBeAbleToPreventDefaultActionWhenAddingElements', () => {
         var collection : number[] = [2, 5, 7];
         var eventEmitter = new EventEmitter();
 
@@ -76,6 +76,76 @@ describe('Collection Manager Tests', () => {
             1: 10,
             3: 8,
         });
+
+        expect(beforeIsEmitted && afterIsEmitted).toBe(true);
+
+        var actual = collectionManager.getCollection();
+
+        expect(actual.length).toBe(expected.length);
+
+        for (var i = 0; i < expected.length; ++i) 
+            expect(actual[i]).toBe(expected[i]);
+    });
+
+    it('mustBeAbleToPreventDefaultActionWhenRemovingElements', () => {
+        var collection : number[] = [2, 10, 5, 8, 7];
+        var eventEmitter = new EventEmitter();
+
+        var beforeIsEmitted = false;
+        var afterIsEmitted = false;
+
+        var indexesToBeRemoved = [1, 3];
+        var expected = [2, 10, 5, 8, 7];
+        
+        var collectionManager = new CollectionManager<number>(collection, eventEmitter);
+
+        eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, function(eventArgs : CollectionChangeEventArgs<number>) {
+            eventArgs.setPreventDefault();
+            beforeIsEmitted = true;
+        });
+
+        eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionAfterChange, function(eventArgs : CollectionChangeEventArgs<number>) {
+            expect(eventArgs.getPreventDefault()).toBe(true);
+            afterIsEmitted = true;
+        });
+
+        collectionManager.removeElements(indexesToBeRemoved);
+
+        expect(beforeIsEmitted && afterIsEmitted).toBe(true);
+
+        var actual = collectionManager.getCollection();
+
+        expect(actual.length).toBe(expected.length);
+
+        for (var i = 0; i < expected.length; ++i) 
+            expect(actual[i]).toBe(expected[i]);
+    });
+
+    it('mustBeAbleToRemoveElements', () => {
+        var collection : number[] = [2, 10, 5, 8, 7];
+        var eventEmitter = new EventEmitter();
+
+        var beforeIsEmitted = false;
+        var afterIsEmitted = false;
+
+        var indexesToBeRemoved = [1, 3];
+        var expected = [2, 5, 7];
+        
+        var collectionManager = new CollectionManager<number>(collection, eventEmitter);
+
+        eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, function(eventArgs : CollectionChangeEventArgs<number>) {
+            var indexMap = eventArgs.getIndexMap();
+            for(var i = 0; i < indexesToBeRemoved.length; ++i)
+                expect(indexMap[indexesToBeRemoved[i]]).toBeUndefined();
+
+            beforeIsEmitted = true;
+        });
+
+        eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionAfterChange, function(eventArgs : CollectionChangeEventArgs<number>) {
+            afterIsEmitted = true;
+        });
+
+        collectionManager.removeElements(indexesToBeRemoved);
 
         expect(beforeIsEmitted && afterIsEmitted).toBe(true);
 
