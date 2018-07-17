@@ -1,7 +1,12 @@
 import { CarouselBase } from './carousel-base'
 import { SoraAnimation } from './animation/carousel-animation'
 import { EventEmitter } from 'events';
-import { CollectionManager, COLLECTION_MANAGER_EVENTS, CollectionChangeEventArgs } from '../collection/collection-manager';
+import { 
+    CancelableCollectionChangeEventArgs,
+    CollectionChangeEventArgs,
+    CollectionManager,
+    COLLECTION_MANAGER_EVENTS,
+} from '../collection/collection-manager';
 
 export namespace CarouselBasic {
 
@@ -216,6 +221,8 @@ export namespace CarouselBasic {
             };
 
             this.eventEmitter.emit(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, eventArgs);
+            this.activeIndex = activeIndex;
+
             this.resetCarouselStructure(activeIndex);
         }
 
@@ -290,7 +297,7 @@ export namespace CarouselBasic {
 
             var that = this;
 
-            var onBeforeChange = function(eventArgs : CollectionChangeEventArgs<HTMLElement>) {
+            var onBeforeChange = function(eventArgs : CancelableCollectionChangeEventArgs<HTMLElement>) {
                 var indexMap = eventArgs.getIndexMap();
                 if (indexMap[that.activeIndex] == null || indexMap[newActiveIndex] == null)
                     eventArgs.setPreventDefault();
@@ -330,15 +337,24 @@ export namespace CarouselBasic {
                 });
             });
 
+            var animationCanceled = false;
+
+            this.eventEmitter.on(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, function() {
+                animationCanceled = true;
+                that.currentAnimation = null;
+            });
+
             var soraHandlerStatus : Promise<void> = new Promise<void>(function(resolve, reject) {
                 Promise.all([
                     enterAnimationStatus.elementAnimationStatus,
                     hideLeaveSlideAfterAnimationEnds,
                 ]).then(function(slidesAnimationStatus : ISingleSlideCarouselAnimateElementOptions[]) {
-                    oldActiveElement.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-                    newActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-                    that.activeIndex = newActiveIndex;
-                    that.currentAnimation = null;
+                    if (!animationCanceled) {
+                        oldActiveElement.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                        newActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                        that.activeIndex = newActiveIndex;
+                        that.currentAnimation = null;
+                    }
 
                     that.eventEmitter.removeListener(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, onBeforeChange);
                     that.eventEmitter.removeListener(COLLECTION_MANAGER_EVENTS.collectionAfterChange, onAfterChange);

@@ -96,6 +96,11 @@ describe('SingleSlideCarousel Tests', () => {
                 return ex.message;
             }
         });
+
+        await expect(evaluationResult).resolves.toBe(true);
+
+        //await page.goto('about:blank');
+        await page.close();
     });
 
     it('mustBeAbleToGoToSlides', async () => {
