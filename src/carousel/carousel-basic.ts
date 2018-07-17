@@ -319,6 +319,14 @@ export namespace CarouselBasic {
             newActiveElement.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
 
             //Animate!
+
+            var animationCanceled = false;
+
+            var cancelAnimationHandler = function() {
+                animationCanceled = true;
+                that.currentAnimation = null;
+            };
+
             var enterAnimationStatus : ISingleSlideCarouselSlideAnimationStatus = 
                 this.handleAnimationOverSlide(newActiveElement, options.enterAnimation);
                 
@@ -330,19 +338,15 @@ export namespace CarouselBasic {
             
             var hideLeaveSlideAfterAnimationEnds = new Promise<ISingleSlideCarouselAnimateElementOptions>(function(resolve, reject) {
                 leaveAnimationStatus.elementAnimationStatus.then(function(animationOptions) {
-                    oldActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
+                    if (!animationCanceled)
+                        oldActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
                     resolve(animationOptions);
                 }).catch(function(err) {
                     reject(err);
                 });
             });
 
-            var animationCanceled = false;
-
-            this.eventEmitter.on(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, function() {
-                animationCanceled = true;
-                that.currentAnimation = null;
-            });
+            this.eventEmitter.on(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, cancelAnimationHandler);
 
             var soraHandlerStatus : Promise<void> = new Promise<void>(function(resolve, reject) {
                 Promise.all([
@@ -358,6 +362,7 @@ export namespace CarouselBasic {
 
                     that.eventEmitter.removeListener(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, onBeforeChange);
                     that.eventEmitter.removeListener(COLLECTION_MANAGER_EVENTS.collectionAfterChange, onAfterChange);
+                    that.eventEmitter.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, cancelAnimationHandler);
 
                     resolve();
                 }).catch(function(err) {
@@ -471,6 +476,7 @@ export namespace CarouselBasic {
                         element.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
                         that.unregisterAnimationListener(element, animationFunctions[animationFunctions.length - 1]);
                         currentAnimationIndex = null;
+                        that.eventEmitter.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onAnimationCancel);
 
                         resolve({
                             element: element,

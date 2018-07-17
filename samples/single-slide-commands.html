@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <title>Single slide carousel</title>
+
+        <!-- sora.js has no dependencies, but with these ones we can achieve to build a sample clean and easy to understand -->
+
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css">
+
+        <!-- Font Awesome 4.7 -->
+        <link rel="stylesheet" href="node_modules/font-awesome/css/font-awesome.css">
+
+        <!-- Sora CSS -->
+        <link rel="stylesheet" href="../dist/css/sora.css">
+
+        <style>
+            .sample-bnt-container {
+                background-color: #ddd;
+                box-shadow: #aaa 0px 5px;
+                border-radius: 10px;
+                margin: 10px 0;
+                padding: 10px;
+            }
+        </style>
+
+        <!-- JQuery -->
+        <script src="node_modules/jquery/dist/jquery.js"></script>
+        <!-- Popper JS -->
+        <script src="node_modules/popper.js/dist/umd/popper.js"></script>
+        <!-- Bootstrap JS -->
+        <script src="node_modules/bootstrap/dist/js/bootstrap.js"></script>
+
+        <!-- sora JS -->
+        <script src="../dist/js/bundle.dev.js"></script>
+
+        <!-- Sample JS -->
+        <script>
+            //1. Just create the carousel
+            $(function() {
+                //Little module with all the features.
+                var uiModule = function() {
+                    var privateScope = {};
+                    var publicScope = {};
+
+                    //UI Buttons
+                    var $btnCancelAnimation = $('.sample-cancel-animation');
+                    var $btnGoLeft = $('.sample-go-left');
+                    var $btnGoRight = $('.sample-go-right');
+                    var $selectMillis = $('.go-auto-millis');
+                    var $checkboxLoop = $('.sample-checkbox-loop');
+                    //Carousel instance
+                    var carousel = new sora.SingleSlideCarousel(document.getElementById('my-sora-carousel'), {
+                        index: 0
+                    });
+
+                    //Classes to be used to generated the animations
+                    var enterAnimations = {
+                        left: { slideStyles: [ 'sora-offset-left-in-animation' ], },
+                        right: { slideStyles: [ 'sora-offset-right-in-animation' ], },
+                    };
+
+                    var leaveAnimations = {
+                        left: { slideStyles: [ 'sora-offset-left-out-animation' ], },
+                        right: { slideStyles: [ 'sora-offset-right-out-animation' ], },
+                    };
+
+                    var goNextEnterAnimation = enterAnimations.left;
+                    var goNextLeaveAnimation = leaveAnimations.left;
+
+                    var goPreviousEnterAnimation = enterAnimations.right;
+                    var goPreviousLeaveAnimation = leaveAnimations.right;
+
+                    privateScope.disableGoBtns = function() {
+                        $btnCancelAnimation.removeAttr('disabled');
+                        $btnGoLeft.attr('disabled', 'disabled');
+                        $btnGoRight.attr('disabled', 'disabled');
+                    };
+
+                    privateScope.enableGoBtns = function() {
+                        $btnCancelAnimation.attr('disabled', 'disabled');
+                        $btnGoLeft.removeAttr('disabled');
+                        $btnGoRight.removeAttr('disabled');
+                    };
+
+                    privateScope.getSelectedMillis = function() {
+                        return $selectMillis.val();
+                    };
+
+                    var goAutoHandler = null;
+
+                    publicScope.goNext = function(enterAnimation, leaveAnimation) {
+                        return carousel.handle(sora.actions.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT, {
+                            enterAnimation: enterAnimation,
+                            leaveAnimation: leaveAnimation,
+                        });
+                    };
+
+                    publicScope.goPrevious = function(enterAnimation, leaveAnimation) {
+                        return carousel.handle(sora.actions.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_PREVIOUS, {
+                            enterAnimation: enterAnimation,
+                            leaveAnimation: leaveAnimation,
+                        });
+                    };
+
+                    publicScope.init = function() {
+                        privateScope.loadHandlers();
+                    }
+
+                    privateScope.isCheckboxLoop = function() {
+                        return $checkboxLoop.is(':checked');
+                    };
+
+                    privateScope.loadHandlers = function() {
+                        $btnGoLeft.on('click', function() {
+                            if (privateScope.isCheckboxLoop()) {
+                                if (null === goAutoHandler) {
+                                    goAutoHandler = setInterval(function() {
+                                        publicScope.goNext(goNextEnterAnimation, goNextLeaveAnimation);
+                                    }, Number(privateScope.getSelectedMillis()));
+                                    publicScope.goNext(goNextEnterAnimation, goNextLeaveAnimation);
+                                    privateScope.disableGoBtns();
+                                } else
+                                    throw new Error('It\'s not possible to request the animation. Reason: there is already an active automatic animation.');
+                            } else {
+                                var animationStatus = publicScope.goNext(goNextEnterAnimation, goNextLeaveAnimation);
+                                animationStatus.soraHandlerStatus.then(privateScope.enableGoBtns);
+                                privateScope.disableGoBtns();
+                            }
+                        });
+                        $btnGoRight.on('click', function() {
+                            if (privateScope.isCheckboxLoop()) {
+                                if (null === goAutoHandler) {
+                                    goAutoHandler = setInterval(function() {
+                                        publicScope.goPrevious(goPreviousEnterAnimation, goPreviousLeaveAnimation);
+                                    }, Number(privateScope.getSelectedMillis()));
+                                    publicScope.goPrevious(goPreviousEnterAnimation, goPreviousLeaveAnimation);
+                                    privateScope.disableGoBtns();
+                                } else
+                                    throw new Error('It\'s not possible to request the animation. Reason: there is already an active automatic animation.');
+                            } else {
+                                var animationStatus = publicScope.goPrevious(goPreviousEnterAnimation, goPreviousLeaveAnimation);
+                                animationStatus.soraHandlerStatus.then(privateScope.enableGoBtns);
+                                privateScope.disableGoBtns();
+                            }
+                        });
+
+                        $btnCancelAnimation.on('click', function() {
+                            if (goAutoHandler != null) {
+                                clearInterval(goAutoHandler);
+                                goAutoHandler = null;
+                            }
+                            carousel.forceActiveSlide(carousel.getActiveIndex());
+                            privateScope.enableGoBtns();
+                        });
+
+                        $checkboxLoop.change(function() {
+                            if (this.checked)
+                                $selectMillis.removeAttr('disabled');
+                            else
+                                $selectMillis.attr('disabled', 'disabled');
+                        });
+                    };
+
+                    return publicScope;
+                } ();
+
+                uiModule.init();
+            });
+        </script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <div class="text-center">
+                        <h1>Single slide carousel examples</h1>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div id="my-sora-carousel" class="sora-carousel">
+                        <div class="sora-wrapper">
+                            <div class="sora-slide">
+                                <img class="img-fluid w-100" src="http://placekitten.com/g/800/400" alt="Kitten 1">
+                            </div>
+                            <div class="sora-slide">
+                                <img class="img-fluid w-100" src="http://placekitten.com/g/802/401" alt="Kitten 2">
+                            </div>
+                            <div class="sora-slide">
+                                <img class="img-fluid w-100" src="http://placekitten.com/g/804/402" alt="Kitten 3">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+                    <div class="sample-bnt-container">
+                        <div class="row">
+                            <div class="col-8 col-sm-4 order-1">
+                                <div class="btn-group d-flex justify-content-start" role="group">
+                                    <button class="btn btn-primary sample-go-right">
+                                        <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                                    </button>
+                                    <button class="btn btn-primary sample-cancel-animation" disabled>
+                                        <i class="fa fa-ban" aria-hidden="true"></i>
+                                    </button>
+                                    <button class="btn btn-primary sample-go-left">
+                                        <i class="fa fa-arrow-right" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-4 order-2 order-sm-3">
+                                <div class="form-check">
+                                    <input class="form-check-input sample-checkbox-loop" type="checkbox" value="" id="checkbox-loop">
+                                    <label class="form-check-label" for="checkbox-loop">
+                                        Loop
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-4 mt-2 mt-sm-0 order-3 order-sm-2">
+                                <select class="form-control go-auto-millis" disabled>
+                                    <option value="2000" selected>2 seconds</option>
+                                    <option value="3000">3 seconds</option>
+                                    <option value="4000">4 seconds</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

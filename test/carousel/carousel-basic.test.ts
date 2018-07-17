@@ -1,6 +1,8 @@
 import { CarouselBasic } from '../../src/carousel/carousel-basic'
 import { PuppeterManagement } from '../util/puppeteer-manager'
 
+var longTimeLimit : number = 100000000;
+
 describe('SingleSlideCarousel Tests', () => {
     it('mustBeInitializable', () => {
         var divElement : HTMLElement = document.createElement('div');
@@ -66,7 +68,7 @@ describe('SingleSlideCarousel Tests', () => {
                     var animationStatus = goNext(carousel);
                     carousel.forceActiveSlide(2);
                     var secondElement = carousel.getElementsManager().getCollection()[2];
-                    var isSecondActive : boolean = 
+                    var isSecondActive : boolean =
                         !secondElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
                         && secondElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
                     Promise.all([
@@ -76,8 +78,8 @@ describe('SingleSlideCarousel Tests', () => {
                     ]).then(function(animationStatusPromisesResponses) {
                         var oldActiveElement = animationStatusPromisesResponses[1].element;
                         var newActiveElement = animationStatusPromisesResponses[0].element;
-                        
-                        var conditions : boolean = 
+
+                        var conditions : boolean =
                             newActiveElement === carousel.getElementsManager().getCollection()[1]
                             && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
                             && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
@@ -101,7 +103,7 @@ describe('SingleSlideCarousel Tests', () => {
 
         //await page.goto('about:blank');
         await page.close();
-    });
+    }, longTimeLimit);
 
     it('mustBeAbleToGoToSlides', async () => {
         var browser = await PuppeterManagement.PuppeteerManager.getInstance().getPuppeteerBrowser();
@@ -155,8 +157,8 @@ describe('SingleSlideCarousel Tests', () => {
                     ]).then(function(animationStatusPromisesResponses) {
                         var oldActiveElement = animationStatusPromisesResponses[1].element;
                         var newActiveElement = animationStatusPromisesResponses[0].element;
-                        
-                        var conditions : boolean = 
+
+                        var conditions : boolean =
                             newActiveElement === carousel.getElementsManager().getCollection()[1]
                             && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
                             && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
@@ -175,8 +177,8 @@ describe('SingleSlideCarousel Tests', () => {
                             ]).then(function(animationStatusPromisesResponses) {
                                 var oldActiveElement = animationStatusPromisesResponses[1].element;
                                 var newActiveElement = animationStatusPromisesResponses[0].element;
-                                
-                                var conditions : boolean = 
+
+                                var conditions : boolean =
                                     newActiveElement === carousel.getElementsManager().getCollection()[0]
                                     && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
                                     && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
@@ -208,7 +210,7 @@ describe('SingleSlideCarousel Tests', () => {
 
         //await page.goto('about:blank');
         await page.close();
-    }, 100000000);
+    }, longTimeLimit);
 
     it('mustBeAbleToGoToSlidesWhileAddingElements', async () => {
         var browser = await PuppeterManagement.PuppeteerManager.getInstance().getPuppeteerBrowser();
@@ -281,8 +283,8 @@ describe('SingleSlideCarousel Tests', () => {
                     ]).then(function(animationStatusPromisesResponses) {
                         var oldActiveElement = animationStatusPromisesResponses[1].element;
                         var newActiveElement = animationStatusPromisesResponses[0].element;
-                        
-                        var conditions : boolean = 
+
+                        var conditions : boolean =
                             newActiveElement === carousel.getElementsManager().getCollection()[5]
                             && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
                             && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
@@ -301,8 +303,8 @@ describe('SingleSlideCarousel Tests', () => {
                             ]).then(function(animationStatusPromisesResponses) {
                                 var oldActiveElement = animationStatusPromisesResponses[1].element;
                                 var newActiveElement = animationStatusPromisesResponses[0].element;
-                                
-                                var conditions : boolean = 
+
+                                var conditions : boolean =
                                     newActiveElement === carousel.getElementsManager().getCollection()[4]
                                     && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
                                     && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
@@ -334,7 +336,7 @@ describe('SingleSlideCarousel Tests', () => {
 
         //await page.goto('about:blank');
         await page.close();
-    }, 100000000);
+    }, longTimeLimit);
 
     it('mustBeAbleToGoToSlidesWhileRemovingAnimationElements', async () => {
         var browser = await PuppeterManagement.PuppeteerManager.getInstance().getPuppeteerBrowser();
@@ -394,8 +396,8 @@ describe('SingleSlideCarousel Tests', () => {
                     ]).then(function(animationStatusPromisesResponses) {
                         var oldActiveElement = animationStatusPromisesResponses[1].element;
                         var newActiveElement = animationStatusPromisesResponses[0].element;
-                        
-                        var conditions : boolean = 
+
+                        var conditions : boolean =
                             newActiveElement === carousel.getElementsManager().getCollection()[1]
                             && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
                             && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
@@ -414,8 +416,8 @@ describe('SingleSlideCarousel Tests', () => {
                             ]).then(function(animationStatusPromisesResponses) {
                                 var oldActiveElement = animationStatusPromisesResponses[1].element;
                                 var newActiveElement = animationStatusPromisesResponses[0].element;
-                                
-                                var conditions : boolean = 
+
+                                var conditions : boolean =
                                     newActiveElement === carousel.getElementsManager().getCollection()[0]
                                     && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
                                     && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
@@ -447,7 +449,7 @@ describe('SingleSlideCarousel Tests', () => {
 
         //await page.goto('about:blank');
         await page.close();
-    }, 100000000);
+    }, longTimeLimit);
 
     it('mustBeAbleToGoToSlidesWhileRemovingOtherElements', async () => {
         var browser = await PuppeterManagement.PuppeteerManager.getInstance().getPuppeteerBrowser();
@@ -507,8 +509,8 @@ describe('SingleSlideCarousel Tests', () => {
                     ]).then(function(animationStatusPromisesResponses) {
                         var oldActiveElement = animationStatusPromisesResponses[1].element;
                         var newActiveElement = animationStatusPromisesResponses[0].element;
-                        
-                        var conditions : boolean = 
+
+                        var conditions : boolean =
                             newActiveElement === carousel.getElementsManager().getCollection()[1]
                             && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
                             && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
@@ -527,8 +529,8 @@ describe('SingleSlideCarousel Tests', () => {
                             ]).then(function(animationStatusPromisesResponses) {
                                 var oldActiveElement = animationStatusPromisesResponses[1].element;
                                 var newActiveElement = animationStatusPromisesResponses[0].element;
-                                
-                                var conditions : boolean = 
+
+                                var conditions : boolean =
                                     newActiveElement === carousel.getElementsManager().getCollection()[0]
                                     && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
                                     && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
@@ -560,7 +562,7 @@ describe('SingleSlideCarousel Tests', () => {
 
         //await page.goto('about:blank');
         await page.close();
-    }, 100000000);
+    }, longTimeLimit);
 
     it('mustBeAbleToHandleChildrenAnimations', async () => {
         var browser = await PuppeterManagement.PuppeteerManager.getInstance().getPuppeteerBrowser();
@@ -622,8 +624,8 @@ describe('SingleSlideCarousel Tests', () => {
                     ]).then(function(animationStatusPromisesResponses) {
                         var oldActiveElement = animationStatusPromisesResponses[1].element;
                         var newActiveElement = animationStatusPromisesResponses[0].element;
-                        
-                        var conditions : boolean = 
+
+                        var conditions : boolean =
                             newActiveElement === carousel.getElementsManager().getCollection()[1]
                             && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
                             && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
@@ -642,8 +644,8 @@ describe('SingleSlideCarousel Tests', () => {
                             ]).then(function(animationStatusPromisesResponses) {
                                 var oldActiveElement = animationStatusPromisesResponses[1].element;
                                 var newActiveElement = animationStatusPromisesResponses[0].element;
-                                
-                                var conditions : boolean = 
+
+                                var conditions : boolean =
                                     newActiveElement === carousel.getElementsManager().getCollection()[0]
                                     && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
                                     && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
@@ -675,7 +677,7 @@ describe('SingleSlideCarousel Tests', () => {
 
         //await page.goto('about:blank');
         await page.close();
-    }, 100000000);
+    }, longTimeLimit);
 
     it('mustBeAbleToRunComplexAnimations', async () => {
         var browser = await PuppeterManagement.PuppeteerManager.getInstance().getPuppeteerBrowser();
@@ -731,8 +733,8 @@ describe('SingleSlideCarousel Tests', () => {
                     ]).then(function(animationStatusPromisesResponses) {
                         var oldActiveElement = animationStatusPromisesResponses[1].element;
                         var newActiveElement = animationStatusPromisesResponses[0].element;
-                        
-                        var conditions : boolean = 
+
+                        var conditions : boolean =
                             newActiveElement === carousel.getElementsManager().getCollection()[1]
                             && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
                             && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
@@ -751,8 +753,8 @@ describe('SingleSlideCarousel Tests', () => {
                             ]).then(function(animationStatusPromisesResponses) {
                                 var oldActiveElement = animationStatusPromisesResponses[1].element;
                                 var newActiveElement = animationStatusPromisesResponses[0].element;
-                                
-                                var conditions : boolean = 
+
+                                var conditions : boolean =
                                     newActiveElement === carousel.getElementsManager().getCollection()[0]
                                     && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
                                     && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
@@ -784,5 +786,5 @@ describe('SingleSlideCarousel Tests', () => {
 
         //await page.goto('about:blank');
         await page.close();
-    }, 100000000);
+    }, longTimeLimit);
 });

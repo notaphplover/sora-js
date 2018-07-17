@@ -1,13 +1,15 @@
-.sora-wrapper {
-  position: relative; }
-  .sora-wrapper .sora-slide {
-    position: absolute;
-    top: 0;
-    width: 100%; }
-    .sora-wrapper .sora-slide.sora-slide-active {
-      position: relative; }
-    .sora-wrapper .sora-slide.sora-hidden {
-      display: none !important; }
+.sora-carousel {
+  overflow: hidden; }
+  .sora-carousel .sora-wrapper {
+    position: relative; }
+    .sora-carousel .sora-wrapper .sora-slide {
+      position: absolute;
+      top: 0;
+      width: 100%; }
+      .sora-carousel .sora-wrapper .sora-slide.sora-slide-active {
+        position: relative; }
+      .sora-carousel .sora-wrapper .sora-slide.sora-hidden {
+        display: none !important; }
 
 @keyframes sora-fade-in {
   from {
@@ -21,6 +23,30 @@
   to {
     opacity: 0; } }
 
+@keyframes sora-offset-left-in {
+  from {
+    transform: translateX(100%); }
+  to {
+    transform: translateX(0); } }
+
+@keyframes sora-offset-left-out {
+  from {
+    transform: translateX(0); }
+  to {
+    transform: translateX(-100%); } }
+
+@keyframes sora-offset-right-in {
+  from {
+    transform: translateX(-100%); }
+  to {
+    transform: translateX(0); } }
+
+@keyframes sora-offset-right-out {
+  from {
+    transform: translateX(0); }
+  to {
+    transform: translateX(100%); } }
+
 .sora-fade-in-animation {
   animation-duration: 1000ms;
   animation-name: sora-fade-in;
@@ -31,4 +57,28 @@
   animation-duration: 1000ms;
   animation-name: sora-fade-out;
   animation-timing-function: ease-out;
+  animation-fill-mode: both; }
+
+.sora-offset-left-in-animation {
+  animation-duration: 1000ms;
+  animation-name: sora-offset-left-in;
+  animation-timing-function: ease-in;
+  animation-fill-mode: both; }
+
+.sora-offset-left-out-animation {
+  animation-duration: 1000ms;
+  animation-name: sora-offset-left-out;
+  animation-timing-function: ease-in;
+  animation-fill-mode: both; }
+
+.sora-offset-right-in-animation {
+  animation-duration: 1000ms;
+  animation-name: sora-offset-right-in;
+  animation-timing-function: ease-in;
+  animation-fill-mode: both; }
+
+.sora-offset-right-out-animation {
+  animation-duration: 1000ms;
+  animation-name: sora-offset-right-out;
+  animation-timing-function: ease-in;
   animation-fill-mode: both; }

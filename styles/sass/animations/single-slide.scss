@@ -15,11 +15,47 @@
     }
 }
 
+@keyframes sora-offset-left-in {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+@keyframes sora-offset-left-out {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-100%);
+    }
+}
+
+@keyframes sora-offset-right-in {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+@keyframes sora-offset-right-out {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(100%);
+    }
+}
+
 .sora-fade-in-animation {
     @include animation-call(
         null,
         null,
-        ('1000ms'),
+        ($single-slide-animation-duration),
         null,
         ('sora-fade-in'),
         null,
@@ -32,11 +68,63 @@
     @include animation-call(
         null,
         null,
-        ('1000ms'),
+        ($single-slide-animation-duration),
         null,
         ('sora-fade-out'),
         null,
         'ease-out',
+        ('both')
+    );
+}
+
+.sora-offset-left-in-animation {
+    @include animation-call(
+        null,
+        null,
+        ($single-slide-animation-duration),
+        null,
+        ('sora-offset-left-in'),
+        null,
+        'ease-in',
+        ('both')
+    );
+}
+
+.sora-offset-left-out-animation {
+    @include animation-call(
+        null,
+        null,
+        ($single-slide-animation-duration),
+        null,
+        ('sora-offset-left-out'),
+        null,
+        'ease-in',
+        ('both')
+    );
+}
+
+.sora-offset-right-in-animation {
+    @include animation-call(
+        null,
+        null,
+        ($single-slide-animation-duration),
+        null,
+        ('sora-offset-right-in'),
+        null,
+        'ease-in',
+        ('both')
+    );
+}
+
+.sora-offset-right-out-animation {
+    @include animation-call(
+        null,
+        null,
+        ($single-slide-animation-duration),
+        null,
+        ('sora-offset-right-out'),
+        null,
+        'ease-in',
         ('both')
     );
 }

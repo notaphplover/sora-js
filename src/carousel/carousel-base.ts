@@ -1,7 +1,12 @@
-import { SoraAnimation }  from './animation/carousel-animation';
-
 export namespace CarouselBase {
     
+    /**
+     * Carousel classes used for multiple purposes.
+     */
+    export const CAROUSEL_STYLES = {
+        CAROUSEL: 'sora-carousel',
+    };
+
     /**
      * Represents a generic carousel.
      * 

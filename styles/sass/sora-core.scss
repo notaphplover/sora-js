@@ -1,17 +1,21 @@
-.sora-wrapper {
-    position: relative;
+.sora-carousel {
+    overflow: hidden;
 
-    .sora-slide {
-        position: absolute;
-        top: 0;
-        width: 100%;
-
-        &.sora-slide-active {
-            position: relative;
-        }
-
-        &.sora-hidden {
-            display: none !important;
+    .sora-wrapper {
+        position: relative;
+    
+        .sora-slide {
+            position: absolute;
+            top: 0;
+            width: 100%;
+    
+            &.sora-slide-active {
+                position: relative;
+            }
+    
+            &.sora-hidden {
+                display: none !important;
+            }
         }
     }
 }
