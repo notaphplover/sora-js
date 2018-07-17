@@ -25,10 +25,10 @@ export class CollectionChangeEventArgs<T> {
      * @param indexMap Index map, from old indexes to new indexes.
      * @param newElements New Elements array.
      */
-    public constructor(indexMap : {[oldIndex : number] : number}, newElements : T[]) {
+    public constructor(indexMap : {[oldIndex : number] : number}, newElements : T[], preventDefault : boolean) {
         this.indexMap = indexMap;
         this.newElements = newElements;
-        this.preventDefault = false;
+        this.preventDefault = preventDefault;
     }
 
     /**
@@ -52,6 +52,18 @@ export class CollectionChangeEventArgs<T> {
      */
     public getPreventDefault() : boolean {
         return this.preventDefault;
+    }
+}
+
+export class CancelableCollectionChangeEventArgs<T> extends CollectionChangeEventArgs<T> {
+
+    /**
+     * Creates a new instance.
+     * @param indexMap Index map, from old indexes to new indexes.
+     * @param newElements New Elements array.
+     */
+    public constructor(indexMap : {[oldIndex : number] : number}, newElements : T[]) {
+        super(indexMap, newElements, false);
     }
 
     /**
@@ -100,18 +112,16 @@ export class CollectionManager<T> {
     /**
      * Inserts a collection of elements at the selected indexes.
      * @param elements Collection of index-element pairs representing the elements to be inserted.
-     * @returns eventArgs. Event arguments passed to the chage events.
      */
-    public insertElements(elements : {[index : number] : T}) : CollectionChangeEventArgs<T> {
+    public insertElements(elements : {[index : number] : T}) : void {
         return this.internalInsertElements(elements);
     }
 
     /**
      * Inserts a collection of elements at the selected indexes.
      * @param elements Collection of index-element pairs representing the elements to be inserted.
-     * @returns eventArgs. Event arguments passed to the chage events.
      */
-    protected internalInsertElements(elements : {[index : number] : T}) : CollectionChangeEventArgs<T> {
+    protected internalInsertElements(elements : {[index : number] : T}) : void {
         var keys : number[] = new Array();
         for (var elemIndex in elements) {
             var numberElemIndex = Number(elemIndex);
@@ -175,17 +185,14 @@ export class CollectionManager<T> {
             }
         }
 
-        var changeEventArgs = new CollectionChangeEventArgs<T>(indexMap, newElements);
-        this.internalTryToChangeCollection(changeEventArgs, newElements);
-
-        return changeEventArgs;
+        this.internalTryToChangeCollection(indexMap, newElements);
     }
 
     /**
      * Removes elements of the collection.
      * @param indexes Indexes of the collection to be removed.
      */
-    protected internalRemoveElements(indexes : number[]) : CollectionChangeEventArgs<T> {
+    protected internalRemoveElements(indexes : number[]) : void {
         //Sort indexes.
         indexes = indexes.sort(function(number1, number2) {
             return number1 - number2;
@@ -203,23 +210,22 @@ export class CollectionManager<T> {
             }
         }
 
-        var changeEventArgs = new CollectionChangeEventArgs<T>(indexMap, newElements);
-        this.internalTryToChangeCollection(changeEventArgs, newElements);
-
-        return changeEventArgs;
+        this.internalTryToChangeCollection(indexMap, newElements);
     }
 
     /**
      * Attemps to change the collection managed by this instance.
-     * @param changeEventArgs Change event args to send on the change events.
+     * @param indexMap Map from old indexes to new indexes.
      * @param newElements New elements to manage if the change is not prevented.
      */
-    protected internalTryToChangeCollection(changeEventArgs : CollectionChangeEventArgs<T>, newElements : T[]) : void {
-        this.eventEmitter.emit(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, changeEventArgs);
+    protected internalTryToChangeCollection(indexMap : {[oldIndex : number] : number} = {}, newElements : T[]) : void {
+        var cancelableChangeEventArgs = new CancelableCollectionChangeEventArgs(indexMap, newElements);
+        this.eventEmitter.emit(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, cancelableChangeEventArgs);
 
-        if (!changeEventArgs.getPreventDefault())
+        if (!cancelableChangeEventArgs.getPreventDefault())
             this.collection = newElements;
 
+        var changeEventArgs = new CollectionChangeEventArgs(indexMap, newElements, cancelableChangeEventArgs.getPreventDefault());
         this.eventEmitter.emit(COLLECTION_MANAGER_EVENTS.collectionAfterChange, changeEventArgs);
     }
 
@@ -227,7 +233,7 @@ export class CollectionManager<T> {
      * Removes elements of the collection.
      * @param indexes Indexes of the collection to be removed.
      */
-    public removeElements(indexes : number[]) : CollectionChangeEventArgs<T> {
-        return this.internalRemoveElements(indexes);
+    public removeElements(indexes : number[]) : void {
+        this.internalRemoveElements(indexes);
     }
 }

@@ -1,4 +1,4 @@
-import { CollectionManager, COLLECTION_MANAGER_EVENTS, CollectionChangeEventArgs } from '../../src/collection/collection-manager'
+import { CollectionManager, COLLECTION_MANAGER_EVENTS, CollectionChangeEventArgs, CancelableCollectionChangeEventArgs } from '../../src/collection/collection-manager'
 import { EventEmitter } from 'events';
 
 describe('Collection Manager Tests', () => {
@@ -62,7 +62,7 @@ describe('Collection Manager Tests', () => {
         
         var collectionManager = new CollectionManager<number>(collection, eventEmitter);
 
-        eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, function(eventArgs : CollectionChangeEventArgs<number>) {
+        eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, function(eventArgs : CancelableCollectionChangeEventArgs<number>) {
             beforeIsEmitted = true;
             eventArgs.setPreventDefault();
         });
@@ -99,7 +99,7 @@ describe('Collection Manager Tests', () => {
         
         var collectionManager = new CollectionManager<number>(collection, eventEmitter);
 
-        eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, function(eventArgs : CollectionChangeEventArgs<number>) {
+        eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, function(eventArgs : CancelableCollectionChangeEventArgs<number>) {
             eventArgs.setPreventDefault();
             beforeIsEmitted = true;
         });

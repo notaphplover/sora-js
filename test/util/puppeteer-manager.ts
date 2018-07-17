@@ -37,7 +37,7 @@ export namespace PuppeterManagement {
             var that = this;
             if (this.browser == null) {
                 const browserOptions = {
-                    devtools: true
+                    //devtools: true,
                 };
                 return this.launchBrowser(browserOptions);
             } else
