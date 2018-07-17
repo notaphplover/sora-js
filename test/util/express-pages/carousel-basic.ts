@@ -22,7 +22,7 @@ function mustBeAbleToCancelAnimation(app : any) {
     htmlBuilder.loadResourcesAsUris([ExpressUtils.SORA_JS_CSS_URI], [ExpressUtils.SORA_JS_JS_URI])
     htmlBuilder.setHtmlData(
 `
-<div id="sora-carousel">
+<div id="sora-carousel" class="sora-carousel">
     <div class="sora-wrapper">
     <div class="sora-slide">
         Content1
@@ -48,7 +48,7 @@ function mustBeAbleToGoToSlidesPage(app : any) {
     htmlBuilder.loadResourcesAsUris([ExpressUtils.SORA_JS_CSS_URI], [ExpressUtils.SORA_JS_JS_URI])
     htmlBuilder.setHtmlData(
 `
-<div id="sora-carousel">
+<div id="sora-carousel" class="sora-carousel">
     <div class="sora-wrapper">
     <div class="sora-slide">
         Content1
@@ -74,7 +74,7 @@ function mustBeAbleToGoToSlidesWhileAddingElements(app : any) {
     htmlBuilder.loadResourcesAsUris([ExpressUtils.SORA_JS_CSS_URI], [ExpressUtils.SORA_JS_JS_URI])
     htmlBuilder.setHtmlData(
 `
-<div id="sora-carousel">
+<div id="sora-carousel" class="sora-carousel">
     <div class="sora-wrapper">
     <div class="sora-slide">
         Content1
@@ -100,7 +100,7 @@ function mustBeAbleToGoToSlidesWhileRemovingAnimationElements(app : any) {
     htmlBuilder.loadResourcesAsUris([ExpressUtils.SORA_JS_CSS_URI], [ExpressUtils.SORA_JS_JS_URI])
     htmlBuilder.setHtmlData(
 `
-<div id="sora-carousel">
+<div id="sora-carousel" class="sora-carousel">
     <div class="sora-wrapper">
     <div class="sora-slide">
         Content1
@@ -126,7 +126,7 @@ function mustBeAbleToGoToSlidesWhileRemovingOtherElements(app : any) {
     htmlBuilder.loadResourcesAsUris([ExpressUtils.SORA_JS_CSS_URI], [ExpressUtils.SORA_JS_JS_URI])
     htmlBuilder.setHtmlData(
 `
-<div id="sora-carousel">
+<div id="sora-carousel" class="sora-carousel">
     <div class="sora-wrapper">
     <div class="sora-slide">
         Content1
@@ -168,7 +168,7 @@ function mustBeAbleToHandleChildrenAnimations(app : any) {
 
     htmlBuilder.setHtmlData(
 `
-<div id="sora-carousel">
+<div id="sora-carousel" class="sora-carousel">
     <div class="sora-wrapper">
         <div class="sora-slide">
             <span class="slide-text">Content 1</span>
@@ -239,7 +239,7 @@ function mustBeAbleToRunComplexAnimations(app : any) {
     
     htmlBuilder.setHtmlData(
 `
-<div id="sora-carousel">
+<div id="sora-carousel" class="sora-carousel">
     <div class="sora-wrapper">
         <div class="sora-slide">
             Content1
