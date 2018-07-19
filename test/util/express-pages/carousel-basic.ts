@@ -12,6 +12,7 @@ export function handleCarouselBasicPages(app : any) {
     mustBeAbleToGoToSlidesWhileRemovingAnimationElements(app);
     mustBeAbleToGoToSlidesWhileRemovingOtherElements(app);
     mustBeAbleToHandleChildrenAnimations(app);
+    mustBeAbleToPauseAndResumeAnimation(app);
     mustBeAbleToRunComplexAnimations(app);
 }
 
@@ -24,15 +25,15 @@ function mustBeAbleToCancelAnimation(app : any) {
 `
 <div id="sora-carousel" class="sora-carousel">
     <div class="sora-wrapper">
-    <div class="sora-slide">
-        Content1
-    </div> \
-    <div class="sora-slide">
-        Content 2
-    </div> \
-    <div class="sora-slide">
-        Content 3
-    </div>
+        <div class="sora-slide">
+            Content1
+        </div> \
+        <div class="sora-slide">
+            Content 2
+        </div> \
+        <div class="sora-slide">
+            Content 3
+        </div>
     </div>
 </div>
 `
@@ -50,15 +51,15 @@ function mustBeAbleToGoToSlidesPage(app : any) {
 `
 <div id="sora-carousel" class="sora-carousel">
     <div class="sora-wrapper">
-    <div class="sora-slide">
-        Content1
-    </div> \
-    <div class="sora-slide">
-        Content 2
-    </div> \
-    <div class="sora-slide">
-        Content 3
-    </div>
+        <div class="sora-slide">
+            Content1
+        </div> \
+        <div class="sora-slide">
+            Content 2
+        </div> \
+        <div class="sora-slide">
+            Content 3
+        </div>
     </div>
 </div>
 `
@@ -76,15 +77,15 @@ function mustBeAbleToGoToSlidesWhileAddingElements(app : any) {
 `
 <div id="sora-carousel" class="sora-carousel">
     <div class="sora-wrapper">
-    <div class="sora-slide">
-        Content1
-    </div> \
-    <div class="sora-slide">
-        Content 2
-    </div> \
-    <div class="sora-slide">
-        Content 3
-    </div>
+        <div class="sora-slide">
+            Content1
+        </div> \
+        <div class="sora-slide">
+            Content 2
+        </div> \
+        <div class="sora-slide">
+            Content 3
+        </div>
     </div>
 </div>
 `
@@ -102,15 +103,15 @@ function mustBeAbleToGoToSlidesWhileRemovingAnimationElements(app : any) {
 `
 <div id="sora-carousel" class="sora-carousel">
     <div class="sora-wrapper">
-    <div class="sora-slide">
-        Content1
-    </div> \
-    <div class="sora-slide">
-        Content 2
-    </div> \
-    <div class="sora-slide">
-        Content 3
-    </div>
+        <div class="sora-slide">
+            Content1
+        </div> \
+        <div class="sora-slide">
+            Content 2
+        </div> \
+        <div class="sora-slide">
+            Content 3
+        </div>
     </div>
 </div>
 `
@@ -128,15 +129,15 @@ function mustBeAbleToGoToSlidesWhileRemovingOtherElements(app : any) {
 `
 <div id="sora-carousel" class="sora-carousel">
     <div class="sora-wrapper">
-    <div class="sora-slide">
-        Content1
-    </div> \
-    <div class="sora-slide">
-        Content 2
-    </div> \
-    <div class="sora-slide">
-        Content 3
-    </div>
+        <div class="sora-slide">
+            Content1
+        </div> \
+        <div class="sora-slide">
+            Content 2
+        </div> \
+        <div class="sora-slide">
+            Content 3
+        </div>
     </div>
 </div>
 `
@@ -189,6 +190,32 @@ function mustBeAbleToHandleChildrenAnimations(app : any) {
     });
 }
 
+function mustBeAbleToPauseAndResumeAnimation(app : any) {
+    var htmlBuilder = new HtmlUtils.HtmlBuilder();
+    htmlBuilder.loadResourcesAsUris([ExpressUtils.SORA_JS_CSS_URI], [ExpressUtils.SORA_JS_JS_URI])
+    htmlBuilder.setHtmlData(
+`
+<div id="sora-carousel" class="sora-carousel">
+    <div class="sora-wrapper">
+        <div class="sora-slide">
+            Content1
+        </div> \
+        <div class="sora-slide">
+            Content 2
+        </div> \
+        <div class="sora-slide">
+            Content 3
+        </div>
+    </div>
+</div>
+`
+    );
+
+    app.get('/test-mustBeAbleToPauseAndResumeAnimation', function(req : any, res : any){
+        res.send(htmlBuilder.buildHTML());
+    });
+}
+
 function mustBeAbleToRunComplexAnimations(app : any) {
     var htmlBuilder = new HtmlUtils.HtmlBuilder();
     htmlBuilder.loadResourcesAsUris([ExpressUtils.SORA_JS_CSS_URI], [ExpressUtils.SORA_JS_JS_URI])
@@ -236,7 +263,7 @@ function mustBeAbleToRunComplexAnimations(app : any) {
     animation-fill-mode: both; }
 `
     ],[]);
-    
+
     htmlBuilder.setHtmlData(
 `
 <div id="sora-carousel" class="sora-carousel">
