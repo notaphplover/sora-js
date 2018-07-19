@@ -11,6 +11,9 @@
       .sora-carousel .sora-wrapper .sora-slide.sora-hidden {
         display: none !important; }
 
+.sora-animation-paused {
+  animation-play-state: paused !important; }
+
 @keyframes sora-fade-in {
   from {
     opacity: 0; }

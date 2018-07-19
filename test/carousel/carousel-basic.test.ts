@@ -29,11 +29,11 @@ describe('SingleSlideCarousel Tests', () => {
         expect(children.length).toBe(3);
 
         expect(children[0].classList).toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-        expect(children[0].classList).not.toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
+        expect(children[0].classList).not.toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
 
         for (var i = 1; i < children.length; ++i) {
             expect(children[i].classList).not.toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-            expect(children[i].classList).toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
+            expect(children[i].classList).toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
         }
     });
 
@@ -69,7 +69,7 @@ describe('SingleSlideCarousel Tests', () => {
                     carousel.forceActiveSlide(2);
                     var secondElement = carousel.getElementsManager().getCollection()[2];
                     var isSecondActive : boolean =
-                        !secondElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                        !secondElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                         && secondElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
                     Promise.all([
                         animationStatus.enterSlideStatus.elementAnimationStatus,
@@ -82,10 +82,10 @@ describe('SingleSlideCarousel Tests', () => {
                         var conditions : boolean =
                             newActiveElement === carousel.getElementsManager().getCollection()[1]
                             && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                            && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                            && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                             && oldActiveElement === carousel.getElementsManager().getCollection()[0]
                             && !oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                            && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                            && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                             && isSecondActive
                         ;
 
@@ -161,10 +161,10 @@ describe('SingleSlideCarousel Tests', () => {
                         var conditions : boolean =
                             newActiveElement === carousel.getElementsManager().getCollection()[1]
                             && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                            && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                            && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                             && oldActiveElement === carousel.getElementsManager().getCollection()[0]
                             && !oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                            && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                            && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                         ;
 
                         if (conditions) {
@@ -181,10 +181,10 @@ describe('SingleSlideCarousel Tests', () => {
                                 var conditions : boolean =
                                     newActiveElement === carousel.getElementsManager().getCollection()[0]
                                     && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                                    && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                                    && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                                     && oldActiveElement === carousel.getElementsManager().getCollection()[1]
                                     && !oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                                    && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                                    && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                                 ;
 
                                 resolve(
@@ -287,10 +287,10 @@ describe('SingleSlideCarousel Tests', () => {
                         var conditions : boolean =
                             newActiveElement === carousel.getElementsManager().getCollection()[5]
                             && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                            && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                            && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                             && oldActiveElement === carousel.getElementsManager().getCollection()[4]
                             && !oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                            && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                            && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                         ;
 
                         if (conditions) {
@@ -307,10 +307,10 @@ describe('SingleSlideCarousel Tests', () => {
                                 var conditions : boolean =
                                     newActiveElement === carousel.getElementsManager().getCollection()[4]
                                     && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                                    && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                                    && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                                     && oldActiveElement === carousel.getElementsManager().getCollection()[5]
                                     && !oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                                    && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                                    && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                                 ;
 
                                 resolve(
@@ -400,10 +400,10 @@ describe('SingleSlideCarousel Tests', () => {
                         var conditions : boolean =
                             newActiveElement === carousel.getElementsManager().getCollection()[1]
                             && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                            && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                            && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                             && oldActiveElement === carousel.getElementsManager().getCollection()[0]
                             && !oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                            && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                            && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                         ;
 
                         if (conditions) {
@@ -420,10 +420,10 @@ describe('SingleSlideCarousel Tests', () => {
                                 var conditions : boolean =
                                     newActiveElement === carousel.getElementsManager().getCollection()[0]
                                     && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                                    && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                                    && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                                     && oldActiveElement === carousel.getElementsManager().getCollection()[1]
                                     && !oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                                    && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                                    && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                                 ;
 
                                 resolve(
@@ -513,10 +513,10 @@ describe('SingleSlideCarousel Tests', () => {
                         var conditions : boolean =
                             newActiveElement === carousel.getElementsManager().getCollection()[1]
                             && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                            && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                            && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                             && oldActiveElement === carousel.getElementsManager().getCollection()[0]
                             && !oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                            && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                            && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                         ;
 
                         if (conditions) {
@@ -533,10 +533,10 @@ describe('SingleSlideCarousel Tests', () => {
                                 var conditions : boolean =
                                     newActiveElement === carousel.getElementsManager().getCollection()[0]
                                     && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                                    && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                                    && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                                     && oldActiveElement === carousel.getElementsManager().getCollection()[1]
                                     && !oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                                    && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                                    && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                                 ;
 
                                 resolve(
@@ -628,10 +628,10 @@ describe('SingleSlideCarousel Tests', () => {
                         var conditions : boolean =
                             newActiveElement === carousel.getElementsManager().getCollection()[1]
                             && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                            && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                            && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                             && oldActiveElement === carousel.getElementsManager().getCollection()[0]
                             && !oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                            && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                            && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                         ;
 
                         if (conditions) {
@@ -648,10 +648,10 @@ describe('SingleSlideCarousel Tests', () => {
                                 var conditions : boolean =
                                     newActiveElement === carousel.getElementsManager().getCollection()[0]
                                     && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                                    && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                                    && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                                     && oldActiveElement === carousel.getElementsManager().getCollection()[1]
                                     && !oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                                    && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                                    && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                                 ;
 
                                 resolve(
@@ -737,10 +737,10 @@ describe('SingleSlideCarousel Tests', () => {
                         var conditions : boolean =
                             newActiveElement === carousel.getElementsManager().getCollection()[1]
                             && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                            && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                            && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                             && oldActiveElement === carousel.getElementsManager().getCollection()[0]
                             && !oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                            && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                            && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                         ;
 
                         if (conditions) {
@@ -757,10 +757,10 @@ describe('SingleSlideCarousel Tests', () => {
                                 var conditions : boolean =
                                     newActiveElement === carousel.getElementsManager().getCollection()[0]
                                     && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                                    && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                                    && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                                     && oldActiveElement === carousel.getElementsManager().getCollection()[1]
                                     && !oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
-                                    && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN)
+                                    && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                                 ;
 
                                 resolve(

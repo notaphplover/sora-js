@@ -1,7 +1,8 @@
 import { CarouselBase } from './carousel-base'
 import { SoraAnimation } from './animation/carousel-animation'
+import { AnimationPlayStateValue } from './animation/animation-play-state'
 import { EventEmitter } from 'events';
-import { 
+import {
     CancelableCollectionChangeEventArgs,
     CollectionChangeEventArgs,
     CollectionManager,
@@ -27,10 +28,22 @@ export namespace CarouselBasic {
     }
 
     /**
+     * Aguments for the event emitter.
+     */
+    export interface ISingleSlideCarouselAnimationPlayStateChangeEventArgs {
+        value : AnimationPlayStateValue,
+    }
+
+    /**
      * Arguments for the event emitted.
      */
     export interface ISingleSlideCarouselCancelAnimationEventArgs {
         activeIndex : number;
+    }
+
+    export interface ISingleSlideCarouselCreateWaitPromiseOptions {
+        millis : number,
+        stopOnCancelAnimation : boolean,
     }
 
     /**
@@ -60,7 +73,7 @@ export namespace CarouselBasic {
          */
         soraHandlerStatus : Promise<void>;
     }
-    
+
     /**
      * Options for the handleGoTo method.
      */
@@ -98,7 +111,7 @@ export namespace CarouselBasic {
      */
     export interface ISingleSlideCarouselSlideChildrenAnimationOptions {
         /**
-         * Associative array. 
+         * Associative array.
          * The key of an entry is the selector that matched with the element.
          * The value of an entry is the animation status of the element.
          */
@@ -123,14 +136,16 @@ export namespace CarouselBasic {
      */
     export const SINGLE_SLIDE_CAROUSEL_EVENTS = {
         ON_CANCEL_ANIMATION: 'car.anim.cancel',
+        ON_ANIMATION_PLAY_STATE_CHANGE: 'car.anim.state.ch',
     };
 
     /**
      * Carousel classes used for multiple purposes.
      */
     export const SINGLE_SLIDE_CAROUSEL_STYLES = {
+        ANIMATION_PAUSED: 'sora-animation-paused',
         CLEAR_ANIMATION: 'sora-clear-animations',
-        HIDDEN: 'sora-hidden',
+        SLIDE_HIDDEN: 'sora-hidden',
         SLIDE: 'sora-slide',
         SLIDE_ACTIVE: 'sora-slide-active',
         WRAPPER: 'sora-wrapper',
@@ -158,7 +173,12 @@ export namespace CarouselBasic {
         /**
          * collection manager
          */
-        protected elementsManager : CollectionManager<HTMLElement>
+        protected elementsManager : CollectionManager<HTMLElement>;
+
+        /**
+         * Flag to determine if the carousel animation is paused.
+         */
+        protected paused : boolean;
 
         //#endregion
 
@@ -205,11 +225,83 @@ export namespace CarouselBasic {
                 if (i == this.activeIndex)
                     children[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
                 else
-                    children[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
+                    children[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
             }
         }
 
         //#region Public
+
+        /**
+         * Subscribes a listener to an event of the carousel.
+         * @param event Event to listen.
+         * @param listener Listener to subscribe.
+         */
+        public addListener(event : string | symbol, listener : (... args : any[]) => void) : void {
+            this.eventEmitter.addListener(event, listener);
+        }
+
+        /**
+         * Creates a promise that waits for a time. The amount of time 
+         * @param options ISingleSlideCarouselCreateWaitPromiseOptions.
+         */
+        public createWaitPromise(options : ISingleSlideCarouselCreateWaitPromiseOptions) : Promise<void> {
+            var that = this;
+            return new Promise<void>(function(resolve, reject) {
+                var lastTimeRun : number;
+                var timeToWait = options.millis;
+
+                if (that.paused) {
+                    lastTimeRun = null;
+                } else {
+                    var waitInterval = setInterval(function() {
+                        removeListeners();
+                        resolve();
+                    }, timeToWait);
+                    lastTimeRun = new Date().getTime();
+                }
+
+                var onCancelAnimation : () => void = null;
+
+                if (options.stopOnCancelAnimation) {
+                    onCancelAnimation = function() {
+                        removeListeners();
+                        resolve();
+                    };
+                    that.addListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onCancelAnimation);
+                }
+
+                var onPlayStateChange = function(args : ISingleSlideCarouselAnimationPlayStateChangeEventArgs) {
+                    if (AnimationPlayStateValue.paused == args.value) {
+                        //pause
+                        timeToWait = timeToWait - (new Date().getTime() - lastTimeRun);
+                        clearInterval(waitInterval);
+                    } else if (AnimationPlayStateValue.running == args.value) {
+                        //resume
+                        lastTimeRun = new Date().getTime();
+
+                        if (timeToWait > 0)
+                            waitInterval = setInterval(function() {
+                                that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, onPlayStateChange);
+                                if (onCancelAnimation != null)
+                                    that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onCancelAnimation);
+                                resolve();
+                            }, timeToWait);
+                        else {
+                            removeListeners();
+                            resolve();
+                        }
+                    }
+                };
+
+                var removeListeners = function() {
+                    that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, onPlayStateChange);
+                    if (onCancelAnimation != null)
+                        that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onCancelAnimation);
+                };
+
+                that.addListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, onPlayStateChange);
+            });
+        }
 
         /**
          * Forces the carousel to change its active slide. Any animation will be canceled in the process.
@@ -219,6 +311,13 @@ export namespace CarouselBasic {
             var eventArgs : ISingleSlideCarouselCancelAnimationEventArgs = {
                 activeIndex: activeIndex,
             };
+
+            /*
+             * In the initial state, the carousel is not paused. This must be true even if there are
+             * no active animations. We need to request this in order to clean children elements correctly.
+             */
+            if (this.isPaused())
+                this.resume();
 
             this.eventEmitter.emit(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, eventArgs);
             this.activeIndex = activeIndex;
@@ -259,7 +358,7 @@ export namespace CarouselBasic {
                 case SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO:
                     if (options == null || typeof options.index !== 'number')
                         throw new Error('Invalid options for \'' + SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO + '\'.');
-                    
+
                     return this.handleGoTo(options as ISingleSlideCarouselGotoOptions);
                 case SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT:
                     options.index = (this.activeIndex + 1) % this.elementsManager.getCollection().length;
@@ -271,8 +370,59 @@ export namespace CarouselBasic {
             }
         }
 
+        /**
+         * Determines if the carousel has an active animation, even if the animation is Paused.
+         * @returns True if the carousel has an active animation.
+         */
+        public hasActiveAnimation() : boolean {
+            return this.currentAnimation != null
+        }
+
+        /**
+         * Returns true if the carousel animation is paused.
+         * @returns True if the carousel is paused and false in any other case.
+         */
+        public isPaused() {
+            return this.paused;
+        }
+
+        /**
+         * Pauses the animations currently handled by the carousel.
+         */
+        public pause() : void {
+            if (!this.paused) {
+                this.eventEmitter.emit(
+                    SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE,
+                    { value : AnimationPlayStateValue.paused, }
+                );
+                this.paused = true;
+            }
+        }
+
+        /**
+         * Unsubscribes a listener to an event of the carousel.
+         * @param event Event associated.
+         * @param listener Listener to unsubscribe.
+         */
+        public removeListener(event : string | symbol, listener : (... args : any[]) => void) : void {
+            this.eventEmitter.removeListener(event, listener);
+        }
+
+        /**
+         * Resumes the animations currently handled by the carousel.
+         */
+        public resume() : void {
+            if (this.paused) {
+                this.eventEmitter.emit(
+                    SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE,
+                    { value: AnimationPlayStateValue.running, }
+                );
+                this.paused = false;
+            }
+        }
+
         //#endregion
-        
+
         //#region Private
 
         /**
@@ -285,7 +435,7 @@ export namespace CarouselBasic {
 
             if (options.index == this.activeIndex)
                 throw new Error('Invalid index. It\'s not allowed to go to the current active slide');
-            
+
             if (null == this.currentAnimation)
                 this.currentAnimation = options;
             else {
@@ -311,12 +461,12 @@ export namespace CarouselBasic {
                 }
             };
 
-            this.eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, onBeforeChange);
-            this.eventEmitter.on(COLLECTION_MANAGER_EVENTS.collectionAfterChange, onAfterChange);
+            this.addListener(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, onBeforeChange);
+            this.addListener(COLLECTION_MANAGER_EVENTS.collectionAfterChange, onAfterChange);
 
             var newActiveElement = this.elementsManager.getCollection()[newActiveIndex];
 
-            newActiveElement.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
+            newActiveElement.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
 
             //Animate!
 
@@ -327,26 +477,26 @@ export namespace CarouselBasic {
                 that.currentAnimation = null;
             };
 
-            var enterAnimationStatus : ISingleSlideCarouselSlideAnimationStatus = 
+            var enterAnimationStatus : ISingleSlideCarouselSlideAnimationStatus =
                 this.handleAnimationOverSlide(newActiveElement, options.enterAnimation);
-                
-            var leaveAnimationStatus : ISingleSlideCarouselSlideAnimationStatus = 
+
+            var leaveAnimationStatus : ISingleSlideCarouselSlideAnimationStatus =
                 this.handleAnimationOverSlide(
-                    oldActiveElement, 
+                    oldActiveElement,
                     options.leaveAnimation
                 );
-            
+
             var hideLeaveSlideAfterAnimationEnds = new Promise<ISingleSlideCarouselAnimateElementOptions>(function(resolve, reject) {
                 leaveAnimationStatus.elementAnimationStatus.then(function(animationOptions) {
                     if (!animationCanceled)
-                        oldActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
+                        oldActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
                     resolve(animationOptions);
                 }).catch(function(err) {
                     reject(err);
                 });
             });
 
-            this.eventEmitter.on(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, cancelAnimationHandler);
+            this.addListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, cancelAnimationHandler);
 
             var soraHandlerStatus : Promise<void> = new Promise<void>(function(resolve, reject) {
                 Promise.all([
@@ -360,9 +510,9 @@ export namespace CarouselBasic {
                         that.currentAnimation = null;
                     }
 
-                    that.eventEmitter.removeListener(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, onBeforeChange);
-                    that.eventEmitter.removeListener(COLLECTION_MANAGER_EVENTS.collectionAfterChange, onAfterChange);
-                    that.eventEmitter.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, cancelAnimationHandler);
+                    that.removeListener(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, onBeforeChange);
+                    that.removeListener(COLLECTION_MANAGER_EVENTS.collectionAfterChange, onAfterChange);
+                    that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, cancelAnimationHandler);
 
                     resolve();
                 }).catch(function(err) {
@@ -393,11 +543,11 @@ export namespace CarouselBasic {
                         childrenStatus[animationObject.selector] = new Array();
 
                     var childrenElements = element.querySelectorAll(animationObject.selector);
-                    for (var j = 0; j < childrenElements.length; ++j) 
+                    for (var j = 0; j < childrenElements.length; ++j)
                         childrenStatus[animationObject.selector].push(
                             this.handleAnimationOverElement(
                                 {
-                                    element: childrenElements[j] as HTMLElement, 
+                                    element: childrenElements[j] as HTMLElement,
                                     styles: animationObject.styles,
                                 }
                             )
@@ -410,7 +560,7 @@ export namespace CarouselBasic {
             return {
                 elementAnimationStatus: that.handleAnimationOverElement(
                     {
-                        element: element, 
+                        element: element,
                         styles: animation.slideStyles,
                     }
                 ),
@@ -428,7 +578,7 @@ export namespace CarouselBasic {
             var styles : string[] = elementAnimation.styles;
 
             if (styles) {
-                if (styles.length < 1) 
+                if (styles.length < 1)
                     throw new Error('It\'s required to have at least one class to generate an animation.');
             } else
                 throw new Error('It\'s required to have an array of styles to generate an animation.');
@@ -440,14 +590,15 @@ export namespace CarouselBasic {
                     var currentAnimationIndex : number = null;
                     var onAnimationCancel = function(args : ISingleSlideCarouselCancelAnimationEventArgs) {
                         element.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
-                        
+
                         if (currentAnimationIndex != null)
                             element.classList.remove(styles[currentAnimationIndex]);
 
                         that.unregisterAnimationListener(element, animationFunctions[currentAnimationIndex]);
                         element.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
 
-                        that.eventEmitter.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onAnimationCancel);
+                        that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onAnimationCancel);
+                        that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, onAnimationPlayStateChange);
 
                         resolve({
                             element: element,
@@ -455,7 +606,19 @@ export namespace CarouselBasic {
                         });
                     };
 
-                    that.eventEmitter.on(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onAnimationCancel);
+                    that.addListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onAnimationCancel);
+
+                    var onAnimationPlayStateChange = function(args : ISingleSlideCarouselAnimationPlayStateChangeEventArgs) {
+                        if (AnimationPlayStateValue.paused == args.value) {
+                            if (!element.classList.contains(SINGLE_SLIDE_CAROUSEL_STYLES.ANIMATION_PAUSED))
+                                element.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.ANIMATION_PAUSED);
+                        } else if (AnimationPlayStateValue.running == args.value) {
+                            if (element.classList.contains(SINGLE_SLIDE_CAROUSEL_STYLES.ANIMATION_PAUSED))
+                                element.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.ANIMATION_PAUSED);
+                        }
+                    };
+
+                    that.addListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, onAnimationPlayStateChange);
 
                     for (var i = 1; i < styles.length; ++i) {
                         animationFunctions.push(function(index) {
@@ -476,7 +639,8 @@ export namespace CarouselBasic {
                         element.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
                         that.unregisterAnimationListener(element, animationFunctions[animationFunctions.length - 1]);
                         currentAnimationIndex = null;
-                        that.eventEmitter.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onAnimationCancel);
+                        that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onAnimationCancel);
+                        that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, onAnimationPlayStateChange);
 
                         resolve({
                             element: element,
@@ -533,7 +697,7 @@ export namespace CarouselBasic {
                 if (activeIndex === i)
                     collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
                 else
-                    collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.HIDDEN);
+                    collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
             }
         }
 

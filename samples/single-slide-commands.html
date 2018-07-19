@@ -46,6 +46,7 @@
                     var publicScope = {};
 
                     //UI Buttons
+                    var $btnAnimationPlayStateToggle = $('.sample-state-togle-animation');
                     var $btnCancelAnimation = $('.sample-cancel-animation');
                     var $btnGoLeft = $('.sample-go-left');
                     var $btnGoRight = $('.sample-go-right');
@@ -54,6 +55,12 @@
                     //Carousel instance
                     var carousel = new sora.SingleSlideCarousel(document.getElementById('my-sora-carousel'), {
                         index: 0
+                    });
+
+                    var animationCancelled = false;
+
+                    carousel.addListener(sora.events.SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, function() {
+                        animationCancelled = true;
                     });
 
                     //Classes to be used to generated the animations
@@ -74,12 +81,14 @@
                     var goPreviousLeaveAnimation = leaveAnimations.right;
 
                     privateScope.disableGoBtns = function() {
+                        $btnAnimationPlayStateToggle.removeAttr('disabled');
                         $btnCancelAnimation.removeAttr('disabled');
                         $btnGoLeft.attr('disabled', 'disabled');
                         $btnGoRight.attr('disabled', 'disabled');
                     };
 
                     privateScope.enableGoBtns = function() {
+                        $btnAnimationPlayStateToggle.attr('disabled', 'disabled');
                         $btnCancelAnimation.attr('disabled', 'disabled');
                         $btnGoLeft.removeAttr('disabled');
                         $btnGoRight.removeAttr('disabled');
@@ -88,8 +97,6 @@
                     privateScope.getSelectedMillis = function() {
                         return $selectMillis.val();
                     };
-
-                    var goAutoHandler = null;
 
                     publicScope.goNext = function(enterAnimation, leaveAnimation) {
                         return carousel.handle(sora.actions.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT, {
@@ -114,45 +121,73 @@
                     };
 
                     privateScope.loadHandlers = function() {
-                        $btnGoLeft.on('click', function() {
-                            if (privateScope.isCheckboxLoop()) {
-                                if (null === goAutoHandler) {
-                                    goAutoHandler = setInterval(function() {
-                                        publicScope.goNext(goNextEnterAnimation, goNextLeaveAnimation);
-                                    }, Number(privateScope.getSelectedMillis()));
-                                    publicScope.goNext(goNextEnterAnimation, goNextLeaveAnimation);
-                                    privateScope.disableGoBtns();
-                                } else
-                                    throw new Error('It\'s not possible to request the animation. Reason: there is already an active automatic animation.');
-                            } else {
-                                var animationStatus = publicScope.goNext(goNextEnterAnimation, goNextLeaveAnimation);
-                                animationStatus.soraHandlerStatus.then(privateScope.enableGoBtns);
-                                privateScope.disableGoBtns();
-                            }
+                        $btnAnimationPlayStateToggle.on('click', function() {
+                            if (carousel.isPaused())
+                                carousel.resume();
+                            else 
+                                carousel.pause();
+                            
+                            privateScope.setTogleIcons();
                         });
-                        $btnGoRight.on('click', function() {
+                        $btnGoLeft.on('click', function() {
+                            if (carousel.hasActiveAnimation()) 
+                                throw new Error('It\'s not possible to request the animation. Reason: there is already an active automatic animation.');
+
                             if (privateScope.isCheckboxLoop()) {
-                                if (null === goAutoHandler) {
-                                    goAutoHandler = setInterval(function() {
-                                        publicScope.goPrevious(goPreviousEnterAnimation, goPreviousLeaveAnimation);
-                                    }, Number(privateScope.getSelectedMillis()));
-                                    publicScope.goPrevious(goPreviousEnterAnimation, goPreviousLeaveAnimation);
-                                    privateScope.disableGoBtns();
-                                } else
-                                    throw new Error('It\'s not possible to request the animation. Reason: there is already an active automatic animation.');
+                                var oneRound = function() {
+                                    carousel.createWaitPromise({
+                                        millis: Number(privateScope.getSelectedMillis()),
+                                        stopOnCancelAnimation: true,
+                                    }).then(function() {
+                                        if (!animationCancelled) {
+                                            publicScope.goPrevious(goPreviousEnterAnimation, goPreviousLeaveAnimation)
+                                            oneRound();
+                                        } else {
+                                            animationCancelled = false;
+                                            privateScope.enableGoBtns();
+                                        }
+                                    });
+                                };
+                                publicScope.goPrevious(goPreviousEnterAnimation, goPreviousLeaveAnimation);
+                                oneRound();
+                                privateScope.disableGoBtns();
                             } else {
                                 var animationStatus = publicScope.goPrevious(goPreviousEnterAnimation, goPreviousLeaveAnimation);
                                 animationStatus.soraHandlerStatus.then(privateScope.enableGoBtns);
                                 privateScope.disableGoBtns();
                             }
                         });
+                        $btnGoRight.on('click', function() {
+                            if (carousel.hasActiveAnimation()) 
+                                throw new Error('It\'s not possible to request the animation. Reason: there is already an active automatic animation.');
 
-                        $btnCancelAnimation.on('click', function() {
-                            if (goAutoHandler != null) {
-                                clearInterval(goAutoHandler);
-                                goAutoHandler = null;
+                            if (privateScope.isCheckboxLoop()) {
+                                var oneRound = function() {
+                                    carousel.createWaitPromise({
+                                        millis: Number(privateScope.getSelectedMillis()),
+                                        stopOnCancelAnimation: true,
+                                    }).then(function() {
+                                        if (!animationCancelled) {
+                                            publicScope.goNext(goNextEnterAnimation, goNextLeaveAnimation);
+                                            oneRound();
+                                        } else {
+                                            animationCancelled = false;
+                                            privateScope.enableGoBtns();
+                                        }
+                                    });
+                                };
+                                publicScope.goNext(goNextEnterAnimation, goNextLeaveAnimation);
+                                oneRound();
+                                privateScope.disableGoBtns();
+                            } else {
+                                var animationStatus = publicScope.goNext(goNextEnterAnimation, goNextLeaveAnimation);
+                                animationStatus.soraHandlerStatus.then(privateScope.enableGoBtns);
+                                privateScope.disableGoBtns();
                             }
+                        });
+                        $btnCancelAnimation.on('click', function() {
                             carousel.forceActiveSlide(carousel.getActiveIndex());
+                            privateScope.setTogleIcons();
                             privateScope.enableGoBtns();
                         });
 
@@ -163,6 +198,16 @@
                                 $selectMillis.attr('disabled', 'disabled');
                         });
                     };
+
+                    privateScope.setTogleIcons = function() {
+                        if (carousel.isPaused()) {
+                            $('.sample-icon-pause').addClass('d-none');
+                            $('.sample-icon-resume').removeClass('d-none');
+                        } else {
+                            $('.sample-icon-pause').removeClass('d-none');
+                            $('.sample-icon-resume').addClass('d-none');
+                        }
+                    }
 
                     return publicScope;
                 } ();
@@ -203,13 +248,17 @@
                         <div class="row">
                             <div class="col-8 col-sm-4 order-1">
                                 <div class="btn-group d-flex justify-content-start" role="group">
-                                    <button class="btn btn-primary sample-go-right">
+                                    <button class="btn btn-primary sample-go-left">
                                         <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                                    </button>
+                                    <button class="btn btn-primary sample-state-togle-animation" disabled>
+                                        <i class="fa fa-pause sample-icon-pause" aria-hidden="true"></i>
+                                        <i class="fa fa-play sample-icon-resume d-none" aria-hidden="true"></i>
                                     </button>
                                     <button class="btn btn-primary sample-cancel-animation" disabled>
                                         <i class="fa fa-ban" aria-hidden="true"></i>
                                     </button>
-                                    <button class="btn btn-primary sample-go-left">
+                                    <button class="btn btn-primary sample-go-right">
                                         <i class="fa fa-arrow-right" aria-hidden="true"></i>
                                     </button>
                                 </div>

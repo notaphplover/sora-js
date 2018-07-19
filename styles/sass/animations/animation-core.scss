@@ -10,12 +10,12 @@
 }
 
 @mixin animation-call(
-    $animation-delays, 
-    $animation-directions, 
-    $animation-durations, 
-    $animation-iteration-counts, 
-    $animation-names, 
-    $animation-play-states, 
+    $animation-delays,
+    $animation-directions,
+    $animation-durations,
+    $animation-iteration-counts,
+    $animation-names,
+    $animation-play-states,
     $animation-timing-functions,
     $animation-fill-modes
 ) {
@@ -44,4 +44,8 @@
     @if $animation-fill-modes and length($animation-fill-modes) > 0 {
         @include style-concatenated('animation-fill-mode', $animation-fill-modes, $separator);
     }
+}
+
+.sora-animation-paused {
+    animation-play-state: paused !important;
 }
