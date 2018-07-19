@@ -679,6 +679,83 @@ describe('SingleSlideCarousel Tests', () => {
         await page.close();
     }, longTimeLimit);
 
+    it('mustBeAbleToPauseAndResumeAnimation', async () => {
+        var browser = await PuppeterManagement.PuppeteerManager.getInstance().getPuppeteerBrowser();
+        var page = await browser.newPage();
+
+        await page.goto('http://localhost:8080/test-mustBeAbleToPauseAndResumeAnimation');
+
+        var evaluationResult : any = page.evaluate(function () {
+            function goNext(carousel : CarouselBasic.SingleSlideCarousel) : CarouselBasic.ISingleSlideCarouselGoToAnimationStatus {
+                var goNextActionStatus = carousel.handle((window as any).sora.actions.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT, {
+                    enterAnimation: {
+                        slideStyles: [
+                            'sora-fade-in-animation',
+                        ],
+                    },
+                    leaveAnimation: {
+                        slideStyles: [
+                            'sora-fade-out-animation',
+                        ],
+                    },
+                });
+                return goNextActionStatus;
+            }
+
+            try {
+                var divElement : HTMLElement = document.getElementById('sora-carousel')
+                var carousel : CarouselBasic.SingleSlideCarousel = new (window as any).sora.SingleSlideCarousel(divElement, { index: 0 });
+
+                return new Promise<boolean>(function(resolve, reject) {
+                    var currentIndex = carousel.getActiveIndex();
+                    var animationStatus = goNext(carousel);
+                    carousel.pause();
+                    if (!carousel.isPaused() || currentIndex != carousel.getActiveIndex())
+                        resolve(false);
+
+                    new Promise<void>(function(resolveCh, reject) {
+                        setTimeout(() => {
+                            if (!carousel.isPaused() || currentIndex != carousel.getActiveIndex())
+                                resolve(false);
+                            resolveCh();
+                        }, 2000);
+                    }).then(function() {
+                        carousel.resume();
+                    });
+
+                    Promise.all([
+                        animationStatus.enterSlideStatus.elementAnimationStatus,
+                        animationStatus.leaveSlideStatus.elementAnimationStatus,
+                        animationStatus.soraHandlerStatus,
+                    ]).then(function(animationStatusPromisesResponses) {
+                        var oldActiveElement = animationStatusPromisesResponses[1].element;
+                        var newActiveElement = animationStatusPromisesResponses[0].element;
+
+                        var conditions : boolean =
+                            newActiveElement === carousel.getElementsManager().getCollection()[1]
+                            && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
+                            && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
+                            && oldActiveElement === carousel.getElementsManager().getCollection()[0]
+                            && !oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
+                            && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
+                        ;
+
+                        resolve(conditions);
+                    }).catch(function(err) {
+                        reject(err);
+                    });
+                });
+            } catch (ex) {
+                return ex.message;
+            }
+        });
+
+        await expect(evaluationResult).resolves.toBe(true);
+
+        //await page.goto('about:blank');
+        await page.close();
+    }, longTimeLimit);
+
     it('mustBeAbleToRunComplexAnimations', async () => {
         var browser = await PuppeterManagement.PuppeteerManager.getInstance().getPuppeteerBrowser();
         var page = await browser.newPage();

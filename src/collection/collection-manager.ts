@@ -14,7 +14,7 @@ export class CollectionChangeEventArgs<T> {
      * new Elements array
      */
     protected newElements : T[];
-    
+
     /**
      * Flag to prevent the default action (update the collection)
      */
@@ -102,11 +102,19 @@ export class CollectionManager<T> {
 
     /**
      * Returns the collection of elements managed.
-     * This is the real collection managed by the instance. 
+     * This is the real collection managed by the instance.
      * Only read operations should be performed directly in the collection.
      */
     public getCollection() : T[] {
         return this.collection;
+    }
+
+    /**
+     * Obtains the length of the collection.
+     * @returns Length of the collection managed.
+     */
+    public getLength() : number {
+        return this.collection.length;
     }
 
     /**
@@ -127,10 +135,10 @@ export class CollectionManager<T> {
             var numberElemIndex = Number(elemIndex);
             if (numberElemIndex < 0)
             throw new Error('The index param should be greater or equals zero.');
-        
+
             if (numberElemIndex > this.collection.length)
                 throw new Error('The index param should be less or equals the number of elements of the collection.');
-        
+
             keys.push(numberElemIndex);
         }
 
@@ -153,7 +161,7 @@ export class CollectionManager<T> {
                 newElements[i] = this.collection[i];
                 indexMap[i] = i;
             }
-            
+
             newElements[index] = element
 
             for(var i = index + 1; i < newElements.length; ++i) {
