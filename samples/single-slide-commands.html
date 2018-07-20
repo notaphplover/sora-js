@@ -50,32 +50,32 @@
 
                     //UI Buttons
                     var $btnAddSlide = $(
-`<button class="btn btn-primary sample-state-togle-animation">
-    <i class="fa fa-plus" aria-hidden="true"></i>
-    <i class="fa fa-picture-o" aria-hidden="true"></i>
-</button>`
+'<button class="btn btn-primary sample-state-togle-animation">\
+    <i class="fa fa-plus" aria-hidden="true"></i>\
+    <i class="fa fa-picture-o" aria-hidden="true"></i>\
+</button>'
                     );
 
                     var $btnAnimationPlayStateToggle = $(
-`<button class="btn btn-primary sample-state-togle-animation">
-    <i class="fa fa-pause sample-icon-pause" aria-hidden="true"></i>
-    <i class="fa fa-play sample-icon-resume d-none" aria-hidden="true"></i>
-</button>`
+'<button class="btn btn-primary sample-state-togle-animation">\
+    <i class="fa fa-pause sample-icon-pause" aria-hidden="true"></i>\
+    <i class="fa fa-play sample-icon-resume d-none" aria-hidden="true"></i>\
+</button>'
                     );
                     var $btnCancelAnimation = $(
-`<button class="btn btn-primary sample-cancel-animation">
-    <i class="fa fa-stop" aria-hidden="true"></i>
-</button>`
+'<button class="btn btn-primary sample-cancel-animation">\
+    <i class="fa fa-stop" aria-hidden="true"></i>\
+</button>'
                     );
                     var $btnGoLeft = $(
-`<button class="btn btn-primary sample-go-left">
-    <i class="fa fa-arrow-left" aria-hidden="true"></i>
-</button>`
+'<button class="btn btn-primary sample-go-left">\
+    <i class="fa fa-arrow-left" aria-hidden="true"></i>\
+</button>'
                     );
                     var $btnGoRight = $(
-`<button class="btn btn-primary sample-go-right">
-    <i class="fa fa-arrow-right" aria-hidden="true"></i>
-</button>`
+'<button class="btn btn-primary sample-go-right">\
+    <i class="fa fa-arrow-right" aria-hidden="true"></i>\
+</button>'
                     );
 
                     var $selectMillis = $('.go-auto-millis');
@@ -151,9 +151,9 @@
                         $btnAddSlide.on('click', function() {
                             var generatedSizeBase = Math.round(600 + Math.random() * 200);
                             var $newSlide = $(
-`<div class="sora-slide sora-hidden">
-    <img class="img-fluid w-100" src="http://placekitten.com/g/` + generatedSizeBase + `/` + Math.round(generatedSizeBase / 2) + `" alt="Kitten Added">
-</div>`
+'<div class="sora-slide sora-hidden">\
+    <img class="img-fluid w-100" src="http://placekitten.com/g/` + generatedSizeBase + `/` + Math.round(generatedSizeBase / 2) + `" alt="Kitten Added">\
+</div>'
                             );
                             var insertMap = {};
                             insertMap[carousel.getElementsManager().getLength()] = $newSlide[0];
