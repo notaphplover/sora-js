@@ -8,6 +8,7 @@ import {
     CollectionManager,
     COLLECTION_MANAGER_EVENTS,
 } from '../collection/collection-manager';
+import { HtmlChildrenManager } from '../collection/html-children-manager';
 
 export namespace CarouselBasic {
 
@@ -173,7 +174,7 @@ export namespace CarouselBasic {
         /**
          * collection manager
          */
-        protected elementsManager : CollectionManager<HTMLElement>;
+        protected elementsManager : HtmlChildrenManager;
 
         /**
          * Flag to determine if the carousel animation is paused.
@@ -216,9 +217,9 @@ export namespace CarouselBasic {
             this.activeIndex = options.index || 0;
             this.currentAnimation = null;
             this.eventEmitter = new EventEmitter();
-            this.elementsManager = new CollectionManager<HTMLElement>(children, this.eventEmitter);
+            this.elementsManager = new HtmlChildrenManager(children, this.eventEmitter, soraWrapper as HTMLElement);
 
-            if (this.activeIndex < 0 || this.activeIndex >= this.elementsManager.getCollection().length)
+            if (this.activeIndex < 0 || this.activeIndex >= this.elementsManager.getLength())
                 throw new Error('Invalid options.index. There is no element with index ' + options.index + '.');
 
             for (var i = 0; i < children.length; ++i) {
@@ -343,7 +344,7 @@ export namespace CarouselBasic {
          * Returns the collection manager of the instance.
          * @returns Collection manager of the slide elements.
          */
-        public getElementsManager() : CollectionManager<HTMLElement> {
+        public getElementsManager() : HtmlChildrenManager {
             return this.elementsManager;
         }
 
@@ -361,10 +362,10 @@ export namespace CarouselBasic {
 
                     return this.handleGoTo(options as ISingleSlideCarouselGotoOptions);
                 case SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT:
-                    options.index = (this.activeIndex + 1) % this.elementsManager.getCollection().length;
+                    options.index = (this.activeIndex + 1) % this.elementsManager.getLength();
                     return this.handle(SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO, options);
                 case SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_PREVIOUS:
-                    var elementsLength = this.elementsManager.getCollection().length;
+                    var elementsLength = this.elementsManager.getLength();
                     options.index = ((this.activeIndex - 1) % elementsLength + elementsLength) % elementsLength;
                     return this.handle(SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO, options);
             }
@@ -430,7 +431,7 @@ export namespace CarouselBasic {
          * @param options Options with the index and the custom animation to display.
          */
         private handleGoTo(options : ISingleSlideCarouselGotoOptions) : ISingleSlideCarouselGoToAnimationStatus {
-            if (options.index < 0 || options.index >= this.elementsManager.getCollection().length)
+            if (options.index < 0 || options.index >= this.elementsManager.getLength())
                 throw new Error('Invalid index. There is no element with index ' + options.index + '.');
 
             if (options.index == this.activeIndex)

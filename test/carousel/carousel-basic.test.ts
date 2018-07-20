@@ -313,16 +313,37 @@ describe('SingleSlideCarousel Tests', () => {
                                     && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
                                 ;
 
-                                resolve(
-                                    conditions
-                                );
+                                if (conditions) {
+                                    var animationStatus = goPrevious(carousel);
+
+                                    Promise.all([
+                                        animationStatus.enterSlideStatus.elementAnimationStatus,
+                                        animationStatus.leaveSlideStatus.elementAnimationStatus,
+                                        animationStatus.soraHandlerStatus,
+                                    ]).then(function(animationStatusPromisesResponses) {
+                                        var oldActiveElement = animationStatusPromisesResponses[1].element;
+                                        var newActiveElement = animationStatusPromisesResponses[0].element;
+
+                                        var conditions : boolean =
+                                            newActiveElement === carousel.getElementsManager().getCollection()[3]
+                                            && newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
+                                            && !newActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
+                                            && oldActiveElement === carousel.getElementsManager().getCollection()[4]
+                                            && !oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE)
+                                            && oldActiveElement.classList.contains((window as any).sora.styles.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN)
+                                        ;
+
+                                        resolve(conditions);
+                                    }).catch(function(err) {
+                                        reject(err);
+                                    })
+                                } else
+                                    resolve(false);
                             }).catch(function(err) {
                                 reject(err);
                             });
                         } else
-                            resolve(
-                                false
-                            );
+                            resolve(false);
                     }).catch(function(err) {
                         reject(err);
                     });

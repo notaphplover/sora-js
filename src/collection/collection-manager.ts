@@ -122,7 +122,7 @@ export class CollectionManager<T> {
      * @param elements Collection of index-element pairs representing the elements to be inserted.
      */
     public insertElements(elements : {[index : number] : T}) : void {
-        return this.internalInsertElements(elements);
+        this.internalInsertElements(elements);
     }
 
     /**
@@ -226,15 +226,16 @@ export class CollectionManager<T> {
      * @param indexMap Map from old indexes to new indexes.
      * @param newElements New elements to manage if the change is not prevented.
      */
-    protected internalTryToChangeCollection(indexMap : {[oldIndex : number] : number} = {}, newElements : T[]) : void {
+    protected internalTryToChangeCollection(indexMap : {[oldIndex : number] : number} = {}, newElements : T[]) : CollectionChangeEventArgs<T> {
         var cancelableChangeEventArgs = new CancelableCollectionChangeEventArgs(indexMap, newElements);
         this.eventEmitter.emit(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, cancelableChangeEventArgs);
 
         if (!cancelableChangeEventArgs.getPreventDefault())
             this.collection = newElements;
 
-        var changeEventArgs = new CollectionChangeEventArgs(indexMap, newElements, cancelableChangeEventArgs.getPreventDefault());
+        var changeEventArgs = new CollectionChangeEventArgs<T>(indexMap, newElements, cancelableChangeEventArgs.getPreventDefault());
         this.eventEmitter.emit(COLLECTION_MANAGER_EVENTS.collectionAfterChange, changeEventArgs);
+        return changeEventArgs;
     }
 
     /**
