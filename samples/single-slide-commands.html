@@ -149,10 +149,10 @@
 
                     privateScope.loadHandlers = function() {
                         $btnAddSlide.on('click', function() {
-                            var generatedSizeBase = Math.round(300 + Math.random() * 200);
+                            var generatedSizeBase = Math.round(600 + Math.random() * 200);
                             var $newSlide = $(
-`<div class="sora-slide">
-    <img class="img-fluid w-100" src="http://placekitten.com/g/` + generatedSizeBase + `/` + Math.round(generatedSizeBase / 2) + `" alt="Kitten 1" style="width: 800px; height: 400px;">
+`<div class="sora-slide sora-hidden">
+    <img class="img-fluid w-100" src="http://placekitten.com/g/` + generatedSizeBase + `/` + Math.round(generatedSizeBase / 2) + `" alt="Kitten Added">
 </div>`
                             );
                             var insertMap = {};
