@@ -266,6 +266,25 @@ export namespace CarouselBasic {
                 else
                     children[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
             }
+
+            var that = this;
+
+            //Add listeners
+            var onBeforeChange = function(eventArgs : CancelableCollectionChangeEventArgs<HTMLElement>) {
+                var indexMap = eventArgs.getIndexMap();
+                if (indexMap[that.activeIndex] == null)
+                    eventArgs.setPreventDefault();
+            };
+
+            var onAfterChange = function(eventArgs : CollectionChangeEventArgs<HTMLElement>) {
+                if (!eventArgs.getPreventDefault()) {
+                    var indexMap = eventArgs.getIndexMap();
+                    that.activeIndex = indexMap[that.activeIndex];
+                }
+            };
+
+            this.addListener(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, onBeforeChange);
+            this.addListener(COLLECTION_MANAGER_EVENTS.collectionAfterChange, onAfterChange);
         }
 
         //#region Public
@@ -492,7 +511,7 @@ export namespace CarouselBasic {
 
             var onBeforeChange = function(eventArgs : CancelableCollectionChangeEventArgs<HTMLElement>) {
                 var indexMap = eventArgs.getIndexMap();
-                if (indexMap[that.activeIndex] == null || indexMap[newActiveIndex] == null)
+                if (indexMap[newActiveIndex] == null)
                     eventArgs.setPreventDefault();
             };
 
@@ -500,7 +519,6 @@ export namespace CarouselBasic {
                 if (!eventArgs.getPreventDefault()) {
                     var indexMap = eventArgs.getIndexMap();
                     newActiveIndex = indexMap[newActiveIndex];
-                    that.activeIndex = indexMap[that.activeIndex];
                 }
             };
 
