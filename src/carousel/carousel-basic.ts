@@ -5,7 +5,6 @@ import { EventEmitter } from 'events';
 import {
     CancelableCollectionChangeEventArgs,
     CollectionChangeEventArgs,
-    CollectionManager,
     COLLECTION_MANAGER_EVENTS,
 } from '../collection/collection-manager';
 import { HtmlChildrenManager } from '../collection/html-children-manager';
@@ -29,10 +28,24 @@ export namespace CarouselBasic {
     }
 
     /**
+     * Arguments for the event emitter.
+     */
+    export interface ISingleSlideCarouselAnimationEndEventArgs {
+
+    }
+
+    /**
      * Aguments for the event emitter.
      */
     export interface ISingleSlideCarouselAnimationPlayStateChangeEventArgs {
         value : AnimationPlayStateValue,
+    }
+
+    /**
+     * Arguments for the event emitter.
+     */
+    export interface ISingleSlideCarouselAnimationStartEventArgs {
+        options : ISingleSlideCarouselGotoOptions,
     }
 
     /**
@@ -42,8 +55,19 @@ export namespace CarouselBasic {
         activeIndex : number;
     }
 
+    /**
+     * Options for creating a promise that waits for an amount of time.
+     *
+     * If the carousel is paused, the amount of time in this state will be ignored by the promise.
+     */
     export interface ISingleSlideCarouselCreateWaitPromiseOptions {
+        /**
+         * Amount of milliseconds to wait
+         */
         millis : number,
+        /**
+         * If set to true, the promise will be resolved if the animation is canceled.
+         */
         stopOnCancelAnimation : boolean,
     }
 
@@ -119,6 +143,16 @@ export namespace CarouselBasic {
         [selector: string]: Promise<ISingleSlideCarouselAnimateElementOptions>[];
     }
 
+    /**
+     * Options for the event
+     */
+    export interface ISingleSlideCarouselSlideEnterEventArgs extends ISingleSlideCarouselAnimateElementOptions { }
+
+    /**
+     * Options for the event
+     */
+    export interface ISingleSlideCarouselSlideLeaveEventArgs extends ISingleSlideCarouselAnimateElementOptions { }
+
     /* #endregion */
 
     /* #region Constants */
@@ -136,8 +170,12 @@ export namespace CarouselBasic {
      * Events directly handled by the carousel.
      */
     export const SINGLE_SLIDE_CAROUSEL_EVENTS = {
-        ON_CANCEL_ANIMATION: 'car.anim.cancel',
+        ON_ANIMATION_END: 'car.anim.out',
         ON_ANIMATION_PLAY_STATE_CHANGE: 'car.anim.state.ch',
+        ON_ANIMATION_START: 'car.anim.in',
+        ON_CANCEL_ANIMATION: 'car.anim.cancel',
+        ON_SLIDE_ENTER: 'car.sl.in',
+        ON_SLIDE_LEAVE: 'car.sl.out',
     };
 
     /**
@@ -242,7 +280,7 @@ export namespace CarouselBasic {
         }
 
         /**
-         * Creates a promise that waits for a time. The amount of time 
+         * Creates a promise that waits for a time. The amount of time
          * @param options ISingleSlideCarouselCreateWaitPromiseOptions.
          */
         public createWaitPromise(options : ISingleSlideCarouselCreateWaitPromiseOptions) : Promise<void> {
@@ -394,7 +432,7 @@ export namespace CarouselBasic {
             if (!this.paused) {
                 this.eventEmitter.emit(
                     SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE,
-                    { value : AnimationPlayStateValue.paused, }
+                    { value : AnimationPlayStateValue.paused, } as ISingleSlideCarouselAnimationPlayStateChangeEventArgs
                 );
                 this.paused = true;
             }
@@ -416,7 +454,7 @@ export namespace CarouselBasic {
             if (this.paused) {
                 this.eventEmitter.emit(
                     SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE,
-                    { value: AnimationPlayStateValue.running, }
+                    { value: AnimationPlayStateValue.running, } as ISingleSlideCarouselAnimationPlayStateChangeEventArgs
                 );
                 this.paused = false;
             }
@@ -445,6 +483,10 @@ export namespace CarouselBasic {
 
             var oldActiveElement = this.elementsManager.getCollection()[this.activeIndex];
             var newActiveIndex : number = options.index;
+
+            this.eventEmitter.emit(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_START, {
+                options : options
+            } as ISingleSlideCarouselAnimationStartEventArgs);
 
             var that = this;
 
@@ -479,13 +521,24 @@ export namespace CarouselBasic {
             };
 
             var enterAnimationStatus : ISingleSlideCarouselSlideAnimationStatus =
-                this.handleAnimationOverSlide(newActiveElement, options.enterAnimation);
+                this.handleAnimationOverSlide(
+                    newActiveElement,
+                    options.enterAnimation
+                );
 
             var leaveAnimationStatus : ISingleSlideCarouselSlideAnimationStatus =
                 this.handleAnimationOverSlide(
                     oldActiveElement,
                     options.leaveAnimation
                 );
+
+            enterAnimationStatus.elementAnimationStatus.then(function(animationOptions) {
+                that.eventEmitter.emit(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_SLIDE_ENTER, animationOptions as ISingleSlideCarouselSlideEnterEventArgs);
+            });
+
+            leaveAnimationStatus.elementAnimationStatus.then(function(animationOptions) {
+                that.eventEmitter.emit(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_SLIDE_LEAVE, animationOptions as ISingleSlideCarouselSlideLeaveEventArgs);
+            });
 
             var hideLeaveSlideAfterAnimationEnds = new Promise<ISingleSlideCarouselAnimateElementOptions>(function(resolve, reject) {
                 leaveAnimationStatus.elementAnimationStatus.then(function(animationOptions) {
@@ -514,6 +567,11 @@ export namespace CarouselBasic {
                     that.removeListener(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, onBeforeChange);
                     that.removeListener(COLLECTION_MANAGER_EVENTS.collectionAfterChange, onAfterChange);
                     that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, cancelAnimationHandler);
+
+                    that.eventEmitter.emit(
+                        SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_END,
+                        {} as ISingleSlideCarouselAnimationEndEventArgs
+                    );
 
                     resolve();
                 }).catch(function(err) {
