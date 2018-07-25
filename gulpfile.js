@@ -16,98 +16,129 @@ const BABEL_OPTIONS = {
             targets: {
                 browsers: [
                     'ie >= 11',
-                    'last 2 versions', 
-                    'safari >= 11', 
+                    'last 2 versions',
+                    'safari >= 11',
                 ],
             }
         }]
+    ],
+    plugins: [
+        'transform-runtime',
     ]
 };
 
 const TASKS = {
-    BUILD_DEV: 'build-dev',
-    BUILD_PROD: 'build-prod',
+    BUILD: 'build',
+    BUNDLE_DEV: 'bundle-dev',
+    BUNDLE_PROD: 'bundle-prod',
+    BUNDLE_TEST: 'bundle-test',
     COMPILE_TYPESCRIPT_SRC: 'compile-typescript-src',
     COMPILE_TYPESCRIPT_TEST: 'compile-typescript-test',
     COMPILE_SASS: 'compile-sass',
+    DEFAULT: 'default',
     TEST: 'jest',
     WATCH_DEV: 'watch-dev',
 };
 
-const PATHS = {
-    BROWSERIFY_ENTRY: 'dist/js/tmp/main.js',
-    BUNDLE_DEV: 'bundle.dev.js',
-    BUNDLE_PROD: 'bundle.js',
-    CSS_DESTINATION_FOLDER: 'dist/css',
-    JS_DESTINATION_FOLDER: 'dist/js',
-    SASS_ENTRY: 'styles/sass/sora.scss',
-    SASS_DOMAIN: 'styles/sass/**/*.scss',
-    TEST_COVERAGE_DOMAIN: 'test/tmp/src/**/*.js',
-    TEST_REGEX: 'test/tmp/test/.*\\.test.js',
-    TS_SRC_CONFIG_FILE: 'src.tsconfig.json',
-    TS_SRC_DOMAIN: ['src/**/*.ts'],
-    TS_SRC_TEMP_FOLDER: 'dist/js/tmp',
-    TS_TEST_CONFIG_FILE: 'test.tsconfig.json',
-    TS_TEST_TEMP_FOLDER: 'test/tmp',
+//#region OPTIONS
+
+var OPTIONS = {};
+
+OPTIONS[TASKS.BUNDLE_DEV] = {
+    BROWSERIFY_ENTRY: 'dist/js/tmp/src/main.js',
+    BUNDLE_NAME: 'bundle.dev.js',
+    DESTINATION_FOLDER: 'dist/js',
+    MODULE_NAME: 'sora',
 };
 
-const MODULE_NAME = 'sora';
+OPTIONS[TASKS.BUNDLE_PROD] = {
+    BROWSERIFY_ENTRY: OPTIONS[TASKS.BUNDLE_DEV].BROWSERIFY_ENTRY,
+    BUNDLE_NAME: 'bundle.js',
+    DESTINATION_FOLDER: OPTIONS[TASKS.BUNDLE_DEV].DESTINATION_FOLDER,
+    MODULE_NAME: OPTIONS[TASKS.BUNDLE_DEV].MODULE_NAME,
+};
 
-var tsProjectSrc = ts.createProject(PATHS.TS_SRC_CONFIG_FILE, { noResolve: true });
+OPTIONS[TASKS.BUNDLE_TEST] = {
+    BROWSERIFY_ENTRY: 'dist/js/tmp/src/test/main.test.js',
+    BUNDLE_NAME: 'bundle.test.js',
+    DESTINATION_FOLDER: OPTIONS[TASKS.BUNDLE_DEV].DESTINATION_FOLDER,
+    MODULE_NAME: 'soraTest',
+};
 
-gulp.task(TASKS.COMPILE_TYPESCRIPT_SRC, function () {
-    var tsResult = tsProjectSrc.src().pipe(sourcemaps.init()).pipe(tsProjectSrc());
-    return tsResult.js.pipe(sourcemaps.write('', { debug: false, includeContent: true, sourceRoot: '' })).pipe(gulp.dest(PATHS.TS_SRC_TEMP_FOLDER));
-});
+OPTIONS[TASKS.COMPILE_SASS] = {
+    ENTRY: 'styles/sass/sora.scss',
+    DESTINATION: 'dist/css',
+};
 
-var tsProjectTest = ts.createProject(PATHS.TS_TEST_CONFIG_FILE, { noResolve: true });
+OPTIONS[TASKS.COMPILE_TYPESCRIPT_SRC] = {
+    CONFIG_FILE: 'src.tsconfig.json',
+    TEMP_FOLDER: 'dist/js/tmp/src',
+};
 
-gulp.task(TASKS.COMPILE_TYPESCRIPT_TEST, function () {
-    var tsResult = tsProjectTest.src().pipe(sourcemaps.init()).pipe(tsProjectTest());
-    return tsResult
-        .js
-        .pipe(babel(BABEL_OPTIONS))
-        .pipe(sourcemaps.write('', { debug: false, includeContent: true, sourceRoot: '' }))
-        .pipe(gulp.dest(PATHS.TS_TEST_TEMP_FOLDER))
-    ;
-});
+//#endregion
 
-gulp.task(TASKS.BUILD_DEV, gulp.series(TASKS.COMPILE_TYPESCRIPT_SRC, function() {
+//#region BUILD
 
+function bundleDev() {
     return browserify(
-        {
-            entries: PATHS.BROWSERIFY_ENTRY,
-            debug: true,
-            standalone: MODULE_NAME,
-        })
+    {
+        entries: OPTIONS[TASKS.BUNDLE_DEV].BROWSERIFY_ENTRY,
+        debug: true,
+        standalone: OPTIONS[TASKS.BUNDLE_DEV].MODULE_NAME,
+    })
         .transform('babelify', BABEL_OPTIONS)
         .bundle()
-        .pipe(source(path.join(PATHS.JS_DESTINATION_FOLDER, PATHS.BUNDLE_DEV)))
+        .pipe(source(path.join(OPTIONS[TASKS.BUNDLE_DEV].DESTINATION_FOLDER, OPTIONS[TASKS.BUNDLE_DEV].BUNDLE_NAME)))
         .pipe(buffer())
         // Gulp Plugins Here
         .pipe(gulp.dest('./'));
-}));
+}
 
-gulp.task(TASKS.BUILD_PROD, gulp.series(TASKS.COMPILE_TYPESCRIPT_SRC, function() {
+function bundleProd() {
     process.env.NODE_ENV = 'production';
 
     return browserify(
-        {
-            entries: PATHS.BROWSERIFY_ENTRY,
-            debug: false,
-            standalone: MODULE_NAME,
-        })
+    {
+        entries: OPTIONS[TASKS.BUNDLE_PROD].BROWSERIFY_ENTRY,
+        debug: false,
+        standalone: OPTIONS[TASKS.BUNDLE_PROD].MODULE_NAME,
+    })
         .transform('babelify', BABEL_OPTIONS)
         .bundle()
-        .pipe(source(path.join(PATHS.JS_DESTINATION_FOLDER, PATHS.BUNDLE_PROD)))
+        .pipe(source(path.join(OPTIONS[TASKS.BUNDLE_PROD].DESTINATION_FOLDER, OPTIONS[TASKS.BUNDLE_PROD].BUNDLE_NAME)))
         .pipe(buffer())
         // Gulp Plugins Here
         .pipe(uglify())
         .pipe(gulp.dest('./'));
-}));
+}
+
+function bundleTest() {
+    process.env.NODE_ENV = 'production';
+
+    return browserify(
+    {
+        entries: OPTIONS[TASKS.BUNDLE_TEST].BROWSERIFY_ENTRY,
+        debug: false,
+        standalone: OPTIONS[TASKS.BUNDLE_TEST].MODULE_NAME,
+    })
+        .transform('babelify', BABEL_OPTIONS)
+        .bundle()
+        .pipe(source(path.join(OPTIONS[TASKS.BUNDLE_TEST].DESTINATION_FOLDER, OPTIONS[TASKS.BUNDLE_TEST].BUNDLE_NAME)))
+        .pipe(buffer())
+        // Gulp Plugins Here
+        .pipe(gulp.dest('./'));
+}
+
+gulp.task(TASKS.COMPILE_TYPESCRIPT_SRC, function () {
+    var tsProjectSrc = ts.createProject(OPTIONS[TASKS.COMPILE_TYPESCRIPT_SRC].CONFIG_FILE, { noResolve: true });
+    var tsResult = tsProjectSrc.src().pipe(sourcemaps.init()).pipe(tsProjectSrc());
+    return tsResult.js.pipe(sourcemaps.write('', { debug: false, includeContent: true, sourceRoot: '' })).pipe(gulp.dest(OPTIONS[TASKS.COMPILE_TYPESCRIPT_SRC].TEMP_FOLDER));
+});
+
+//#region SASS
 
 gulp.task(TASKS.COMPILE_SASS, function () {
-    return gulp.src(PATHS.SASS_ENTRY)
+    return gulp.src(OPTIONS[TASKS.COMPILE_SASS].ENTRY)
         .pipe(sass().on(
             'error',
             function(error) {
@@ -115,81 +146,30 @@ gulp.task(TASKS.COMPILE_SASS, function () {
             }
 
         ))
-        .pipe(gulp.dest(PATHS.CSS_DESTINATION_FOLDER))
+        .pipe(gulp.dest(OPTIONS[TASKS.COMPILE_SASS].DESTINATION))
         .on('error', function(error) {
             console.log(error.toString());
         })
     ;
 });
 
-gulp.task(TASKS.TEST, gulp.series(TASKS.COMPILE_TYPESCRIPT_TEST, function (cb) {
-    process.env.NODE_ENV = 'test';
-    var JEST_OPTIONS = {
-        coverageDirectory: PATHS.TS_TEST_TEMP_FOLDER + '/output',
-        globalSetup: __dirname + '/test/tmp/test/jest-global-setup',
-        globalTeardown: __dirname + '/test/tmp/test/jest-global-teardown',
-        moduleFileExtensions: ['js', 'jsx', 'json', 'ts', 'tsx'],
-        runInBand: true,
-        testRegex: PATHS.TEST_REGEX,
-        scriptPreprocessor: './node_modules/babel-jest',
-        unmockedModulePathPatterns: [
-            './node_modules/*'
-        ],
-    };
+//#endregion
 
-    jestCli.runCLI(JEST_OPTIONS, '.').then(function (_ref) {
-        var results = _ref.results;
+gulp.task(
+    TASKS.BUILD,
+    gulp.parallel(
+        TASKS.COMPILE_SASS,
+        gulp.series(
+            TASKS.COMPILE_TYPESCRIPT_SRC,
+            gulp.parallel(
+                bundleDev,
+                bundleProd,
+                bundleTest
+            )
+        )
+    )
+);
 
-        console.log('\n');
-        console.log('\x1b[33m%s\x1b[0m','Discovering tests ...\n');
+//#endregion
 
-        for (var i = 0; i < results.testResults.length; ++i) {
-            var testResult = results.testResults[i];
-            var innerTestsResults = testResult.testResults;
-
-            console.log('\x1b[33m%s\x1b[0m', '    ' + innerTestsResults.length + ' Tests were found at ' + testResult.testFilePath + '.\n');
-
-            for (var j = 0; j < innerTestsResults.length; ++j) {
-                var innerTestsResult = innerTestsResults[j];
-                var testDuration = innerTestsResult.duration;
-                var testName = innerTestsResult.fullName;
-                var testStatus = innerTestsResult.status;
-                var errorMesages = innerTestsResult.failureMessages;
-
-                console.log('\x1b[33m%s\x1b[0m', '        Name: ' + testName);
-                console.log('\x1b[33m%s\x1b[0m', '        Duration: ' + testDuration);
-
-                if (errorMesages.length == 0)
-                    console.log('\x1b[33m        Status: \x1b[0m\x1b[32m%s\x1b[0m', testStatus);
-                else
-                    console.log('\x1b[33m        Status: \x1b[0m\x1b[31m%s\x1b[0m', testStatus);
-
-                if (errorMesages.length > 0) {
-                    console.log('\x1b[33m%s\x1b[0m', '        Errors found:');
-
-                    for (var k = 0; k < errorMesages.length; ++k) {
-                        console.log('\x1b[33m            \x1b[31m%s\x1b[0m', errorMesages[i]);
-                    }
-                }
-                console.log('\n');
-            }
-        }
-
-        if (results.numFailedTests || results.numFailedTestSuites) {
-            console.log('\x1b[31mTests Failed!\x1b[0m');
-        } else {
-            console.log('\x1b[32mTests Succeded!\x1b[0m');
-        }
-        console.log('\n');
-        cb();
-    });
-}));
-
-// Rerun the dev task when a file changes
-gulp.task(TASKS.WATCH_DEV, function() {
-    gulp.watch(PATHS.TS_SRC_DOMAIN, gulp.series(TASKS.BUILD_DEV));
-    gulp.watch(PATHS.SASS_DOMAIN, gulp.series(TASKS.COMPILE_SASS))
-});
-
-// By default run all the tasks
-gulp.task('default', gulp.parallel(TASKS.COMPILE_SASS, gulp.series(TASKS.BUILD_DEV, TASKS.BUILD_PROD)));
+gulp.task(TASKS.DEFAULT, gulp.series(TASKS.BUILD));
