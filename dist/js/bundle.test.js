@@ -803,6 +803,8 @@ var SingleSlideCarouselTests = exports.SingleSlideCarouselTests = function () {
                 _this.itMustBeAbleToCancelAnimation();
                 _this.itMustBeAbleToGoToSlides();
                 _this.itMustBeAbleToGoToSlidesWhileAddingElements();
+                _this.itMustBeAbleToGoToSlidesWhileRemovingAnimationElements();
+                _this.itMustBeAbleToGoToSlidesWhileRemovingOtherElements();
             });
         }
     }, {
@@ -1026,6 +1028,92 @@ var SingleSlideCarouselTests = exports.SingleSlideCarouselTests = function () {
                                 resolve();
                             });
                         });
+                    });
+                });
+                executionPromise.then(function () {
+                    document.body.removeChild(divElement);
+                    done();
+                }).catch(function (err) {
+                    done.fail(err);
+                });
+            }, this.longTimeLimit);
+        }
+    }, {
+        key: 'itMustBeAbleToGoToSlidesWhileRemovingAnimationElements',
+        value: function itMustBeAbleToGoToSlidesWhileRemovingAnimationElements() {
+            var that = this;
+            it('mustBeAbleToGoToSlidesWhileRemovingAnimationElements', function (done) {
+                function goNext(carousel) {
+                    var goNextActionStatus = carousel.handle(_carouselBasic.CarouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT, {
+                        enterAnimation: {
+                            slideStyles: ['sora-fade-in-animation']
+                        },
+                        leaveAnimation: {
+                            slideStyles: ['sora-fade-out-animation']
+                        }
+                    });
+                    return goNextActionStatus;
+                }
+                var divElement = that.generateBasicCarousel();
+                var carousel = new _carouselBasic.CarouselBasic.SingleSlideCarousel(divElement, { index: 0 });
+                document.body.appendChild(divElement);
+                var executionPromise = new _promise2.default(function (resolve, reject) {
+                    var animationStatus = goNext(carousel);
+                    carousel.getElementsManager().removeElements([0, 1]);
+                    expect(carousel.getElementsManager().getCollection().length).toBe(3);
+                    _promise2.default.all([animationStatus.enterSlideStatus.elementAnimationStatus, animationStatus.leaveSlideStatus.elementAnimationStatus, animationStatus.soraHandlerStatus]).then(function (animationStatusPromisesResponses) {
+                        var oldActiveElement = animationStatusPromisesResponses[1].element;
+                        var newActiveElement = animationStatusPromisesResponses[0].element;
+                        expect(newActiveElement).toBe(carousel.getElementsManager().getCollection()[1]);
+                        expect(newActiveElement.classList).toContain(_carouselBasic.CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                        expect(newActiveElement.classList).not.toContain(_carouselBasic.CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                        expect(oldActiveElement).toBe(carousel.getElementsManager().getCollection()[0]);
+                        expect(oldActiveElement.classList).not.toContain(_carouselBasic.CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                        expect(oldActiveElement.classList).toContain(_carouselBasic.CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                        resolve();
+                    });
+                });
+                executionPromise.then(function () {
+                    document.body.removeChild(divElement);
+                    done();
+                }).catch(function (err) {
+                    done.fail(err);
+                });
+            }, this.longTimeLimit);
+        }
+    }, {
+        key: 'itMustBeAbleToGoToSlidesWhileRemovingOtherElements',
+        value: function itMustBeAbleToGoToSlidesWhileRemovingOtherElements() {
+            var that = this;
+            it('mustBeAbleToGoToSlidesWhileRemovingOtherElements', function (done) {
+                function goNext(carousel) {
+                    var goNextActionStatus = carousel.handle(_carouselBasic.CarouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT, {
+                        enterAnimation: {
+                            slideStyles: ['sora-fade-in-animation']
+                        },
+                        leaveAnimation: {
+                            slideStyles: ['sora-fade-out-animation']
+                        }
+                    });
+                    return goNextActionStatus;
+                }
+                var divElement = that.generateBasicCarousel();
+                var carousel = new _carouselBasic.CarouselBasic.SingleSlideCarousel(divElement, { index: 0 });
+                document.body.appendChild(divElement);
+                var executionPromise = new _promise2.default(function (resolve, reject) {
+                    var animationStatus = goNext(carousel);
+                    carousel.getElementsManager().removeElements([2]);
+                    expect(carousel.getElementsManager().getCollection().length).toBe(2);
+                    _promise2.default.all([animationStatus.enterSlideStatus.elementAnimationStatus, animationStatus.leaveSlideStatus.elementAnimationStatus, animationStatus.soraHandlerStatus]).then(function (animationStatusPromisesResponses) {
+                        var oldActiveElement = animationStatusPromisesResponses[1].element;
+                        var newActiveElement = animationStatusPromisesResponses[0].element;
+                        expect(newActiveElement).toBe(carousel.getElementsManager().getCollection()[1]);
+                        expect(newActiveElement.classList).toContain(_carouselBasic.CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                        expect(newActiveElement.classList).not.toContain(_carouselBasic.CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                        expect(oldActiveElement).toBe(carousel.getElementsManager().getCollection()[0]);
+                        expect(oldActiveElement.classList).not.toContain(_carouselBasic.CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                        expect(oldActiveElement.classList).toContain(_carouselBasic.CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                        resolve();
                     });
                 });
                 executionPromise.then(function () {
