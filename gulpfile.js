@@ -24,7 +24,8 @@ const BABEL_OPTIONS = {
     ],
     plugins: [
         'transform-runtime',
-    ]
+    ],
+    sourceMaps: true,
 };
 
 const TASKS = {
@@ -59,7 +60,7 @@ OPTIONS[TASKS.BUNDLE_PROD] = {
 };
 
 OPTIONS[TASKS.BUNDLE_TEST] = {
-    BROWSERIFY_ENTRY: 'dist/js/tmp/src/test/main.test.js',
+    BROWSERIFY_ENTRY: 'dist/js/tmp/src/main.test.js',
     BUNDLE_NAME: 'bundle.test.js',
     DESTINATION_FOLDER: OPTIONS[TASKS.BUNDLE_DEV].DESTINATION_FOLDER,
     MODULE_NAME: 'soraTest',
@@ -91,6 +92,8 @@ function bundleDev() {
         .pipe(source(path.join(OPTIONS[TASKS.BUNDLE_DEV].DESTINATION_FOLDER, OPTIONS[TASKS.BUNDLE_DEV].BUNDLE_NAME)))
         .pipe(buffer())
         // Gulp Plugins Here
+        .pipe(sourcemaps.init({loadMaps: true}))
+        .pipe(sourcemaps.write('./'))
         .pipe(gulp.dest('./'));
 }
 
@@ -118,7 +121,7 @@ function bundleTest() {
     return browserify(
     {
         entries: OPTIONS[TASKS.BUNDLE_TEST].BROWSERIFY_ENTRY,
-        debug: false,
+        debug: true,
         standalone: OPTIONS[TASKS.BUNDLE_TEST].MODULE_NAME,
     })
         .transform('babelify', BABEL_OPTIONS)
@@ -126,6 +129,8 @@ function bundleTest() {
         .pipe(source(path.join(OPTIONS[TASKS.BUNDLE_TEST].DESTINATION_FOLDER, OPTIONS[TASKS.BUNDLE_TEST].BUNDLE_NAME)))
         .pipe(buffer())
         // Gulp Plugins Here
+        .pipe(sourcemaps.init({loadMaps: true}))
+        .pipe(sourcemaps.write('./'))
         .pipe(gulp.dest('./'));
 }
 

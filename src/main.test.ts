@@ -1,5 +1,5 @@
-import { SingleSlideCarouselTests } from './carousel/carousel-basic.test';
-import { CollectionManagerTests } from './collection/collection-manager.test';
+import { SingleSlideCarouselTests } from './test/carousel/carousel-basic.test';
+import { CollectionManagerTests } from './test/collection/collection-manager.test';
 
 var soraTest = function() {
     return {
