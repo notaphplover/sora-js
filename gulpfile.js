@@ -2,7 +2,6 @@ const babel = require('gulp-babel');
 const browserify = require('browserify');
 const buffer = require('vinyl-buffer');
 const gulp = require('gulp');
-const jestCli = require('jest-cli');
 const path = require('path');
 const sass = require('gulp-sass');
 const source = require('vinyl-source-stream');
