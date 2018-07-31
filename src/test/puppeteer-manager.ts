@@ -2,9 +2,6 @@ const puppeteer = require('puppeteer');
 
 export namespace PuppeterManagement {
 
-    export const SORA_JS_CSS_PATH = 'http://localhost:8080/dist/css/sora.css';
-    export const SORA_JS_JS_PATH = 'http://localhost:8080/dist/js/bundle.dev.js';
-
     export class PuppeteerManager {
 
         //#region Attributes

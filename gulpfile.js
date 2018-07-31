@@ -1,8 +1,8 @@
-const babel = require('gulp-babel');
 const browserify = require('browserify');
 const buffer = require('vinyl-buffer');
 const gulp = require('gulp');
 const path = require('path');
+const puppeteer = require('puppeteer');
 const sass = require('gulp-sass');
 const source = require('vinyl-source-stream');
 const sourcemaps = require('gulp-sourcemaps');
@@ -33,10 +33,9 @@ const TASKS = {
     BUNDLE_PROD: 'bundle-prod',
     BUNDLE_TEST: 'bundle-test',
     COMPILE_TYPESCRIPT_SRC: 'compile-typescript-src',
-    COMPILE_TYPESCRIPT_TEST: 'compile-typescript-test',
     COMPILE_SASS: 'compile-sass',
     DEFAULT: 'default',
-    TEST: 'jest',
+    TEST: 'test',
     WATCH_DEV: 'watch-dev',
 };
 
@@ -73,6 +72,10 @@ OPTIONS[TASKS.COMPILE_SASS] = {
 OPTIONS[TASKS.COMPILE_TYPESCRIPT_SRC] = {
     CONFIG_FILE: 'src.tsconfig.json',
     TEMP_FOLDER: 'dist/js/tmp/src',
+};
+
+OPTIONS[TASKS.TEST] = {
+    PAGE_LOCATION: 'file:///' + __dirname + '/src/test/runner/test-runner.html',
 };
 
 //#endregion
@@ -173,6 +176,72 @@ gulp.task(
         )
     )
 );
+
+//#endregion
+
+//#region Test
+
+gulp.task(TASKS.TEST, function() {
+    return new Promise(function(resolve, reject) { 
+        (puppeteer.launch({
+            devtools: true,
+        }))
+            .then(function(browser) {
+                browser.newPage().then(function(page) {
+                    Promise.all([
+                        page.coverage.startJSCoverage(),
+                        page.coverage.startCSSCoverage()
+                    ]).then(function() {
+                        page.goto(OPTIONS[TASKS.TEST].PAGE_LOCATION).then(function(response) {
+                            var evaluationResult = page.evaluate(function() {
+                                return new Promise(function(resolve, reject) {
+                                    if('complete' === document.readyState)
+                                        customJasmineBoot.initialize().then(function() {
+                                            resolve();
+                                        });
+                                    else 
+                                        window.addEventListener('load', function() {
+                                            customJasmineBoot.initialize().then(function() {
+                                                resolve();
+                                            });
+                                        });
+                                });
+                                
+                            });
+                            evaluationResult.then(function() {
+                                Promise.all([
+                                    page.coverage.stopJSCoverage(),
+                                    page.coverage.stopCSSCoverage(),
+                                ]).then(function(coverageData) {
+                                    var jsCoverage = coverageData[0];
+                                    var cssCoverage = coverageData[1];
+
+                                    var totalBytes = 0;
+                                    var usedBytes = 0;
+                                    for (var key in jsCoverage) {
+                                        totalBytes += jsCoverage[key].text.length;
+
+                                        var ranges = jsCoverage[key].ranges;
+
+                                        for (var range in ranges) 
+                                            usedBytes += ranges[range].end - ranges[range].start - 1;
+                                    }
+
+                                    browser.close().then(function() {
+                                        resolve();
+                                    });
+                                });
+                            });
+                        });
+                    });
+                    
+                });
+            }).catch(function(err) {
+                reject(err);
+            });
+    });
+    
+});
 
 //#endregion
 
