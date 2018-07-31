@@ -1,8 +1,10 @@
 const browserify = require('browserify');
 const buffer = require('vinyl-buffer');
+const execSync = require('child_process').execSync;
 const gulp = require('gulp');
 const path = require('path');
 const puppeteer = require('puppeteer');
+const pti = require('puppeteer-to-istanbul')
 const sass = require('gulp-sass');
 const source = require('vinyl-source-stream');
 const sourcemaps = require('gulp-sourcemaps');
@@ -182,7 +184,7 @@ gulp.task(
 //#region Test
 
 gulp.task(TASKS.TEST, function() {
-    return new Promise(function(resolve, reject) { 
+    return new Promise(function(resolve, reject) {
         (puppeteer.launch({
             devtools: true,
         }))
@@ -199,14 +201,14 @@ gulp.task(TASKS.TEST, function() {
                                         customJasmineBoot.initialize().then(function() {
                                             resolve();
                                         });
-                                    else 
+                                    else
                                         window.addEventListener('load', function() {
                                             customJasmineBoot.initialize().then(function() {
                                                 resolve();
                                             });
                                         });
                                 });
-                                
+
                             });
                             evaluationResult.then(function() {
                                 Promise.all([
@@ -214,19 +216,13 @@ gulp.task(TASKS.TEST, function() {
                                     page.coverage.stopCSSCoverage(),
                                 ]).then(function(coverageData) {
                                     var jsCoverage = coverageData[0];
-                                    var cssCoverage = coverageData[1];
-
-                                    var totalBytes = 0;
-                                    var usedBytes = 0;
-                                    for (var key in jsCoverage) {
-                                        totalBytes += jsCoverage[key].text.length;
-
-                                        var ranges = jsCoverage[key].ranges;
-
-                                        for (var range in ranges) 
-                                            usedBytes += ranges[range].end - ranges[range].start - 1;
-                                    }
-
+                                    pti.write(jsCoverage);
+                                    execSync(
+                                        'node ./node_modules/nyc/bin/nyc.js report --reporter=html',
+                                        {
+                                            cwd: __dirname,
+                                        },
+                                    );
                                     browser.close().then(function() {
                                         resolve();
                                     });
@@ -234,13 +230,13 @@ gulp.task(TASKS.TEST, function() {
                             });
                         });
                     });
-                    
+
                 });
             }).catch(function(err) {
                 reject(err);
             });
     });
-    
+
 });
 
 //#endregion

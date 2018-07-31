@@ -1,5 +1,9 @@
+# Istanbul js
+/.nyc_output
+# Visual studio code
 /.vscode
+# Istanbul js
+/coverage
 /dist/js/tmp
 /node_modules
 /samples/node_modules
-/test/tmp
