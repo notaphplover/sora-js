@@ -1,5 +1,5 @@
 import { CarouselBase } from './carousel-base'
-import { SoraAnimation } from './animation/carousel-animation'
+import { ICarouselAnimation, ICarouselAnimationChildrenStyles } from './animation/carousel-animation'
 import { AnimationPlayStateValue } from './animation/animation-play-state'
 import { EventEmitter } from 'events';
 import {
@@ -106,7 +106,7 @@ export namespace CarouselBasic {
         /**
          * Custom animation for the incoming slide.
          */
-        enterAnimation : SoraAnimation.ICarouselAnimation;
+        enterAnimation : ICarouselAnimation;
         /**
          * Index of the element to display.
          */
@@ -114,7 +114,7 @@ export namespace CarouselBasic {
         /**
          * Custom animation for the outcoming slide.
          */
-        leaveAnimation : SoraAnimation.ICarouselAnimation;
+        leaveAnimation : ICarouselAnimation;
     }
 
     /**
@@ -182,12 +182,8 @@ export namespace CarouselBasic {
      * Carousel classes used for multiple purposes.
      */
     export const SINGLE_SLIDE_CAROUSEL_STYLES = {
-        ANIMATION_PAUSED: 'sora-animation-paused',
-        CLEAR_ANIMATION: 'sora-clear-animations',
         SLIDE_HIDDEN: 'sora-hidden',
-        SLIDE: 'sora-slide',
         SLIDE_ACTIVE: 'sora-slide-active',
-        WRAPPER: 'sora-wrapper',
     };
 
     /* #endregion */
@@ -240,7 +236,10 @@ export namespace CarouselBasic {
             if (element == null)
                 throw new Error('The element must not be null.');
 
-            var soraWrapper = element.querySelector('.' + SINGLE_SLIDE_CAROUSEL_STYLES.WRAPPER);
+            if (!element.classList.contains(CarouselBase.CAROUSEL_STYLES.CAROUSEL))
+                throw new Error('The carousel element must contain the class "' + CarouselBase.CAROUSEL_STYLES.CAROUSEL + '".');
+
+            var soraWrapper = element.querySelector('.' + CarouselBase.CAROUSEL_STYLES.WRAPPER);
 
             if (soraWrapper == null)
                 throw new Error('The element has no child with class \'sora-wrapper\'.');
@@ -248,7 +247,7 @@ export namespace CarouselBasic {
             var children : HTMLElement[] = new Array();
 
             for (var i = 0; i < soraWrapper.children.length; ++i) {
-                if (soraWrapper.children[i].classList.contains(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE))
+                if (soraWrapper.children[i].classList.contains(CarouselBase.CAROUSEL_STYLES.SLIDE))
                     children.push(soraWrapper.children[i] as HTMLElement);
             }
 
@@ -610,12 +609,12 @@ export namespace CarouselBasic {
          * @param animation Animation options.
          * @returns Promise of handling the animation. The promise is resolved as soon as all the transitions are finished.
          */
-        private handleAnimationOverSlide(element : HTMLElement, animation : SoraAnimation.ICarouselAnimation) : ISingleSlideCarouselSlideAnimationStatus {
+        private handleAnimationOverSlide(element : HTMLElement, animation : ICarouselAnimation) : ISingleSlideCarouselSlideAnimationStatus {
             var childrenStatus : ISingleSlideCarouselSlideChildrenAnimationOptions = {};
 
             if (animation.childrenStyles) {
                 for (var i = 0; i < animation.childrenStyles.length; ++i) {
-                    var animationObject : SoraAnimation.ICarouselAnimationChildrenStyles = animation.childrenStyles[i];
+                    var animationObject : ICarouselAnimationChildrenStyles = animation.childrenStyles[i];
                     if (!childrenStatus[animationObject.selector])
                         childrenStatus[animationObject.selector] = new Array();
 
@@ -666,13 +665,13 @@ export namespace CarouselBasic {
                     var animationFunctions : ((event : TransitionEvent) => void)[] = new Array();
                     var currentAnimationIndex : number = null;
                     var onAnimationCancel = function(args : ISingleSlideCarouselCancelAnimationEventArgs) {
-                        element.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
+                        element.classList.add(CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
 
                         if (currentAnimationIndex != null)
                             element.classList.remove(styles[currentAnimationIndex]);
 
                         that.unregisterAnimationListener(element, animationFunctions[currentAnimationIndex]);
-                        element.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
+                        element.classList.remove(CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
 
                         that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onAnimationCancel);
                         that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, onAnimationPlayStateChange);
@@ -687,11 +686,11 @@ export namespace CarouselBasic {
 
                     var onAnimationPlayStateChange = function(args : ISingleSlideCarouselAnimationPlayStateChangeEventArgs) {
                         if (AnimationPlayStateValue.paused == args.value) {
-                            if (!element.classList.contains(SINGLE_SLIDE_CAROUSEL_STYLES.ANIMATION_PAUSED))
-                                element.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.ANIMATION_PAUSED);
+                            if (!element.classList.contains(CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED))
+                                element.classList.add(CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
                         } else if (AnimationPlayStateValue.running == args.value) {
-                            if (element.classList.contains(SINGLE_SLIDE_CAROUSEL_STYLES.ANIMATION_PAUSED))
-                                element.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.ANIMATION_PAUSED);
+                            if (element.classList.contains(CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED))
+                                element.classList.remove(CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
                         }
                     };
 
@@ -711,9 +710,9 @@ export namespace CarouselBasic {
 
                     //add the clear function
                     animationFunctions.push(function(event : TransitionEvent) {
-                        element.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
+                        element.classList.add(CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
                         element.classList.remove(styles[styles.length - 1]);
-                        element.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
+                        element.classList.remove(CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
                         that.unregisterAnimationListener(element, animationFunctions[animationFunctions.length - 1]);
                         currentAnimationIndex = null;
                         that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onAnimationCancel);
@@ -769,7 +768,7 @@ export namespace CarouselBasic {
                 while(collection[i].classList.length > 0)
                     collection[i].classList.remove(collection[i].classList.item(0));
 
-                collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE);
+                collection[i].classList.add(CarouselBase.CAROUSEL_STYLES.SLIDE);
 
                 if (activeIndex === i)
                     collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);

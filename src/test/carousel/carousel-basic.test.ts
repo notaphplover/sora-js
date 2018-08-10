@@ -1,3 +1,4 @@
+import { CarouselBase } from '../../../src/carousel/carousel-base'
 import { CarouselBasic } from '../../../src/carousel/carousel-basic'
 import { ITest } from "../ITest";
 
@@ -11,7 +12,7 @@ export class SingleSlideCarouselTests implements ITest {
 
     protected generateBasicCarousel() : HTMLElement {
         var divElement : HTMLElement = document.createElement('div');
-        divElement.classList.add('sora-carousel');
+        divElement.classList.add(CarouselBase.CAROUSEL_STYLES.CAROUSEL);
         divElement.innerHTML =
 `<div class="sora-wrapper">
     <div class="sora-slide">
@@ -51,10 +52,10 @@ export class SingleSlideCarouselTests implements ITest {
             var carousel : CarouselBasic.SingleSlideCarousel = new CarouselBasic.SingleSlideCarousel(divElement, { index: 0 });
             expect(carousel).not.toBeNull();
 
-            var wrapper = divElement.querySelectorAll('.' + CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.WRAPPER);
+            var wrapper = divElement.querySelectorAll('.' + CarouselBase.CAROUSEL_STYLES.WRAPPER);
             expect(wrapper.length).toBe(1);
 
-            var children = divElement.querySelectorAll('.' + CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.WRAPPER + ' > .' + CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE);
+            var children = divElement.querySelectorAll('.' + CarouselBase.CAROUSEL_STYLES.WRAPPER + ' > .' + CarouselBase.CAROUSEL_STYLES.SLIDE);
             expect(children.length).toBe(3);
 
             expect(children[0].classList).toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
@@ -271,19 +272,19 @@ export class SingleSlideCarouselTests implements ITest {
                 var animationStatus = goNext(carousel);
 
                 var element0 = document.createElement('div');
-                element0.classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE);
+                element0.classList.add(CarouselBase.CAROUSEL_STYLES.SLIDE);
                 element0.classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
                 element0.innerHTML = 'New Content 0';
                 var element1 = document.createElement('div');
-                element1.classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE);
+                element1.classList.add(CarouselBase.CAROUSEL_STYLES.SLIDE);
                 element1.classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
                 element1.innerHTML = 'New Content 1';
                 var element2 = document.createElement('div');
-                element2.classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE);
+                element2.classList.add(CarouselBase.CAROUSEL_STYLES.SLIDE);
                 element2.classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
                 element2.innerHTML = 'New Content 2';
                 var element3 = document.createElement('div');
-                element3.classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE);
+                element3.classList.add(CarouselBase.CAROUSEL_STYLES.SLIDE);
                 element3.classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
                 element3.innerHTML = 'New Content 3';
                 carousel.getElementsManager().insertElements({

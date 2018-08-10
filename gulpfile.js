@@ -230,7 +230,6 @@ gulp.task(TASKS.TEST, function() {
                             });
                         });
                     });
-
                 });
             }).catch(function(err) {
                 reject(err);

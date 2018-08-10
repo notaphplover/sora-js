@@ -29,7 +29,11 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var CarouselBase = exports.CarouselBase = undefined;
 (function (CarouselBase_1) {
     CarouselBase_1.CAROUSEL_STYLES = {
-        CAROUSEL: 'sora-carousel'
+        ANIMATION_PAUSED: 'sora-animation-paused',
+        CLEAR_ANIMATION: 'sora-clear-animations',
+        CAROUSEL: 'sora-carousel',
+        SLIDE: 'sora-slide',
+        WRAPPER: 'sora-wrapper'
     };
 
     var CarouselBase = function CarouselBase() {
@@ -101,12 +105,8 @@ var CarouselBasic = exports.CarouselBasic = undefined;
         ON_SLIDE_LEAVE: 'car.sl.out'
     };
     CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES = {
-        ANIMATION_PAUSED: 'sora-animation-paused',
-        CLEAR_ANIMATION: 'sora-clear-animations',
         SLIDE_HIDDEN: 'sora-hidden',
-        SLIDE: 'sora-slide',
-        SLIDE_ACTIVE: 'sora-slide-active',
-        WRAPPER: 'sora-wrapper'
+        SLIDE_ACTIVE: 'sora-slide-active'
     };
 
     var SingleSlideCarousel = function (_CarouselBase$Carouse) {
@@ -118,11 +118,12 @@ var CarouselBasic = exports.CarouselBasic = undefined;
             var _this = (0, _possibleConstructorReturn3.default)(this, (SingleSlideCarousel.__proto__ || (0, _getPrototypeOf2.default)(SingleSlideCarousel)).call(this));
 
             if (element == null) throw new Error('The element must not be null.');
-            var soraWrapper = element.querySelector('.' + CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.WRAPPER);
+            if (!element.classList.contains(_carouselBase.CarouselBase.CAROUSEL_STYLES.CAROUSEL)) throw new Error('The carousel element must contain the class "' + _carouselBase.CarouselBase.CAROUSEL_STYLES.CAROUSEL + '".');
+            var soraWrapper = element.querySelector('.' + _carouselBase.CarouselBase.CAROUSEL_STYLES.WRAPPER);
             if (soraWrapper == null) throw new Error('The element has no child with class \'sora-wrapper\'.');
             var children = new Array();
             for (var i = 0; i < soraWrapper.children.length; ++i) {
-                if (soraWrapper.children[i].classList.contains(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE)) children.push(soraWrapper.children[i]);
+                if (soraWrapper.children[i].classList.contains(_carouselBase.CarouselBase.CAROUSEL_STYLES.SLIDE)) children.push(soraWrapper.children[i]);
             }
             _this.activeIndex = options.index || 0;
             _this.currentAnimation = null;
@@ -386,10 +387,10 @@ var CarouselBasic = exports.CarouselBasic = undefined;
                         var animationFunctions = new Array();
                         var currentAnimationIndex = null;
                         var onAnimationCancel = function onAnimationCancel(args) {
-                            element.classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
+                            element.classList.add(_carouselBase.CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
                             if (currentAnimationIndex != null) element.classList.remove(styles[currentAnimationIndex]);
                             that.unregisterAnimationListener(element, animationFunctions[currentAnimationIndex]);
-                            element.classList.remove(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
+                            element.classList.remove(_carouselBase.CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
                             that.removeListener(CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onAnimationCancel);
                             that.removeListener(CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, onAnimationPlayStateChange);
                             resolve({
@@ -400,9 +401,9 @@ var CarouselBasic = exports.CarouselBasic = undefined;
                         that.addListener(CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onAnimationCancel);
                         var onAnimationPlayStateChange = function onAnimationPlayStateChange(args) {
                             if (_animationPlayState.AnimationPlayStateValue.paused == args.value) {
-                                if (!element.classList.contains(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.ANIMATION_PAUSED)) element.classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.ANIMATION_PAUSED);
+                                if (!element.classList.contains(_carouselBase.CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED)) element.classList.add(_carouselBase.CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
                             } else if (_animationPlayState.AnimationPlayStateValue.running == args.value) {
-                                if (element.classList.contains(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.ANIMATION_PAUSED)) element.classList.remove(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.ANIMATION_PAUSED);
+                                if (element.classList.contains(_carouselBase.CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED)) element.classList.remove(_carouselBase.CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
                             }
                         };
                         that.addListener(CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, onAnimationPlayStateChange);
@@ -418,9 +419,9 @@ var CarouselBasic = exports.CarouselBasic = undefined;
                             }(i));
                         }
                         animationFunctions.push(function (event) {
-                            element.classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
+                            element.classList.add(_carouselBase.CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
                             element.classList.remove(styles[styles.length - 1]);
-                            element.classList.remove(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
+                            element.classList.remove(_carouselBase.CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
                             that.unregisterAnimationListener(element, animationFunctions[animationFunctions.length - 1]);
                             currentAnimationIndex = null;
                             that.removeListener(CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onAnimationCancel);
@@ -457,7 +458,7 @@ var CarouselBasic = exports.CarouselBasic = undefined;
                 for (var i = 0; i < collection.length; ++i) {
                     while (collection[i].classList.length > 0) {
                         collection[i].classList.remove(collection[i].classList.item(0));
-                    }collection[i].classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE);
+                    }collection[i].classList.add(_carouselBase.CarouselBase.CAROUSEL_STYLES.SLIDE);
                     if (activeIndex === i) collection[i].classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);else collection[i].classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
                 }
             }
