@@ -8,13 +8,13 @@ import { OperationManager } from "./operation-manager";
  */
 export const ANIMATION_CONSTRAINT_TYPES = {
     /**
-     * Requires the start of an animation part.
-     */
-    ANIMATION_BEGIN : 'anim.begin',
-    /**
      * Requires the end of an animation part.
      */
     ANIMATION_END: 'anim.end',
+    /**
+     * Requires the start of an animation part.
+     */
+    ANIMATION_START : 'anim.start',
     /**
      * Requires a group of constraints.
      */
@@ -71,7 +71,7 @@ const ANIMATION_PART_WHEN_EVENT_PREFIXES = {
     /**
      * Prefix for any event raised one an animation part has started.
      */
-    ANIMATION_BEGIN: 'anim.begin.',
+    ANIMATION_START: 'anim.start.',
     /**
      * Prefix for any event raised one an animation part has ended.
      */
@@ -199,7 +199,7 @@ export abstract class AnimationPartConstraint extends AnimationPartWhenConstrain
  */
 export class AnimationPartBeginConstraint extends AnimationPartConstraint {
     public constructor(after : IAnimationPartWhenConstraint, alias : string) {
-        super(after, alias, ANIMATION_CONSTRAINT_TYPES.ANIMATION_BEGIN)
+        super(after, alias, ANIMATION_CONSTRAINT_TYPES.ANIMATION_START)
     }
 }
 
@@ -265,8 +265,14 @@ export class SingleAnimationEngine {
 
     //#region Operators
 
+    /**
+     * Animation cancel operation manager.
+     */
     protected animationCancelManager : OperationManager<IAnimationCancelEventArgs>;
 
+    /**
+     * Animation state change operation manager.
+     */
     protected animationStateChangeManager : OperationManager<IAnimationStateChangeEventArgs>
 
     //#endregion
@@ -333,23 +339,47 @@ export class SingleAnimationEngine {
      * @returns Promise resolved once the animation of the part is finished.
      */
     protected handleAnimationPart(part : IAnimationFlowPart) : Promise<void> {
+        //TODO: Just save events and emit them in the animation handler (use a param!)
         var that = this;
+        var isCanceled = false;
+        var isPaused = false;
+
+        this.animationCancelManager.subscribe(
+            part.alias,
+            function(eventArgs : IAnimationCancelEventArgs) {
+                isCanceled = true;
+                that.animationCancelManager.unsubscribe(part.alias);
+            }
+        );
+        this.animationStateChangeManager.subscribe(
+            part.alias,
+            function(eventArgs : IAnimationStateChangeEventArgs) { isPaused = eventArgs.value == AnimationPlayStateValue.paused; }
+        );
+
         return new Promise<void>(function(resolve, reject) {
             that.handleAnimationPartWhen(part.when).then(function() {
                 //1. Emit the start of animation of the part.
-                that.eventEmitter.emit(ANIMATION_PART_WHEN_EVENT_PREFIXES.ANIMATION_BEGIN + part.alias, {});
+                that.eventEmitter.emit(ANIMATION_PART_WHEN_EVENT_PREFIXES.ANIMATION_START + part.alias, {});
+
+                that.animationCancelManager.unsubscribe(part.alias);
+                that.animationStateChangeManager.unsubscribe(part.alias);
 
                 var promises : Promise<void>[] = new Array(part.elements.length);
 
-                //2. Perform the animation.
+                // 2. Perform the animation.
                 for (var i = 0; i < part.elements.length; ++i)
                     promises[i] = that.handleAnimationOverElement(part.elements[i], part);
 
                 Promise.all(promises).then(function() {
-                    //3. Emit the end of the animation of the part.
+                    // 3. Emit the end of the animation of the part and resolve the promise.
                     that.eventEmitter.emit(ANIMATION_PART_WHEN_EVENT_PREFIXES.ANIMATION_END + part.alias, {});
                     resolve();
                 });
+
+                if (isPaused)
+                    that.pause([part.alias]);
+                if (isCanceled)
+                    that.cancelAnimation([part.alias]);
             }).catch(function(err : any) {
                 reject(err);
             });
@@ -430,9 +460,8 @@ export class SingleAnimationEngine {
                     element.classList.remove(CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
                     that.unregisterAnimationListener(element, animationFunctions[animationFunctions.length - 1]);
                     currentAnimationIndex = null;
-                    that.eventEmitter.removeListener(ANIMATION_OPERATION_EVENTS.ANIMATION_CANCEL, onAnimationCancel);
-                    that.eventEmitter.removeListener(ANIMATION_OPERATION_EVENTS.ANIMATION_STATE_CHANGE, onAnimationPlayStateChange);
-
+                    that.animationCancelManager.unsubscribe(part.alias);
+                    that.animationStateChangeManager.unsubscribe(part.alias);
                     resolve();
                 });
 
@@ -481,28 +510,28 @@ export class SingleAnimationEngine {
         var that = this;
         return new Promise<void>(function(resolve, reject) {
             if (whenEntity == null)
-            resolve();
-
-            switch(whenEntity.constraintType) {
-                case ANIMATION_CONSTRAINT_TYPES.ANIMATION_BEGIN:
-                    that.handleAnimationPartWhenAnimationBegin(whenEntity as AnimationPartBeginConstraint)
-                        .then(resolve);
-                    break;
-                case ANIMATION_CONSTRAINT_TYPES.ANIMATION_END:
-                    that.handleAnimationPartWhenAnimationEnd(whenEntity as AnimationPartEndConstraint)
-                        .then(resolve);
-                    break;
-                case ANIMATION_CONSTRAINT_TYPES.GROUP:
-                    that.handleAnimationPartWhenAnimationGroup(whenEntity as AnimationGroupConstraint)
-                        .then(resolve);
-                    break;
-                case ANIMATION_CONSTRAINT_TYPES.WAIT_FOR:
-                    that.handleAnimationPartWhenWaitFor(whenEntity as AnimationTimeConstraint)
-                        .then(resolve);
-                    break;
-                default:
-                    throw new Error('Unexpected when entity type.');
-            }
+                resolve();
+            else
+                switch(whenEntity.constraintType) {
+                    case ANIMATION_CONSTRAINT_TYPES.ANIMATION_START:
+                        that.handleAnimationPartWhenAnimationBegin(whenEntity as AnimationPartBeginConstraint)
+                            .then(resolve);
+                        break;
+                    case ANIMATION_CONSTRAINT_TYPES.ANIMATION_END:
+                        that.handleAnimationPartWhenAnimationEnd(whenEntity as AnimationPartEndConstraint)
+                            .then(resolve);
+                        break;
+                    case ANIMATION_CONSTRAINT_TYPES.GROUP:
+                        that.handleAnimationPartWhenAnimationGroup(whenEntity as AnimationGroupConstraint)
+                            .then(resolve);
+                        break;
+                    case ANIMATION_CONSTRAINT_TYPES.WAIT_FOR:
+                        that.handleAnimationPartWhenWaitFor(whenEntity as AnimationTimeConstraint)
+                            .then(resolve);
+                        break;
+                    default:
+                        throw new Error('Unexpected when entity type.');
+                }
         });
     }
 
@@ -518,7 +547,7 @@ export class SingleAnimationEngine {
     protected handleAnimationPartWhenAnimationBegin(whenEntity : AnimationPartBeginConstraint) : Promise<void> {
         var that = this;
         return new Promise<void>(function(resolve, reject) {
-            var eventName = ANIMATION_PART_WHEN_EVENT_PREFIXES.ANIMATION_BEGIN + whenEntity.alias;
+            var eventName = ANIMATION_PART_WHEN_EVENT_PREFIXES.ANIMATION_START + whenEntity.alias;
             var eventHandler = function() {
                 that.eventEmitter.removeListener(eventName, eventHandler);
                 if (whenEntity.after == null)
@@ -611,6 +640,51 @@ export class SingleAnimationEngine {
                 }
             }, whenEntity.millis);
         });
+    }
+
+    //#endregion
+
+    //#region Operations
+
+    /**
+     * Cancels the animation.
+     * @param aliases Aliases of the parts to cancel or null to cancel all the parts.
+     */
+    public cancelAnimation(aliases : string[]) : void {
+        this.eventEmitter.emit(
+            ANIMATION_OPERATION_EVENTS.ANIMATION_CANCEL,
+            {
+                aliases : aliases,
+            } as IAnimationCancelEventArgs
+        );
+    }
+
+    /**
+     * Pauses the engine animation.
+     * @param aliases Aliases of the animation parts to pause or null to pause all the parts.
+     */
+    public pause(aliases : string[]) : void {
+        this.eventEmitter.emit(
+            ANIMATION_OPERATION_EVENTS.ANIMATION_STATE_CHANGE,
+            {
+                aliases: aliases,
+                value: AnimationPlayStateValue.paused,
+            } as IAnimationStateChangeEventArgs
+        );
+    }
+
+    /**
+     * Resumes the engine animation.
+     * @param aliases Aliases of the animation to resume or null to resume all the parts.
+     */
+    public resume(aliases : string[]) : void {
+        this.eventEmitter.emit(
+            ANIMATION_OPERATION_EVENTS.ANIMATION_STATE_CHANGE,
+            {
+                aliases: aliases,
+                value: AnimationPlayStateValue.running,
+            } as IAnimationStateChangeEventArgs
+        );
     }
 
     //#endregion

@@ -1,6 +1,6 @@
 export interface ICarouselAnimation {
     childrenStyles?: ICarouselAnimationChildrenStyles[],
-    slideStyles?: string[],
+    slideStyles: string[],
 }
 
 export interface ICarouselAnimationChildrenStyles {

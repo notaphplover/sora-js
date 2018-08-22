@@ -1,5 +1,8 @@
 import { EventEmitter } from "events";
 
+/**
+ * Operation arguments
+ */
 export interface IOperationArgs {
     aliases : string[],
 }
