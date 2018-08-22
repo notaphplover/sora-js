@@ -125,17 +125,22 @@
                     };
 
                     publicScope.goNext = function(enterAnimation, leaveAnimation) {
-                        return carousel.handle(sora.actions.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT, {
-                            enterAnimation: enterAnimation,
-                            leaveAnimation: leaveAnimation,
-                        });
+                        return carousel.handle(
+                            sora.actions.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT,
+                            {
+                                enterAnimation: enterAnimation,
+                                leaveAnimation: leaveAnimation,
+                            }
+                        );
                     };
 
                     publicScope.goPrevious = function(enterAnimation, leaveAnimation) {
-                        return carousel.handle(sora.actions.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_PREVIOUS, {
-                            enterAnimation: enterAnimation,
-                            leaveAnimation: leaveAnimation,
-                        });
+                        return carousel.handle(
+                            sora.actions.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_PREVIOUS, {
+                                enterAnimation: enterAnimation,
+                                leaveAnimation: leaveAnimation,
+                            }
+                        );
                     };
 
                     publicScope.init = function() {

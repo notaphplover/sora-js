@@ -1,15 +1,19 @@
 export namespace CarouselBase {
-    
+
     /**
      * Carousel classes used for multiple purposes.
      */
     export const CAROUSEL_STYLES = {
+        ANIMATION_PAUSED: 'sora-animation-paused',
+        CLEAR_ANIMATION: 'sora-clear-animations',
         CAROUSEL: 'sora-carousel',
+        SLIDE: 'sora-slide',
+        WRAPPER: 'sora-wrapper',
     };
 
     /**
      * Represents a generic carousel.
-     * 
+     *
      * 1. Any carousel has elements.
      * 2. Any carousel has a topology.
      * 3. Any carousel has transitions.

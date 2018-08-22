@@ -1,5 +1,5 @@
 import { CarouselBase } from './carousel-base'
-import { SoraAnimation } from './animation/carousel-animation'
+import { ICarouselAnimation, ICarouselAnimationChildrenStyles } from './animation/carousel-animation'
 import { AnimationPlayStateValue } from './animation/animation-play-state'
 import { EventEmitter } from 'events';
 import {
@@ -8,6 +8,7 @@ import {
     COLLECTION_MANAGER_EVENTS,
 } from '../collection/collection-manager';
 import { HtmlChildrenManager } from '../collection/html-children-manager';
+import { SingleAnimationEngine, IAnimationFlow, IAnimationFlowPart } from './animation/animation-engine';
 
 export namespace CarouselBasic {
 
@@ -86,13 +87,9 @@ export namespace CarouselBasic {
      */
     export interface ISingleSlideCarouselGoToAnimationStatus {
         /**
-         * Enter slide status.
+         * Animation promises
          */
-        enterSlideStatus : ISingleSlideCarouselSlideAnimationStatus;
-        /**
-         * Leave slide status.
-         */
-        leaveSlideStatus : ISingleSlideCarouselSlideAnimationStatus;
+        animationPromises : Promise<void>[],
         /**
          * Promise resolved once Sora has ended the handling of the animation.
          */
@@ -106,7 +103,7 @@ export namespace CarouselBasic {
         /**
          * Custom animation for the incoming slide.
          */
-        enterAnimation : SoraAnimation.ICarouselAnimation;
+        enterAnimation : ICarouselAnimation;
         /**
          * Index of the element to display.
          */
@@ -114,33 +111,7 @@ export namespace CarouselBasic {
         /**
          * Custom animation for the outcoming slide.
          */
-        leaveAnimation : SoraAnimation.ICarouselAnimation;
-    }
-
-    /**
-     * Slide animation status
-     */
-    export interface ISingleSlideCarouselSlideAnimationStatus {
-        /**
-         * Slide element status
-         */
-        elementAnimationStatus : Promise<ISingleSlideCarouselAnimateElementOptions>;
-        /**
-         * Children element status
-         */
-        childrenAnimationStatus : ISingleSlideCarouselSlideChildrenAnimationOptions;
-    }
-
-    /**
-     * Children animation options
-     */
-    export interface ISingleSlideCarouselSlideChildrenAnimationOptions {
-        /**
-         * Associative array.
-         * The key of an entry is the selector that matched with the element.
-         * The value of an entry is the animation status of the element.
-         */
-        [selector: string]: Promise<ISingleSlideCarouselAnimateElementOptions>[];
+        leaveAnimation : ICarouselAnimation;
     }
 
     /**
@@ -178,16 +149,17 @@ export namespace CarouselBasic {
         ON_SLIDE_LEAVE: 'car.sl.out',
     };
 
+    const SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES = {
+        ENTER: 'enter-part',
+        LEAVE: 'leave-part',
+    }
+
     /**
      * Carousel classes used for multiple purposes.
      */
     export const SINGLE_SLIDE_CAROUSEL_STYLES = {
-        ANIMATION_PAUSED: 'sora-animation-paused',
-        CLEAR_ANIMATION: 'sora-clear-animations',
         SLIDE_HIDDEN: 'sora-hidden',
-        SLIDE: 'sora-slide',
         SLIDE_ACTIVE: 'sora-slide-active',
-        WRAPPER: 'sora-wrapper',
     };
 
     /* #endregion */
@@ -215,6 +187,11 @@ export namespace CarouselBasic {
         protected elementsManager : HtmlChildrenManager;
 
         /**
+         * Engine animation.
+         */
+        protected engineAnimation : SingleAnimationEngine;
+
+        /**
          * Flag to determine if the carousel animation is paused.
          */
         protected paused : boolean;
@@ -240,7 +217,10 @@ export namespace CarouselBasic {
             if (element == null)
                 throw new Error('The element must not be null.');
 
-            var soraWrapper = element.querySelector('.' + SINGLE_SLIDE_CAROUSEL_STYLES.WRAPPER);
+            if (!element.classList.contains(CarouselBase.CAROUSEL_STYLES.CAROUSEL))
+                throw new Error('The carousel element must contain the class "' + CarouselBase.CAROUSEL_STYLES.CAROUSEL + '".');
+
+            var soraWrapper = element.querySelector('.' + CarouselBase.CAROUSEL_STYLES.WRAPPER);
 
             if (soraWrapper == null)
                 throw new Error('The element has no child with class \'sora-wrapper\'.');
@@ -248,7 +228,7 @@ export namespace CarouselBasic {
             var children : HTMLElement[] = new Array();
 
             for (var i = 0; i < soraWrapper.children.length; ++i) {
-                if (soraWrapper.children[i].classList.contains(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE))
+                if (soraWrapper.children[i].classList.contains(CarouselBase.CAROUSEL_STYLES.SLIDE))
                     children.push(soraWrapper.children[i] as HTMLElement);
             }
 
@@ -285,6 +265,8 @@ export namespace CarouselBasic {
 
             this.addListener(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, onBeforeChange);
             this.addListener(COLLECTION_MANAGER_EVENTS.collectionAfterChange, onAfterChange);
+
+            this.engineAnimation = new SingleAnimationEngine();
         }
 
         //#region Public
@@ -377,10 +359,86 @@ export namespace CarouselBasic {
             if (this.isPaused())
                 this.resume();
 
-            this.eventEmitter.emit(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, eventArgs);
+            this.engineAnimation.cancelAnimation(null);
             this.activeIndex = activeIndex;
-
             this.resetCarouselStructure(activeIndex);
+
+            this.eventEmitter.emit(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, eventArgs);
+        }
+
+        /**
+         * Creates an animation flow based on animation options.
+         *
+         * @param enterElement Element to apply the enter animation.
+         * @param leaveElement Element to apply the leave animation.
+         * @param options Animation options.
+         *
+         * @returns Animation flow from the animation options.
+         */
+        protected generateGoToAnimationFlow(enterElement : HTMLElement, leaveElement : HTMLElement, options : ISingleSlideCarouselGotoOptions) : IAnimationFlow {
+            var innerParts : IAnimationFlowPart[] = [
+                {
+                    alias: SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER,
+                    elements: [ enterElement, ],
+                    styles: options.enterAnimation.slideStyles,
+                    when: null,
+                },
+                {
+                    alias: SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE,
+                    elements: [ leaveElement, ],
+                    styles: options.leaveAnimation.slideStyles,
+                    when: null,
+                },
+            ];
+
+            var generateChildrenParts = function(parentElement : HTMLElement, childrenStyles : ICarouselAnimationChildrenStyles[], aliasBase : string) {
+                if (childrenStyles) {
+                    for (var i = 0; i < childrenStyles.length; ++i) {
+                        innerParts.push({
+                            alias: aliasBase + i.toString(),
+                            elements: function() : HTMLElement[] {
+                                var elements : HTMLElement[] = new Array();
+
+                                var animationObject : ICarouselAnimationChildrenStyles = childrenStyles[i];
+
+                                var childrenElements = parentElement.querySelectorAll(animationObject.selector);
+                                for (var j = 0; j < childrenElements.length; ++j)
+                                    elements.push(childrenElements[j] as HTMLElement);
+
+                                return elements;
+                            } (),
+                            styles: childrenStyles[i].styles,
+                            when: null,
+                        });
+                    }
+                }
+            };
+
+            generateChildrenParts(
+                enterElement,
+                options.enterAnimation.childrenStyles,
+                SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER
+            );
+            generateChildrenParts(
+                leaveElement,
+                options.leaveAnimation.childrenStyles,
+                SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE
+            );
+
+            var innerPartsMap : { [key : string] : IAnimationFlowPart } = { };
+
+            for (var i = 0; i < innerParts.length; ++i)
+                innerPartsMap[innerParts[i].alias] = innerParts[i];
+
+            var innerGetPartByAlias = function(alias : string) : IAnimationFlowPart {
+                return innerPartsMap[alias];
+            };
+            var animationFlow : IAnimationFlow = {
+                parts: innerParts,
+                getPartByAlias: innerGetPartByAlias,
+            };
+
+            return animationFlow;
         }
 
         /**
@@ -406,11 +464,21 @@ export namespace CarouselBasic {
         }
 
         /**
-         * Carousel handler.
-         * 3. Any carousel has transitions.
-         * @param action action to be handled
-         * @param options options for the action.
+         * Determines if the carousel has an active animation, even if the animation is Paused.
+         * @returns True if the carousel has an active animation.
          */
+        public hasActiveAnimation() : boolean {
+            return this.currentAnimation != null
+        }
+
+        /**
+         * Returns true if the carousel animation is paused.
+         * @returns True if the carousel is paused and false in any other case.
+         */
+        public isPaused() {
+            return this.paused;
+        }
+
         public handle(action: string, options : {[key: string] : any}) : ISingleSlideCarouselGoToAnimationStatus {
             switch(action) {
                 case SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO:
@@ -429,31 +497,16 @@ export namespace CarouselBasic {
         }
 
         /**
-         * Determines if the carousel has an active animation, even if the animation is Paused.
-         * @returns True if the carousel has an active animation.
-         */
-        public hasActiveAnimation() : boolean {
-            return this.currentAnimation != null
-        }
-
-        /**
-         * Returns true if the carousel animation is paused.
-         * @returns True if the carousel is paused and false in any other case.
-         */
-        public isPaused() {
-            return this.paused;
-        }
-
-        /**
          * Pauses the animations currently handled by the carousel.
          */
         public pause() : void {
             if (!this.paused) {
+                this.engineAnimation.pause(null);
+                this.paused = true;
                 this.eventEmitter.emit(
                     SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE,
                     { value : AnimationPlayStateValue.paused, } as ISingleSlideCarouselAnimationPlayStateChangeEventArgs
                 );
-                this.paused = true;
             }
         }
 
@@ -471,11 +524,12 @@ export namespace CarouselBasic {
          */
         public resume() : void {
             if (this.paused) {
+                this.engineAnimation.resume(null);
+                this.paused = false;
                 this.eventEmitter.emit(
                     SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE,
                     { value: AnimationPlayStateValue.running, } as ISingleSlideCarouselAnimationPlayStateChangeEventArgs
                 );
-                this.paused = false;
             }
         }
 
@@ -529,8 +583,6 @@ export namespace CarouselBasic {
 
             newActiveElement.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
 
-            //Animate!
-
             var animationCanceled = false;
 
             var cancelAnimationHandler = function() {
@@ -538,31 +590,16 @@ export namespace CarouselBasic {
                 that.currentAnimation = null;
             };
 
-            var enterAnimationStatus : ISingleSlideCarouselSlideAnimationStatus =
-                this.handleAnimationOverSlide(
-                    newActiveElement,
-                    options.enterAnimation
-                );
+            var animationFlow = this.generateGoToAnimationFlow(newActiveElement, oldActiveElement, options);
+            var animationPromises : Promise<void>[] = this.engineAnimation.handle(animationFlow);
 
-            var leaveAnimationStatus : ISingleSlideCarouselSlideAnimationStatus =
-                this.handleAnimationOverSlide(
-                    oldActiveElement,
-                    options.leaveAnimation
-                );
+            const ANIMATION_LEAVE_INDEX : number = 1;
 
-            enterAnimationStatus.elementAnimationStatus.then(function(animationOptions) {
-                that.eventEmitter.emit(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_SLIDE_ENTER, animationOptions as ISingleSlideCarouselSlideEnterEventArgs);
-            });
-
-            leaveAnimationStatus.elementAnimationStatus.then(function(animationOptions) {
-                that.eventEmitter.emit(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_SLIDE_LEAVE, animationOptions as ISingleSlideCarouselSlideLeaveEventArgs);
-            });
-
-            var hideLeaveSlideAfterAnimationEnds = new Promise<ISingleSlideCarouselAnimateElementOptions>(function(resolve, reject) {
-                leaveAnimationStatus.elementAnimationStatus.then(function(animationOptions) {
+            var hideLeaveSlideAfterAnimationEnds = new Promise<void>(function(resolve, reject) {
+                animationPromises[ANIMATION_LEAVE_INDEX].then(function(animationOptions) {
                     if (!animationCanceled)
                         oldActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
-                    resolve(animationOptions);
+                    resolve();
                 }).catch(function(err) {
                     reject(err);
                 });
@@ -572,9 +609,9 @@ export namespace CarouselBasic {
 
             var soraHandlerStatus : Promise<void> = new Promise<void>(function(resolve, reject) {
                 Promise.all([
-                    enterAnimationStatus.elementAnimationStatus,
+                    animationPromises[0],
                     hideLeaveSlideAfterAnimationEnds,
-                ]).then(function(slidesAnimationStatus : ISingleSlideCarouselAnimateElementOptions[]) {
+                ]).then(function() {
                     if (!animationCanceled) {
                         oldActiveElement.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
                         newActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
@@ -598,163 +635,10 @@ export namespace CarouselBasic {
             });
 
             return {
-                enterSlideStatus: enterAnimationStatus,
-                leaveSlideStatus: leaveAnimationStatus,
+                animationPromises: animationPromises,
                 soraHandlerStatus: soraHandlerStatus,
             };
         }
-
-        /**
-         * Handles the animation of an element.
-         * @param element Element to be animated.
-         * @param animation Animation options.
-         * @returns Promise of handling the animation. The promise is resolved as soon as all the transitions are finished.
-         */
-        private handleAnimationOverSlide(element : HTMLElement, animation : SoraAnimation.ICarouselAnimation) : ISingleSlideCarouselSlideAnimationStatus {
-            var childrenStatus : ISingleSlideCarouselSlideChildrenAnimationOptions = {};
-
-            if (animation.childrenStyles) {
-                for (var i = 0; i < animation.childrenStyles.length; ++i) {
-                    var animationObject : SoraAnimation.ICarouselAnimationChildrenStyles = animation.childrenStyles[i];
-                    if (!childrenStatus[animationObject.selector])
-                        childrenStatus[animationObject.selector] = new Array();
-
-                    var childrenElements = element.querySelectorAll(animationObject.selector);
-                    for (var j = 0; j < childrenElements.length; ++j)
-                        childrenStatus[animationObject.selector].push(
-                            this.handleAnimationOverElement(
-                                {
-                                    element: childrenElements[j] as HTMLElement,
-                                    styles: animationObject.styles,
-                                }
-                            )
-                        );
-                }
-            }
-
-            var that = this;
-
-            return {
-                elementAnimationStatus: that.handleAnimationOverElement(
-                    {
-                        element: element,
-                        styles: animation.slideStyles,
-                    }
-                ),
-                childrenAnimationStatus : childrenStatus,
-            }
-        }
-
-        /**
-         * Handles the animation of an element
-         * @param element Element to be animated.
-         * @param styles Collection os styles to apply.
-         */
-        private handleAnimationOverElement(elementAnimation : ISingleSlideCarouselAnimateElementOptions) : Promise<ISingleSlideCarouselAnimateElementOptions> {
-            var element : HTMLElement = elementAnimation.element;
-            var styles : string[] = elementAnimation.styles;
-
-            if (styles) {
-                if (styles.length < 1)
-                    throw new Error('It\'s required to have at least one class to generate an animation.');
-            } else
-                throw new Error('It\'s required to have an array of styles to generate an animation.');
-
-            var that = this;
-            return new Promise<ISingleSlideCarouselAnimateElementOptions>(function(resolve, reject) {
-                try {
-                    var animationFunctions : ((event : TransitionEvent) => void)[] = new Array();
-                    var currentAnimationIndex : number = null;
-                    var onAnimationCancel = function(args : ISingleSlideCarouselCancelAnimationEventArgs) {
-                        element.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
-
-                        if (currentAnimationIndex != null)
-                            element.classList.remove(styles[currentAnimationIndex]);
-
-                        that.unregisterAnimationListener(element, animationFunctions[currentAnimationIndex]);
-                        element.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
-
-                        that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onAnimationCancel);
-                        that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, onAnimationPlayStateChange);
-
-                        resolve({
-                            element: element,
-                            styles: styles,
-                        });
-                    };
-
-                    that.addListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onAnimationCancel);
-
-                    var onAnimationPlayStateChange = function(args : ISingleSlideCarouselAnimationPlayStateChangeEventArgs) {
-                        if (AnimationPlayStateValue.paused == args.value) {
-                            if (!element.classList.contains(SINGLE_SLIDE_CAROUSEL_STYLES.ANIMATION_PAUSED))
-                                element.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.ANIMATION_PAUSED);
-                        } else if (AnimationPlayStateValue.running == args.value) {
-                            if (element.classList.contains(SINGLE_SLIDE_CAROUSEL_STYLES.ANIMATION_PAUSED))
-                                element.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.ANIMATION_PAUSED);
-                        }
-                    };
-
-                    that.addListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, onAnimationPlayStateChange);
-
-                    for (var i = 1; i < styles.length; ++i) {
-                        animationFunctions.push(function(index) {
-                            return function(event : TransitionEvent) {
-                                element.classList.remove(styles[index - 1]);
-                                that.unregisterAnimationListener(element, animationFunctions[index - 1]);
-                                that.registerAnimationListener(element, animationFunctions[index]);
-                                element.classList.add(styles[index]);
-                                currentAnimationIndex = index;
-                            }
-                        } (i));
-                    }
-
-                    //add the clear function
-                    animationFunctions.push(function(event : TransitionEvent) {
-                        element.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
-                        element.classList.remove(styles[styles.length - 1]);
-                        element.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.CLEAR_ANIMATION);
-                        that.unregisterAnimationListener(element, animationFunctions[animationFunctions.length - 1]);
-                        currentAnimationIndex = null;
-                        that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onAnimationCancel);
-                        that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, onAnimationPlayStateChange);
-
-                        resolve({
-                            element: element,
-                            styles: styles,
-                        });
-                    });
-
-                    that.registerAnimationListener(element, animationFunctions[0]);
-                    element.classList.add(styles[0]);
-                    currentAnimationIndex = 0;
-                } catch (ex) {
-                    reject(ex);
-                }
-            });
-        }
-
-        /**
-         * Handles the end of a transition over an element.
-         * @param element Element whose event will be handled.
-         * @param listener Event listener.
-         */
-        private registerAnimationListener(element : HTMLElement, listener : (element : TransitionEvent) => void) : void {
-            element.addEventListener('animationend', listener);
-            element.addEventListener('webkitAnimationEnd', listener);
-        }
-
-        /**
-         * Unsubscribes an event handler from the list of listeners of an element
-         * @param element Target element
-         * @param listener Listener to be unsubscribed.
-         */
-        private unregisterAnimationListener(element : HTMLElement, listener : (element : TransitionEvent) => void) : void {
-            element.removeEventListener('animationend', listener);
-            element.removeEventListener('webkitAnimationEnd', listener);
-        }
-
-        //#endregion
 
         //#region Protected
 
@@ -769,7 +653,7 @@ export namespace CarouselBasic {
                 while(collection[i].classList.length > 0)
                     collection[i].classList.remove(collection[i].classList.item(0));
 
-                collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE);
+                collection[i].classList.add(CarouselBase.CAROUSEL_STYLES.SLIDE);
 
                 if (activeIndex === i)
                     collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
