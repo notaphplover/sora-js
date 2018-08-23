@@ -8,7 +8,8 @@ import {
     COLLECTION_MANAGER_EVENTS,
 } from '../collection/collection-manager';
 import { HtmlChildrenManager } from '../collection/html-children-manager';
-import { SingleAnimationEngine, IAnimationFlow, IAnimationFlowPart } from './animation/animation-engine';
+import { SingleAnimationEngine, IAnimationFlowPart } from '../task/animation-engine';
+import { ITaskFlow } from '../task/task-engine';
 
 export namespace CarouselBasic {
 
@@ -375,7 +376,7 @@ export namespace CarouselBasic {
          *
          * @returns Animation flow from the animation options.
          */
-        protected generateGoToAnimationFlow(enterElement : HTMLElement, leaveElement : HTMLElement, options : ISingleSlideCarouselGotoOptions) : IAnimationFlow {
+        protected generateGoToAnimationFlow(enterElement : HTMLElement, leaveElement : HTMLElement, options : ISingleSlideCarouselGotoOptions) : ITaskFlow<IAnimationFlowPart> {
             var innerParts : IAnimationFlowPart[] = [
                 {
                     alias: SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER,
@@ -433,7 +434,7 @@ export namespace CarouselBasic {
             var innerGetPartByAlias = function(alias : string) : IAnimationFlowPart {
                 return innerPartsMap[alias];
             };
-            var animationFlow : IAnimationFlow = {
+            var animationFlow : ITaskFlow<IAnimationFlowPart> = {
                 parts: innerParts,
                 getPartByAlias: innerGetPartByAlias,
             };
