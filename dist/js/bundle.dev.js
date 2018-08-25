@@ -814,18 +814,20 @@ var HtmlChildrenManager = exports.HtmlChildrenManager = function (_CollectionMan
                 var oldIndexesCounter = 0;
                 var newIndexesCounter = 0;
                 for (var key in indexMap) {
-                    var keyNumber = Number(key);
-                    for (var i = oldIndexesCounter; i < keyNumber; ++i) {
-                        this.parentElement.removeChild(this.parentElement.children[i + insertionPivot - deletionPivot]);
-                        ++deletionPivot;
+                    if (indexMap.hasOwnProperty(key)) {
+                        var keyNumber = Number(key);
+                        for (var i = oldIndexesCounter; i < keyNumber; ++i) {
+                            this.parentElement.removeChild(this.parentElement.children[i + insertionPivot - deletionPivot]);
+                            ++deletionPivot;
+                        }
+                        var newIndex = indexMap[key];
+                        for (var i = newIndexesCounter; i < newIndex; ++i) {
+                            this.parentElement.insertBefore(newElements[i], this.parentElement.children[i]);
+                            ++insertionPivot;
+                        }
+                        oldIndexesCounter = keyNumber + 1;
+                        newIndexesCounter = newIndex + 1;
                     }
-                    var newIndex = indexMap[key];
-                    for (var i = newIndexesCounter; i < newIndex; ++i) {
-                        this.parentElement.insertBefore(newElements[i], this.parentElement.children[i]);
-                        ++insertionPivot;
-                    }
-                    oldIndexesCounter = keyNumber + 1;
-                    newIndexesCounter = newIndex + 1;
                 }
                 for (var i = newIndexesCounter; i < newElements.length; ++i) {
                     this.parentElement.appendChild(newElements[i]);
@@ -865,50 +867,50 @@ module.exports = sora;
 
 
 },{"./carousel/carousel-basic":3,"core-js/fn/promise":28}],9:[function(require,module,exports){
-"use strict";
+'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
 exports.SingleAnimationEngine = exports.ANIMATION_OPERATION_EVENTS = undefined;
 
-var _promise = require("babel-runtime/core-js/promise");
+var _promise = require('babel-runtime/core-js/promise');
 
 var _promise2 = _interopRequireDefault(_promise);
 
-var _getPrototypeOf = require("babel-runtime/core-js/object/get-prototype-of");
+var _getPrototypeOf = require('babel-runtime/core-js/object/get-prototype-of');
 
 var _getPrototypeOf2 = _interopRequireDefault(_getPrototypeOf);
 
-var _classCallCheck2 = require("babel-runtime/helpers/classCallCheck");
+var _classCallCheck2 = require('babel-runtime/helpers/classCallCheck');
 
 var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
 
-var _createClass2 = require("babel-runtime/helpers/createClass");
+var _createClass2 = require('babel-runtime/helpers/createClass');
 
 var _createClass3 = _interopRequireDefault(_createClass2);
 
-var _possibleConstructorReturn2 = require("babel-runtime/helpers/possibleConstructorReturn");
+var _possibleConstructorReturn2 = require('babel-runtime/helpers/possibleConstructorReturn');
 
 var _possibleConstructorReturn3 = _interopRequireDefault(_possibleConstructorReturn2);
 
-var _get2 = require("babel-runtime/helpers/get");
+var _get2 = require('babel-runtime/helpers/get');
 
 var _get3 = _interopRequireDefault(_get2);
 
-var _inherits2 = require("babel-runtime/helpers/inherits");
+var _inherits2 = require('babel-runtime/helpers/inherits');
 
 var _inherits3 = _interopRequireDefault(_inherits2);
 
-var _events = require("events");
+var _events = require('events');
 
-var _carouselBase = require("../carousel/carousel-base");
+var _animationPlayState = require('../carousel/animation/animation-play-state');
 
-var _animationPlayState = require("../carousel/animation/animation-play-state");
+var _carouselBase = require('../carousel/carousel-base');
 
-var _operationManager = require("./operation-manager");
+var _operationManager = require('./operation-manager');
 
-var _taskEngine = require("./task-engine");
+var _taskEngine = require('./task-engine');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -932,13 +934,34 @@ var SingleAnimationEngine = exports.SingleAnimationEngine = function (_TaskEngin
     }
 
     (0, _createClass3.default)(SingleAnimationEngine, [{
-        key: "dispose",
+        key: 'dispose',
         value: function dispose() {
             this.animationCancelManager.dispose();
             this.animationStateChangeManager.dispose();
         }
     }, {
-        key: "handleTaskPart",
+        key: 'cancelAnimation',
+        value: function cancelAnimation(aliases) {
+            this.eventEmitter.emit(ANIMATION_OPERATION_EVENTS.ANIMATION_CANCEL, { aliases: aliases });
+        }
+    }, {
+        key: 'pause',
+        value: function pause(aliases) {
+            this.eventEmitter.emit(ANIMATION_OPERATION_EVENTS.ANIMATION_STATE_CHANGE, {
+                aliases: aliases,
+                value: _animationPlayState.AnimationPlayStateValue.paused
+            });
+        }
+    }, {
+        key: 'resume',
+        value: function resume(aliases) {
+            this.eventEmitter.emit(ANIMATION_OPERATION_EVENTS.ANIMATION_STATE_CHANGE, {
+                aliases: aliases,
+                value: _animationPlayState.AnimationPlayStateValue.running
+            });
+        }
+    }, {
+        key: 'handleTaskPart',
         value: function handleTaskPart(part) {
             var that = this;
             part.pendingOperations = {
@@ -950,117 +973,115 @@ var SingleAnimationEngine = exports.SingleAnimationEngine = function (_TaskEngin
                 that.animationCancelManager.unsubscribe(part.alias);
             });
             this.animationStateChangeManager.subscribe(part.alias, function (eventArgs) {
-                part.pendingOperations.pause = eventArgs.value == _animationPlayState.AnimationPlayStateValue.paused;
+                part.pendingOperations.pause = eventArgs.value === _animationPlayState.AnimationPlayStateValue.paused;
             });
-            return (0, _get3.default)(SingleAnimationEngine.prototype.__proto__ || (0, _getPrototypeOf2.default)(SingleAnimationEngine.prototype), "handleTaskPart", this).call(this, part);
+            return (0, _get3.default)(SingleAnimationEngine.prototype.__proto__ || (0, _getPrototypeOf2.default)(SingleAnimationEngine.prototype), 'handleTaskPart', this).call(this, part);
         }
     }, {
-        key: "performTask",
+        key: 'performTask',
         value: function performTask(part) {
             this.animationCancelManager.unsubscribe(part.alias);
             this.animationStateChangeManager.unsubscribe(part.alias);
             var promises = new Array(part.elements.length);
             for (var i = 0; i < part.elements.length; ++i) {
                 promises[i] = this.handleAnimationOverElement(part.elements[i], part);
-            }if (part.pendingOperations) {
-                if (part.pendingOperations.pause) this.pause([part.alias]);
-                if (part.pendingOperations.cancel) this.cancelAnimation([part.alias]);
+            }
+            if (part.pendingOperations) {
+                if (part.pendingOperations.pause) {
+                    this.pause([part.alias]);
+                }
+                if (part.pendingOperations.cancel) {
+                    this.cancelAnimation([part.alias]);
+                }
             }
             return _promise2.default.all(promises);
         }
     }, {
-        key: "handleAnimationOverElement",
+        key: 'handleAnimationOverElement',
         value: function handleAnimationOverElement(element, part) {
             var styles = part.styles;
             if (styles) {
-                if (styles.length < 1) throw new Error('It\'s required to have at least one class to generate an animation.');
-            } else throw new Error('It\'s required to have an array of styles to generate an animation.');
+                if (styles.length < 1) {
+                    throw new Error('It\'s required to have at least one class to generate an animation.');
+                }
+            } else {
+                throw new Error('It\'s required to have an array of styles to generate an animation.');
+            }
             var that = this;
             return new _promise2.default(function (resolve, reject) {
                 try {
-                    var animationFunctions = new Array();
-                    var currentAnimationIndex = null;
-                    var onAnimationCancel = function onAnimationCancel(args) {
-                        element.classList.add(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
-                        if (currentAnimationIndex != null) element.classList.remove(styles[currentAnimationIndex]);
-                        that.unregisterAnimationListener(element, animationFunctions[currentAnimationIndex]);
-                        element.classList.remove(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
-                        that.animationCancelManager.unsubscribe(part.alias);
-                        that.animationStateChangeManager.unsubscribe(part.alias);
-                        resolve();
-                    };
-                    that.animationCancelManager.subscribe(part.alias, onAnimationCancel);
-                    var onAnimationPlayStateChange = function onAnimationPlayStateChange(args) {
-                        if (_animationPlayState.AnimationPlayStateValue.paused == args.value) {
-                            if (!element.classList.contains(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED)) element.classList.add(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
-                        } else if (_animationPlayState.AnimationPlayStateValue.running == args.value) {
-                            if (element.classList.contains(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED)) element.classList.remove(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
-                        }
-                    };
-                    that.animationStateChangeManager.subscribe(part.alias, onAnimationPlayStateChange);
-                    for (var i = 1; i < styles.length; ++i) {
-                        animationFunctions.push(function (index) {
-                            return function (event) {
-                                element.classList.remove(styles[index - 1]);
-                                that.unregisterAnimationListener(element, animationFunctions[index - 1]);
-                                that.registerAnimationListener(element, animationFunctions[index]);
-                                element.classList.add(styles[index]);
-                                currentAnimationIndex = index;
-                            };
-                        }(i));
-                    }
-                    animationFunctions.push(function (event) {
-                        element.classList.add(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
-                        element.classList.remove(styles[styles.length - 1]);
-                        element.classList.remove(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
-                        that.unregisterAnimationListener(element, animationFunctions[animationFunctions.length - 1]);
+                    var currentAnimationIndex;
+                    var i;
+
+                    (function () {
+                        var animationFunctions = new Array();
                         currentAnimationIndex = null;
-                        that.animationCancelManager.unsubscribe(part.alias);
-                        that.animationStateChangeManager.unsubscribe(part.alias);
-                        resolve();
-                    });
-                    that.registerAnimationListener(element, animationFunctions[0]);
-                    element.classList.add(styles[0]);
-                    currentAnimationIndex = 0;
+
+                        var onAnimationCancel = function onAnimationCancel(args) {
+                            element.classList.add(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                            if (null != currentAnimationIndex) {
+                                element.classList.remove(styles[currentAnimationIndex]);
+                            }
+                            that.unregisterAnimationListener(element, animationFunctions[currentAnimationIndex]);
+                            element.classList.remove(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                            that.animationCancelManager.unsubscribe(part.alias);
+                            that.animationStateChangeManager.unsubscribe(part.alias);
+                            resolve();
+                        };
+                        that.animationCancelManager.subscribe(part.alias, onAnimationCancel);
+                        var onAnimationPlayStateChange = function onAnimationPlayStateChange(args) {
+                            if (_animationPlayState.AnimationPlayStateValue.paused === args.value) {
+                                if (!element.classList.contains(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED)) {
+                                    element.classList.add(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
+                                }
+                            } else if (_animationPlayState.AnimationPlayStateValue.running === args.value) {
+                                if (element.classList.contains(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED)) {
+                                    element.classList.remove(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
+                                }
+                            }
+                        };
+                        that.animationStateChangeManager.subscribe(part.alias, onAnimationPlayStateChange);
+                        for (i = 1; i < styles.length; ++i) {
+                            animationFunctions.push(function (index) {
+                                return function (event) {
+                                    element.classList.remove(styles[index - 1]);
+                                    that.unregisterAnimationListener(element, animationFunctions[index - 1]);
+                                    that.registerAnimationListener(element, animationFunctions[index]);
+                                    element.classList.add(styles[index]);
+                                    currentAnimationIndex = index;
+                                };
+                            }(i));
+                        }
+                        animationFunctions.push(function (event) {
+                            element.classList.add(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                            element.classList.remove(styles[styles.length - 1]);
+                            element.classList.remove(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                            that.unregisterAnimationListener(element, animationFunctions[animationFunctions.length - 1]);
+                            currentAnimationIndex = null;
+                            that.animationCancelManager.unsubscribe(part.alias);
+                            that.animationStateChangeManager.unsubscribe(part.alias);
+                            resolve();
+                        });
+                        that.registerAnimationListener(element, animationFunctions[0]);
+                        element.classList.add(styles[0]);
+                        currentAnimationIndex = 0;
+                    })();
                 } catch (ex) {
                     reject(ex);
                 }
             });
         }
     }, {
-        key: "registerAnimationListener",
+        key: 'registerAnimationListener',
         value: function registerAnimationListener(element, listener) {
             element.addEventListener('animationend', listener);
             element.addEventListener('webkitAnimationEnd', listener);
         }
     }, {
-        key: "unregisterAnimationListener",
+        key: 'unregisterAnimationListener',
         value: function unregisterAnimationListener(element, listener) {
             element.removeEventListener('animationend', listener);
             element.removeEventListener('webkitAnimationEnd', listener);
-        }
-    }, {
-        key: "cancelAnimation",
-        value: function cancelAnimation(aliases) {
-            this.eventEmitter.emit(ANIMATION_OPERATION_EVENTS.ANIMATION_CANCEL, {
-                aliases: aliases
-            });
-        }
-    }, {
-        key: "pause",
-        value: function pause(aliases) {
-            this.eventEmitter.emit(ANIMATION_OPERATION_EVENTS.ANIMATION_STATE_CHANGE, {
-                aliases: aliases,
-                value: _animationPlayState.AnimationPlayStateValue.paused
-            });
-        }
-    }, {
-        key: "resume",
-        value: function resume(aliases) {
-            this.eventEmitter.emit(ANIMATION_OPERATION_EVENTS.ANIMATION_STATE_CHANGE, {
-                aliases: aliases,
-                value: _animationPlayState.AnimationPlayStateValue.running
-            });
         }
     }]);
     return SingleAnimationEngine;
