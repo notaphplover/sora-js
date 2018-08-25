@@ -1,5 +1,11 @@
-import { CollectionManager, COLLECTION_MANAGER_EVENTS, CollectionChangeEventArgs, CancelableCollectionChangeEventArgs } from '../../../src/collection/collection-manager'
 import { EventEmitter } from 'events';
+import { CancelableCollectionChangeEventArgs } from '../../collection/cancelable-collection-change-args';
+import { CollectionChangeEventArgs } from '../../collection/collection-change-args';
+import {
+    COLLECTION_MANAGER_EVENTS,
+    CollectionManager,
+} from '../../collection/collection-manager';
+
 import { ITest } from '../ITest';
 
 export class CollectionManagerTests implements ITest {

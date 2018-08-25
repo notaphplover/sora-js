@@ -1,8 +1,8 @@
 import { EventEmitter } from 'events';
+import { CancelableCollectionChangeEventArgs } from '../collection/cancelable-collection-change-args';
+import { CollectionChangeEventArgs } from '../collection/collection-change-args';
 import {
-    CancelableCollectionChangeEventArgs,
     COLLECTION_MANAGER_EVENTS,
-    CollectionChangeEventArgs,
 } from '../collection/collection-manager';
 import { HtmlChildrenManager } from '../collection/html-children-manager';
 import {
@@ -406,6 +406,102 @@ export class SingleSlideCarousel extends CarouselBase {
     }
 
     /**
+     * Obtains the active slide of the carousel
+     */
+    public getActiveElement(): HTMLElement {
+        return this.elementsManager.getCollection()[this.activeIndex];
+    }
+
+    /**
+     * Obtains the active index in the elements array of the carousel
+     */
+    public getActiveIndex(): number {
+        return this.activeIndex;
+    }
+
+    /**
+     * Returns the collection manager of the instance.
+     * @returns Collection manager of the slide elements.
+     */
+    public getElementsManager(): HtmlChildrenManager {
+        return this.elementsManager;
+    }
+
+    /**
+     * Determines if the carousel has an active animation, even if the animation is Paused.
+     * @returns True if the carousel has an active animation.
+     */
+    public hasActiveAnimation(): boolean {
+        return null != this.currentAnimation;
+    }
+
+    public handle(action: string, options: {[key: string]: any}): ISingleSlideCarouselGoToAnimationStatus {
+        switch (action) {
+            case SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO:
+                if (options == null || typeof options.index !== 'number') {
+                    throw new Error('Invalid options for \'' + SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO + '\'.');
+                }
+                return this.handleGoTo(options as ISingleSlideCarouselGotoOptions);
+            case SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT:
+                options.index = (this.activeIndex + 1) % this.elementsManager.getLength();
+                return this.handle(SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO, options);
+            case SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_PREVIOUS:
+                const elementsLength = this.elementsManager.getLength();
+                options.index = ((this.activeIndex - 1) % elementsLength + elementsLength) % elementsLength;
+                return this.handle(SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO, options);
+        }
+    }
+
+    /**
+     * Returns true if the carousel animation is paused.
+     * @returns True if the carousel is paused and false in any other case.
+     */
+    public isPaused() {
+        return this.paused;
+    }
+
+    /**
+     * Pauses the animations currently handled by the carousel.
+     */
+    public pause(): void {
+        if (!this.paused) {
+            this.engineAnimation.pause(null);
+            this.paused = true;
+            this.eventEmitter.emit(
+                SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE,
+                { value : AnimationPlayStateValue.paused } as ISingleSlideCarouselAnimationPlayStateChangeEventArgs,
+            );
+        }
+    }
+
+    /**
+     * Unsubscribes a listener to an event of the carousel.
+     * @param event Event associated.
+     * @param listener Listener to unsubscribe.
+     */
+    public removeListener(event: string | symbol, listener: (... args: any[]) => void): void {
+        this.eventEmitter.removeListener(event, listener);
+    }
+
+    /**
+     * Resumes the animations currently handled by the carousel.
+     */
+    public resume(): void {
+        if (this.paused) {
+            this.engineAnimation.resume(null);
+            this.paused = false;
+            this.eventEmitter.emit(
+                SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE,
+                { value: AnimationPlayStateValue.running } as ISingleSlideCarouselAnimationPlayStateChangeEventArgs,
+            );
+        }
+    }
+
+    //#endregion
+
+    //#region Protected
+
+    /**
      * Creates an animation flow based on animation options.
      *
      * @param enterElement Element to apply the enter animation.
@@ -422,7 +518,7 @@ export class SingleSlideCarousel extends CarouselBase {
         const innerParts: IAnimationFlowPart[] = [
             {
                 alias: SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER,
-                elements: [ enterElement, ],
+                elements: [ enterElement ],
                 styles: options.enterAnimation.slideStyles,
                 when: null,
             },
@@ -448,8 +544,8 @@ export class SingleSlideCarousel extends CarouselBase {
                             const animationObject: ICarouselAnimationChildrenStyles = childrenStyles[i];
                             const childrenElements = parentElement.querySelectorAll(animationObject.selector);
 
-                            for (var j = 0; j < childrenElements.length; ++j) {
-                                elements.push(childrenElements[j] as HTMLElement);
+                            for (const childrenElement of childrenElements) {
+                                elements.push(childrenElement as HTMLElement);
                             }
 
                             return elements;
@@ -464,119 +560,50 @@ export class SingleSlideCarousel extends CarouselBase {
         generateChildrenParts(
             enterElement,
             options.enterAnimation.childrenStyles,
-            SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER
+            SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER,
         );
         generateChildrenParts(
             leaveElement,
             options.leaveAnimation.childrenStyles,
-            SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE
+            SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE,
         );
 
-        var innerPartsMap : { [key : string] : IAnimationFlowPart } = { };
+        const innerPartsMap: { [key: string]: IAnimationFlowPart } = { };
 
-        for (var i = 0; i < innerParts.length; ++i)
-            innerPartsMap[innerParts[i].alias] = innerParts[i];
+        for (const innerPart of innerParts) {
+            innerPartsMap[innerPart.alias] = innerPart;
+        }
 
-        var innerGetPartByAlias = function(alias : string) : IAnimationFlowPart {
+        const innerGetPartByAlias = function(alias: string): IAnimationFlowPart {
             return innerPartsMap[alias];
         };
-        var animationFlow : ITaskFlow<IAnimationFlowPart> = {
-            parts: innerParts,
+        const animationFlow: ITaskFlow<IAnimationFlowPart> = {
             getPartByAlias: innerGetPartByAlias,
+            parts: innerParts,
         };
 
         return animationFlow;
     }
 
     /**
-     * Obtains the active slide of the carousel
+     * Resets the carousel structure. Sets a new active element for the carousel.
+     * @param activeIndex Current active index.
      */
-    public getActiveElement() : HTMLElement {
-        return this.elementsManager.getCollection()[this.activeIndex];
-    }
+    protected resetCarouselStructure(activeIndex: number) {
+        // This operation is atomic in a single-thread environment, so we can store the collection.
+        const collection = this.elementsManager.getCollection();
+        for (var i = 0; i < collection.length; ++i) {
+            while (collection[i].classList.length > 0) {
+                collection[i].classList.remove(collection[i].classList.item(0));
+            }
 
-    /**
-     * Obtains the active index in the elements array of the carousel
-     */
-    public getActiveIndex() : number {
-        return this.activeIndex;
-    }
+            collection[i].classList.add(CAROUSEL_STYLES.SLIDE);
 
-    /**
-     * Returns the collection manager of the instance.
-     * @returns Collection manager of the slide elements.
-     */
-    public getElementsManager() : HtmlChildrenManager {
-        return this.elementsManager;
-    }
-
-    /**
-     * Determines if the carousel has an active animation, even if the animation is Paused.
-     * @returns True if the carousel has an active animation.
-     */
-    public hasActiveAnimation() : boolean {
-        return this.currentAnimation != null
-    }
-
-    /**
-     * Returns true if the carousel animation is paused.
-     * @returns True if the carousel is paused and false in any other case.
-     */
-    public isPaused() {
-        return this.paused;
-    }
-
-    public handle(action: string, options : {[key: string] : any}) : ISingleSlideCarouselGoToAnimationStatus {
-        switch(action) {
-            case SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO:
-                if (options == null || typeof options.index !== 'number')
-                    throw new Error('Invalid options for \'' + SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO + '\'.');
-
-                return this.handleGoTo(options as ISingleSlideCarouselGotoOptions);
-            case SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT:
-                options.index = (this.activeIndex + 1) % this.elementsManager.getLength();
-                return this.handle(SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO, options);
-            case SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_PREVIOUS:
-                var elementsLength = this.elementsManager.getLength();
-                options.index = ((this.activeIndex - 1) % elementsLength + elementsLength) % elementsLength;
-                return this.handle(SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO, options);
-        }
-    }
-
-    /**
-     * Pauses the animations currently handled by the carousel.
-     */
-    public pause() : void {
-        if (!this.paused) {
-            this.engineAnimation.pause(null);
-            this.paused = true;
-            this.eventEmitter.emit(
-                SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE,
-                { value : AnimationPlayStateValue.paused, } as ISingleSlideCarouselAnimationPlayStateChangeEventArgs
-            );
-        }
-    }
-
-    /**
-     * Unsubscribes a listener to an event of the carousel.
-     * @param event Event associated.
-     * @param listener Listener to unsubscribe.
-     */
-    public removeListener(event : string | symbol, listener : (... args : any[]) => void) : void {
-        this.eventEmitter.removeListener(event, listener);
-    }
-
-    /**
-     * Resumes the animations currently handled by the carousel.
-     */
-    public resume() : void {
-        if (this.paused) {
-            this.engineAnimation.resume(null);
-            this.paused = false;
-            this.eventEmitter.emit(
-                SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE,
-                { value: AnimationPlayStateValue.running, } as ISingleSlideCarouselAnimationPlayStateChangeEventArgs
-            );
+            if (i === activeIndex) {
+                collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+            } else {
+                collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+            }
         }
     }
 
@@ -588,37 +615,41 @@ export class SingleSlideCarousel extends CarouselBase {
      * Handles the GoTo operation.
      * @param options Options with the index and the custom animation to display.
      */
-    private handleGoTo(options : ISingleSlideCarouselGotoOptions) : ISingleSlideCarouselGoToAnimationStatus {
-        if (options.index < 0 || options.index >= this.elementsManager.getLength())
+    private handleGoTo(options: ISingleSlideCarouselGotoOptions): ISingleSlideCarouselGoToAnimationStatus {
+        if (options.index < 0 || options.index >= this.elementsManager.getLength()) {
             throw new Error('Invalid index. There is no element with index ' + options.index + '.');
-
-        if (options.index == this.activeIndex)
-            throw new Error('Invalid index. It\'s not allowed to go to the current active slide');
-
-        if (null == this.currentAnimation)
-            this.currentAnimation = options;
-        else {
-            throw new Error('It\'s not allowed to start an animation while an existing animation over an slide element is active');
         }
 
-        var oldActiveElement = this.elementsManager.getCollection()[this.activeIndex];
-        var newActiveIndex : number = options.index;
+        if (options.index === this.activeIndex) {
+            throw new Error('Invalid index. It\'s not allowed to go to the current active slide');
+        }
+        if (null == this.currentAnimation) {
+            this.currentAnimation = options;
+        } else {
+            throw new Error(
+                'It\'s not allowed to start an animation while an existing animation over an slide element is active',
+            );
+        }
+
+        const oldActiveElement = this.elementsManager.getCollection()[this.activeIndex];
+        var newActiveIndex: number = options.index;
 
         this.eventEmitter.emit(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_START, {
-            options : options
+            options: options,
         } as ISingleSlideCarouselAnimationStartEventArgs);
 
-        var that = this;
+        const that = this;
 
-        var onBeforeChange = function(eventArgs : CancelableCollectionChangeEventArgs<HTMLElement>) {
-            var indexMap = eventArgs.getIndexMap();
-            if (indexMap[newActiveIndex] == null)
+        const onBeforeChange = function(eventArgs: CancelableCollectionChangeEventArgs<HTMLElement>) {
+            const indexMap = eventArgs.getIndexMap();
+            if (null == indexMap[newActiveIndex]) {
                 eventArgs.setPreventDefault();
+            }
         };
 
-        var onAfterChange = function(eventArgs : CollectionChangeEventArgs<HTMLElement>) {
+        const onAfterChange = function(eventArgs: CollectionChangeEventArgs<HTMLElement>) {
             if (!eventArgs.getPreventDefault()) {
-                var indexMap = eventArgs.getIndexMap();
+                const indexMap = eventArgs.getIndexMap();
                 newActiveIndex = indexMap[newActiveIndex];
             }
         };
@@ -626,26 +657,27 @@ export class SingleSlideCarousel extends CarouselBase {
         this.addListener(COLLECTION_MANAGER_EVENTS.collectionBeforeChange, onBeforeChange);
         this.addListener(COLLECTION_MANAGER_EVENTS.collectionAfterChange, onAfterChange);
 
-        var newActiveElement = this.elementsManager.getCollection()[newActiveIndex];
+        const newActiveElement = this.elementsManager.getCollection()[newActiveIndex];
 
         newActiveElement.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
 
         var animationCanceled = false;
 
-        var cancelAnimationHandler = function() {
+        const cancelAnimationHandler = function() {
             animationCanceled = true;
             that.currentAnimation = null;
         };
 
-        var animationFlow = this.generateGoToAnimationFlow(newActiveElement, oldActiveElement, options);
-        var animationPromises : Promise<void>[] = this.engineAnimation.handle(animationFlow);
+        const animationFlow = this.generateGoToAnimationFlow(newActiveElement, oldActiveElement, options);
+        const animationPromises: Array<Promise<void>> = this.engineAnimation.handle(animationFlow);
 
-        const ANIMATION_LEAVE_INDEX : number = 1;
+        const ANIMATION_LEAVE_INDEX: number = 1;
 
-        var hideLeaveSlideAfterAnimationEnds = new Promise<void>(function(resolve, reject) {
+        const hideLeaveSlideAfterAnimationEnds = new Promise<void>(function(resolve, reject) {
             animationPromises[ANIMATION_LEAVE_INDEX].then(function(animationOptions) {
-                if (!animationCanceled)
+                if (!animationCanceled) {
                     oldActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                }
                 resolve();
             }).catch(function(err) {
                 reject(err);
@@ -654,7 +686,7 @@ export class SingleSlideCarousel extends CarouselBase {
 
         this.addListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, cancelAnimationHandler);
 
-        var soraHandlerStatus : Promise<void> = new Promise<void>(function(resolve, reject) {
+        const soraHandlerStatus: Promise<void> = new Promise<void>(function(resolve, reject) {
             Promise.all([
                 animationPromises[0],
                 hideLeaveSlideAfterAnimationEnds,
@@ -672,7 +704,7 @@ export class SingleSlideCarousel extends CarouselBase {
 
                 that.eventEmitter.emit(
                     SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_END,
-                    {} as ISingleSlideCarouselAnimationEndEventArgs
+                    {} as ISingleSlideCarouselAnimationEndEventArgs,
                 );
 
                 resolve();
@@ -686,28 +718,4 @@ export class SingleSlideCarousel extends CarouselBase {
             soraHandlerStatus: soraHandlerStatus,
         };
     }
-
-    //#region Protected
-
-    /**
-     * Resets the carousel structure. Sets a new active element for the carousel.
-     * @param activeIndex Current active index.
-     */
-    protected resetCarouselStructure(activeIndex : number) {
-        //This operation is atomic in a single-thread environment, so we can store the collection.
-        var collection = this.elementsManager.getCollection();
-        for (var i = 0; i < collection.length; ++i) {
-            while(collection[i].classList.length > 0)
-                collection[i].classList.remove(collection[i].classList.item(0));
-
-            collection[i].classList.add(CAROUSEL_STYLES.SLIDE);
-
-            if (activeIndex === i)
-                collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-            else
-                collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
-        }
-    }
-
-    //#endregion
 }

@@ -1,5 +1,6 @@
-import { CollectionManager, CollectionChangeEventArgs } from "./collection-manager";
-import { EventEmitter } from "events";
+import { EventEmitter } from 'events';
+import { CollectionChangeEventArgs } from './collection-change-args';
+import { CollectionManager } from './collection-manager';
 
 export class HtmlChildrenManager extends CollectionManager<HTMLElement> {
     /**
@@ -48,7 +49,7 @@ export class HtmlChildrenManager extends CollectionManager<HTMLElement> {
                 newIndexesCounter = newIndex + 1;
             }
 
-            for (var i = newIndexesCounter; i < newElements.length; ++i) 
+            for (var i = newIndexesCounter; i < newElements.length; ++i)
                 this.parentElement.appendChild(newElements[i]);
         }
 
