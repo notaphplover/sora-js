@@ -1,9 +1,21 @@
 export interface ICarouselAnimation {
-    childrenStyles?: ICarouselAnimationChildrenStyles[],
-    slideStyles: string[],
+    /**
+     * Children animation options.
+     */
+    childrenStyles?: ICarouselAnimationChildrenStyles[];
+    /**
+     * Slide styles to apply.
+     */
+    slideStyles: string[];
 }
 
 export interface ICarouselAnimationChildrenStyles {
-    selector: string,
-    styles: string[],
+    /**
+     * Selector to use to search the desired children elements.
+     */
+    selector: string;
+    /**
+     * Styles to apply.
+     */
+    styles: string[];
 }

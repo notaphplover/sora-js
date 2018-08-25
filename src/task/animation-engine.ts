@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import { CarouselBase } from "../carousel/carousel-base";
+import { CarouselBase, CAROUSEL_STYLES } from "../carousel/carousel-base";
 import { AnimationPlayStateValue } from "../carousel/animation/animation-play-state";
 import { OperationManager } from "./operation-manager";
 import { ITaskFlowPart, TaskEngine } from "./task-engine";
@@ -207,13 +207,13 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
                 var currentAnimationIndex : number = null;
 
                 var onAnimationCancel = function(args : IAnimationCancelEventArgs) {
-                    element.classList.add(CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                    element.classList.add(CAROUSEL_STYLES.CLEAR_ANIMATION);
 
                     if (currentAnimationIndex != null)
                         element.classList.remove(styles[currentAnimationIndex]);
 
                     that.unregisterAnimationListener(element, animationFunctions[currentAnimationIndex]);
-                    element.classList.remove(CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                    element.classList.remove(CAROUSEL_STYLES.CLEAR_ANIMATION);
 
                     that.animationCancelManager.unsubscribe(part.alias);
                     that.animationStateChangeManager.unsubscribe(part.alias);
@@ -225,11 +225,11 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
 
                 var onAnimationPlayStateChange = function(args : IAnimationStateChangeEventArgs) {
                     if (AnimationPlayStateValue.paused == args.value) {
-                        if (!element.classList.contains(CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED))
-                            element.classList.add(CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
+                        if (!element.classList.contains(CAROUSEL_STYLES.ANIMATION_PAUSED))
+                            element.classList.add(CAROUSEL_STYLES.ANIMATION_PAUSED);
                     } else if (AnimationPlayStateValue.running == args.value) {
-                        if (element.classList.contains(CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED))
-                            element.classList.remove(CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
+                        if (element.classList.contains(CAROUSEL_STYLES.ANIMATION_PAUSED))
+                            element.classList.remove(CAROUSEL_STYLES.ANIMATION_PAUSED);
                     }
                 };
 
@@ -249,9 +249,9 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
 
                 //add the clear function
                 animationFunctions.push(function(event : TransitionEvent) {
-                    element.classList.add(CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                    element.classList.add(CAROUSEL_STYLES.CLEAR_ANIMATION);
                     element.classList.remove(styles[styles.length - 1]);
-                    element.classList.remove(CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                    element.classList.remove(CAROUSEL_STYLES.CLEAR_ANIMATION);
                     that.unregisterAnimationListener(element, animationFunctions[animationFunctions.length - 1]);
                     currentAnimationIndex = null;
                     that.animationCancelManager.unsubscribe(part.alias);

@@ -18,7 +18,7 @@ var AnimationPlayStateValue = exports.AnimationPlayStateValue = undefined;
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.CarouselBase = undefined;
+exports.CarouselBase = exports.CAROUSEL_STYLES = undefined;
 
 var _classCallCheck2 = require('babel-runtime/helpers/classCallCheck');
 
@@ -26,22 +26,17 @@ var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var CarouselBase = exports.CarouselBase = undefined;
-(function (CarouselBase_1) {
-    CarouselBase_1.CAROUSEL_STYLES = {
-        ANIMATION_PAUSED: 'sora-animation-paused',
-        CLEAR_ANIMATION: 'sora-clear-animations',
-        CAROUSEL: 'sora-carousel',
-        SLIDE: 'sora-slide',
-        WRAPPER: 'sora-wrapper'
-    };
+var CAROUSEL_STYLES = exports.CAROUSEL_STYLES = {
+    ANIMATION_PAUSED: 'sora-animation-paused',
+    CAROUSEL: 'sora-carousel',
+    CLEAR_ANIMATION: 'sora-clear-animations',
+    SLIDE: 'sora-slide',
+    WRAPPER: 'sora-wrapper'
+};
 
-    var CarouselBase = function CarouselBase() {
-        (0, _classCallCheck3.default)(this, CarouselBase);
-    };
-
-    CarouselBase_1.CarouselBase = CarouselBase;
-})(CarouselBase || (exports.CarouselBase = CarouselBase = {}));
+var CarouselBase = exports.CarouselBase = function CarouselBase() {
+    (0, _classCallCheck3.default)(this, CarouselBase);
+};
 
 
 
@@ -51,7 +46,7 @@ var CarouselBase = exports.CarouselBase = undefined;
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.CarouselBasic = undefined;
+exports.SingleSlideCarousel = exports.SINGLE_SLIDE_CAROUSEL_STYLES = exports.SINGLE_SLIDE_CAROUSEL_EVENTS = exports.SINGLE_SLIDE_CAROUSEL_ACTIONS = undefined;
 
 var _promise = require('babel-runtime/core-js/promise');
 
@@ -77,10 +72,6 @@ var _inherits2 = require('babel-runtime/helpers/inherits');
 
 var _inherits3 = _interopRequireDefault(_inherits2);
 
-var _carouselBase = require('./carousel-base');
-
-var _animationPlayState = require('./animation/animation-play-state');
-
 var _events = require('events');
 
 var _collectionManager = require('../collection/collection-manager');
@@ -89,332 +80,354 @@ var _htmlChildrenManager = require('../collection/html-children-manager');
 
 var _animationEngine = require('../task/animation-engine');
 
+var _animationPlayState = require('./animation/animation-play-state');
+
+var _carouselBase = require('./carousel-base');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var CarouselBasic = exports.CarouselBasic = undefined;
-(function (CarouselBasic) {
-    CarouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS = {
-        GO_TO: 'to',
-        GO_TO_NEXT: 'next',
-        GO_TO_PREVIOUS: 'prev'
-    };
-    CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS = {
-        ON_ANIMATION_END: 'car.anim.out',
-        ON_ANIMATION_PLAY_STATE_CHANGE: 'car.anim.state.ch',
-        ON_ANIMATION_START: 'car.anim.in',
-        ON_CANCEL_ANIMATION: 'car.anim.cancel',
-        ON_SLIDE_ENTER: 'car.sl.in',
-        ON_SLIDE_LEAVE: 'car.sl.out'
-    };
-    var SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES = {
-        ENTER: 'enter-part',
-        LEAVE: 'leave-part'
-    };
-    CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES = {
-        SLIDE_HIDDEN: 'sora-hidden',
-        SLIDE_ACTIVE: 'sora-slide-active'
-    };
+var SINGLE_SLIDE_CAROUSEL_ACTIONS = exports.SINGLE_SLIDE_CAROUSEL_ACTIONS = {
+    GO_TO: 'to',
+    GO_TO_NEXT: 'next',
+    GO_TO_PREVIOUS: 'prev'
+};
+var SINGLE_SLIDE_CAROUSEL_EVENTS = exports.SINGLE_SLIDE_CAROUSEL_EVENTS = {
+    ON_ANIMATION_END: 'car.anim.out',
+    ON_ANIMATION_PLAY_STATE_CHANGE: 'car.anim.state.ch',
+    ON_ANIMATION_START: 'car.anim.in',
+    ON_CANCEL_ANIMATION: 'car.anim.cancel',
+    ON_SLIDE_ENTER: 'car.sl.in',
+    ON_SLIDE_LEAVE: 'car.sl.out'
+};
+var SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES = {
+    ENTER: 'enter-part',
+    LEAVE: 'leave-part'
+};
+var SINGLE_SLIDE_CAROUSEL_STYLES = exports.SINGLE_SLIDE_CAROUSEL_STYLES = {
+    SLIDE_ACTIVE: 'sora-slide-active',
+    SLIDE_HIDDEN: 'sora-hidden'
+};
 
-    var SingleSlideCarousel = function (_CarouselBase$Carouse) {
-        (0, _inherits3.default)(SingleSlideCarousel, _CarouselBase$Carouse);
+var SingleSlideCarousel = exports.SingleSlideCarousel = function (_CarouselBase) {
+    (0, _inherits3.default)(SingleSlideCarousel, _CarouselBase);
 
-        function SingleSlideCarousel(element, options) {
-            (0, _classCallCheck3.default)(this, SingleSlideCarousel);
+    function SingleSlideCarousel(element, options) {
+        (0, _classCallCheck3.default)(this, SingleSlideCarousel);
 
-            var _this = (0, _possibleConstructorReturn3.default)(this, (SingleSlideCarousel.__proto__ || (0, _getPrototypeOf2.default)(SingleSlideCarousel)).call(this));
+        var _this = (0, _possibleConstructorReturn3.default)(this, (SingleSlideCarousel.__proto__ || (0, _getPrototypeOf2.default)(SingleSlideCarousel)).call(this));
 
-            if (element == null) throw new Error('The element must not be null.');
-            if (!element.classList.contains(_carouselBase.CarouselBase.CAROUSEL_STYLES.CAROUSEL)) throw new Error('The carousel element must contain the class "' + _carouselBase.CarouselBase.CAROUSEL_STYLES.CAROUSEL + '".');
-            var soraWrapper = element.querySelector('.' + _carouselBase.CarouselBase.CAROUSEL_STYLES.WRAPPER);
-            if (soraWrapper == null) throw new Error('The element has no child with class \'sora-wrapper\'.');
-            var children = new Array();
-            for (var i = 0; i < soraWrapper.children.length; ++i) {
-                if (soraWrapper.children[i].classList.contains(_carouselBase.CarouselBase.CAROUSEL_STYLES.SLIDE)) children.push(soraWrapper.children[i]);
+        if (element == null) {
+            throw new Error('The element must not be null.');
+        }
+        if (!element.classList.contains(_carouselBase.CAROUSEL_STYLES.CAROUSEL)) {
+            throw new Error('The carousel element must contain the class "' + _carouselBase.CAROUSEL_STYLES.CAROUSEL + '".');
+        }
+        var soraWrapper = element.querySelector('.' + _carouselBase.CAROUSEL_STYLES.WRAPPER);
+        if (soraWrapper == null) {
+            throw new Error('The element has no child with class \'sora-wrapper\'.');
+        }
+        var children = new Array();
+        for (var i = 0; i < soraWrapper.children.length; ++i) {
+            if (soraWrapper.children[i].classList.contains(_carouselBase.CAROUSEL_STYLES.SLIDE)) {
+                children.push(soraWrapper.children[i]);
             }
-            _this.activeIndex = options.index || 0;
-            _this.currentAnimation = null;
-            _this.eventEmitter = new _events.EventEmitter();
-            _this.elementsManager = new _htmlChildrenManager.HtmlChildrenManager(children, _this.eventEmitter, soraWrapper);
-            if (_this.activeIndex < 0 || _this.activeIndex >= _this.elementsManager.getLength()) throw new Error('Invalid options.index. There is no element with index ' + options.index + '.');
-            for (var i = 0; i < children.length; ++i) {
-                if (i == _this.activeIndex) children[i].classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);else children[i].classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+        }
+        _this.activeIndex = options.index || 0;
+        _this.currentAnimation = null;
+        _this.eventEmitter = new _events.EventEmitter();
+        _this.elementsManager = new _htmlChildrenManager.HtmlChildrenManager(children, _this.eventEmitter, soraWrapper);
+        if (_this.activeIndex < 0 || _this.activeIndex >= _this.elementsManager.getLength()) {
+            throw new Error('Invalid options.index. There is no element with index ' + options.index + '.');
+        }
+        for (var i = 0; i < children.length; ++i) {
+            if (i === _this.activeIndex) {
+                children[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+            } else {
+                children[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
             }
-            var that = _this;
+        }
+        var that = _this;
+        var onBeforeChange = function onBeforeChange(eventArgs) {
+            var indexMap = eventArgs.getIndexMap();
+            if (null == indexMap[that.activeIndex]) {
+                eventArgs.setPreventDefault();
+            }
+        };
+        var onAfterChange = function onAfterChange(eventArgs) {
+            if (!eventArgs.getPreventDefault()) {
+                var indexMap = eventArgs.getIndexMap();
+                that.activeIndex = indexMap[that.activeIndex];
+            }
+        };
+        _this.addListener(_collectionManager.COLLECTION_MANAGER_EVENTS.collectionBeforeChange, onBeforeChange);
+        _this.addListener(_collectionManager.COLLECTION_MANAGER_EVENTS.collectionAfterChange, onAfterChange);
+        _this.engineAnimation = new _animationEngine.SingleAnimationEngine();
+        return _this;
+    }
+
+    (0, _createClass3.default)(SingleSlideCarousel, [{
+        key: 'addListener',
+        value: function addListener(event, listener) {
+            this.eventEmitter.addListener(event, listener);
+        }
+    }, {
+        key: 'createWaitPromise',
+        value: function createWaitPromise(options) {
+            var that = this;
+            return new _promise2.default(function (resolve, reject) {
+                var lastTimeRun;
+                var timeToWait = options.millis;
+                if (that.paused) {
+                    lastTimeRun = null;
+                } else {
+                    var waitInterval = setInterval(function () {
+                        removeListeners();
+                        resolve();
+                    }, timeToWait);
+                    lastTimeRun = new Date().getTime();
+                }
+                var onCancelAnimation = null;
+                if (options.stopOnCancelAnimation) {
+                    onCancelAnimation = function onCancelAnimation() {
+                        removeListeners();
+                        resolve();
+                    };
+                    that.addListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onCancelAnimation);
+                }
+                var onPlayStateChange = function onPlayStateChange(args) {
+                    if (_animationPlayState.AnimationPlayStateValue.paused === args.value) {
+                        timeToWait = timeToWait - (new Date().getTime() - lastTimeRun);
+                        clearInterval(waitInterval);
+                    } else if (_animationPlayState.AnimationPlayStateValue.running === args.value) {
+                        lastTimeRun = new Date().getTime();
+                        if (0 < timeToWait) {
+                            waitInterval = setInterval(function () {
+                                that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, onPlayStateChange);
+                                if (null != onCancelAnimation) {
+                                    that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onCancelAnimation);
+                                }
+                                resolve();
+                            }, timeToWait);
+                        } else {
+                            removeListeners();
+                            resolve();
+                        }
+                    }
+                };
+                var removeListeners = function removeListeners() {
+                    that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, onPlayStateChange);
+                    if (null != onCancelAnimation) {
+                        that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onCancelAnimation);
+                    }
+                };
+                that.addListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, onPlayStateChange);
+            });
+        }
+    }, {
+        key: 'forceActiveSlide',
+        value: function forceActiveSlide(activeIndex) {
+            var eventArgs = { activeIndex: activeIndex };
+            if (this.isPaused()) {
+                this.resume();
+            }
+            this.engineAnimation.cancelAnimation(null);
+            this.activeIndex = activeIndex;
+            this.resetCarouselStructure(activeIndex);
+            this.eventEmitter.emit(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, eventArgs);
+        }
+    }, {
+        key: 'generateGoToAnimationFlow',
+        value: function generateGoToAnimationFlow(enterElement, leaveElement, options) {
+            var innerParts = [{
+                alias: SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER,
+                elements: [enterElement],
+                styles: options.enterAnimation.slideStyles,
+                when: null
+            }, {
+                alias: SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE,
+                elements: [leaveElement],
+                styles: options.leaveAnimation.slideStyles,
+                when: null
+            }];
+            var generateChildrenParts = function generateChildrenParts(parentElement, childrenStyles, aliasBase) {
+                if (childrenStyles) {
+                    for (var i = 0; i < childrenStyles.length; ++i) {
+                        innerParts.push({
+                            alias: aliasBase + i.toString(),
+                            elements: function () {
+                                var elements = new Array();
+                                var animationObject = childrenStyles[i];
+                                var childrenElements = parentElement.querySelectorAll(animationObject.selector);
+                                for (var j = 0; j < childrenElements.length; ++j) {
+                                    elements.push(childrenElements[j]);
+                                }
+                                return elements;
+                            }(),
+                            styles: childrenStyles[i].styles,
+                            when: null
+                        });
+                    }
+                }
+            };
+            generateChildrenParts(enterElement, options.enterAnimation.childrenStyles, SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER);
+            generateChildrenParts(leaveElement, options.leaveAnimation.childrenStyles, SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE);
+            var innerPartsMap = {};
+            for (var i = 0; i < innerParts.length; ++i) {
+                innerPartsMap[innerParts[i].alias] = innerParts[i];
+            }var innerGetPartByAlias = function innerGetPartByAlias(alias) {
+                return innerPartsMap[alias];
+            };
+            var animationFlow = {
+                parts: innerParts,
+                getPartByAlias: innerGetPartByAlias
+            };
+            return animationFlow;
+        }
+    }, {
+        key: 'getActiveElement',
+        value: function getActiveElement() {
+            return this.elementsManager.getCollection()[this.activeIndex];
+        }
+    }, {
+        key: 'getActiveIndex',
+        value: function getActiveIndex() {
+            return this.activeIndex;
+        }
+    }, {
+        key: 'getElementsManager',
+        value: function getElementsManager() {
+            return this.elementsManager;
+        }
+    }, {
+        key: 'hasActiveAnimation',
+        value: function hasActiveAnimation() {
+            return this.currentAnimation != null;
+        }
+    }, {
+        key: 'isPaused',
+        value: function isPaused() {
+            return this.paused;
+        }
+    }, {
+        key: 'handle',
+        value: function handle(action, options) {
+            switch (action) {
+                case SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO:
+                    if (options == null || typeof options.index !== 'number') throw new Error('Invalid options for \'' + SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO + '\'.');
+                    return this.handleGoTo(options);
+                case SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT:
+                    options.index = (this.activeIndex + 1) % this.elementsManager.getLength();
+                    return this.handle(SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO, options);
+                case SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_PREVIOUS:
+                    var elementsLength = this.elementsManager.getLength();
+                    options.index = ((this.activeIndex - 1) % elementsLength + elementsLength) % elementsLength;
+                    return this.handle(SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO, options);
+            }
+        }
+    }, {
+        key: 'pause',
+        value: function pause() {
+            if (!this.paused) {
+                this.engineAnimation.pause(null);
+                this.paused = true;
+                this.eventEmitter.emit(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, { value: _animationPlayState.AnimationPlayStateValue.paused });
+            }
+        }
+    }, {
+        key: 'removeListener',
+        value: function removeListener(event, listener) {
+            this.eventEmitter.removeListener(event, listener);
+        }
+    }, {
+        key: 'resume',
+        value: function resume() {
+            if (this.paused) {
+                this.engineAnimation.resume(null);
+                this.paused = false;
+                this.eventEmitter.emit(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, { value: _animationPlayState.AnimationPlayStateValue.running });
+            }
+        }
+    }, {
+        key: 'handleGoTo',
+        value: function handleGoTo(options) {
+            if (options.index < 0 || options.index >= this.elementsManager.getLength()) throw new Error('Invalid index. There is no element with index ' + options.index + '.');
+            if (options.index == this.activeIndex) throw new Error('Invalid index. It\'s not allowed to go to the current active slide');
+            if (null == this.currentAnimation) this.currentAnimation = options;else {
+                throw new Error('It\'s not allowed to start an animation while an existing animation over an slide element is active');
+            }
+            var oldActiveElement = this.elementsManager.getCollection()[this.activeIndex];
+            var newActiveIndex = options.index;
+            this.eventEmitter.emit(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_START, {
+                options: options
+            });
+            var that = this;
             var onBeforeChange = function onBeforeChange(eventArgs) {
                 var indexMap = eventArgs.getIndexMap();
-                if (indexMap[that.activeIndex] == null) eventArgs.setPreventDefault();
+                if (indexMap[newActiveIndex] == null) eventArgs.setPreventDefault();
             };
             var onAfterChange = function onAfterChange(eventArgs) {
                 if (!eventArgs.getPreventDefault()) {
                     var indexMap = eventArgs.getIndexMap();
-                    that.activeIndex = indexMap[that.activeIndex];
+                    newActiveIndex = indexMap[newActiveIndex];
                 }
             };
-            _this.addListener(_collectionManager.COLLECTION_MANAGER_EVENTS.collectionBeforeChange, onBeforeChange);
-            _this.addListener(_collectionManager.COLLECTION_MANAGER_EVENTS.collectionAfterChange, onAfterChange);
-            _this.engineAnimation = new _animationEngine.SingleAnimationEngine();
-            return _this;
+            this.addListener(_collectionManager.COLLECTION_MANAGER_EVENTS.collectionBeforeChange, onBeforeChange);
+            this.addListener(_collectionManager.COLLECTION_MANAGER_EVENTS.collectionAfterChange, onAfterChange);
+            var newActiveElement = this.elementsManager.getCollection()[newActiveIndex];
+            newActiveElement.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+            var animationCanceled = false;
+            var cancelAnimationHandler = function cancelAnimationHandler() {
+                animationCanceled = true;
+                that.currentAnimation = null;
+            };
+            var animationFlow = this.generateGoToAnimationFlow(newActiveElement, oldActiveElement, options);
+            var animationPromises = this.engineAnimation.handle(animationFlow);
+            var ANIMATION_LEAVE_INDEX = 1;
+            var hideLeaveSlideAfterAnimationEnds = new _promise2.default(function (resolve, reject) {
+                animationPromises[ANIMATION_LEAVE_INDEX].then(function (animationOptions) {
+                    if (!animationCanceled) oldActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                    resolve();
+                }).catch(function (err) {
+                    reject(err);
+                });
+            });
+            this.addListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, cancelAnimationHandler);
+            var soraHandlerStatus = new _promise2.default(function (resolve, reject) {
+                _promise2.default.all([animationPromises[0], hideLeaveSlideAfterAnimationEnds]).then(function () {
+                    if (!animationCanceled) {
+                        oldActiveElement.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                        newActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                        that.activeIndex = newActiveIndex;
+                        that.currentAnimation = null;
+                    }
+                    that.removeListener(_collectionManager.COLLECTION_MANAGER_EVENTS.collectionBeforeChange, onBeforeChange);
+                    that.removeListener(_collectionManager.COLLECTION_MANAGER_EVENTS.collectionAfterChange, onAfterChange);
+                    that.removeListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, cancelAnimationHandler);
+                    that.eventEmitter.emit(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_END, {});
+                    resolve();
+                }).catch(function (err) {
+                    reject(err);
+                });
+            });
+            return {
+                animationPromises: animationPromises,
+                soraHandlerStatus: soraHandlerStatus
+            };
         }
-
-        (0, _createClass3.default)(SingleSlideCarousel, [{
-            key: 'addListener',
-            value: function addListener(event, listener) {
-                this.eventEmitter.addListener(event, listener);
+    }, {
+        key: 'resetCarouselStructure',
+        value: function resetCarouselStructure(activeIndex) {
+            var collection = this.elementsManager.getCollection();
+            for (var i = 0; i < collection.length; ++i) {
+                while (collection[i].classList.length > 0) {
+                    collection[i].classList.remove(collection[i].classList.item(0));
+                }collection[i].classList.add(_carouselBase.CAROUSEL_STYLES.SLIDE);
+                if (activeIndex === i) collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);else collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
             }
-        }, {
-            key: 'createWaitPromise',
-            value: function createWaitPromise(options) {
-                var that = this;
-                return new _promise2.default(function (resolve, reject) {
-                    var lastTimeRun;
-                    var timeToWait = options.millis;
-                    if (that.paused) {
-                        lastTimeRun = null;
-                    } else {
-                        var waitInterval = setInterval(function () {
-                            removeListeners();
-                            resolve();
-                        }, timeToWait);
-                        lastTimeRun = new Date().getTime();
-                    }
-                    var onCancelAnimation = null;
-                    if (options.stopOnCancelAnimation) {
-                        onCancelAnimation = function onCancelAnimation() {
-                            removeListeners();
-                            resolve();
-                        };
-                        that.addListener(CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onCancelAnimation);
-                    }
-                    var onPlayStateChange = function onPlayStateChange(args) {
-                        if (_animationPlayState.AnimationPlayStateValue.paused == args.value) {
-                            timeToWait = timeToWait - (new Date().getTime() - lastTimeRun);
-                            clearInterval(waitInterval);
-                        } else if (_animationPlayState.AnimationPlayStateValue.running == args.value) {
-                            lastTimeRun = new Date().getTime();
-                            if (timeToWait > 0) waitInterval = setInterval(function () {
-                                that.removeListener(CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, onPlayStateChange);
-                                if (onCancelAnimation != null) that.removeListener(CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onCancelAnimation);
-                                resolve();
-                            }, timeToWait);else {
-                                removeListeners();
-                                resolve();
-                            }
-                        }
-                    };
-                    var removeListeners = function removeListeners() {
-                        that.removeListener(CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, onPlayStateChange);
-                        if (onCancelAnimation != null) that.removeListener(CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, onCancelAnimation);
-                    };
-                    that.addListener(CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, onPlayStateChange);
-                });
-            }
-        }, {
-            key: 'forceActiveSlide',
-            value: function forceActiveSlide(activeIndex) {
-                var eventArgs = {
-                    activeIndex: activeIndex
-                };
-                if (this.isPaused()) this.resume();
-                this.engineAnimation.cancelAnimation(null);
-                this.activeIndex = activeIndex;
-                this.resetCarouselStructure(activeIndex);
-                this.eventEmitter.emit(CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, eventArgs);
-            }
-        }, {
-            key: 'generateGoToAnimationFlow',
-            value: function generateGoToAnimationFlow(enterElement, leaveElement, options) {
-                var innerParts = [{
-                    alias: SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER,
-                    elements: [enterElement],
-                    styles: options.enterAnimation.slideStyles,
-                    when: null
-                }, {
-                    alias: SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE,
-                    elements: [leaveElement],
-                    styles: options.leaveAnimation.slideStyles,
-                    when: null
-                }];
-                var generateChildrenParts = function generateChildrenParts(parentElement, childrenStyles, aliasBase) {
-                    if (childrenStyles) {
-                        for (var i = 0; i < childrenStyles.length; ++i) {
-                            innerParts.push({
-                                alias: aliasBase + i.toString(),
-                                elements: function () {
-                                    var elements = new Array();
-                                    var animationObject = childrenStyles[i];
-                                    var childrenElements = parentElement.querySelectorAll(animationObject.selector);
-                                    for (var j = 0; j < childrenElements.length; ++j) {
-                                        elements.push(childrenElements[j]);
-                                    }return elements;
-                                }(),
-                                styles: childrenStyles[i].styles,
-                                when: null
-                            });
-                        }
-                    }
-                };
-                generateChildrenParts(enterElement, options.enterAnimation.childrenStyles, SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER);
-                generateChildrenParts(leaveElement, options.leaveAnimation.childrenStyles, SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE);
-                var innerPartsMap = {};
-                for (var i = 0; i < innerParts.length; ++i) {
-                    innerPartsMap[innerParts[i].alias] = innerParts[i];
-                }var innerGetPartByAlias = function innerGetPartByAlias(alias) {
-                    return innerPartsMap[alias];
-                };
-                var animationFlow = {
-                    parts: innerParts,
-                    getPartByAlias: innerGetPartByAlias
-                };
-                return animationFlow;
-            }
-        }, {
-            key: 'getActiveElement',
-            value: function getActiveElement() {
-                return this.elementsManager.getCollection()[this.activeIndex];
-            }
-        }, {
-            key: 'getActiveIndex',
-            value: function getActiveIndex() {
-                return this.activeIndex;
-            }
-        }, {
-            key: 'getElementsManager',
-            value: function getElementsManager() {
-                return this.elementsManager;
-            }
-        }, {
-            key: 'hasActiveAnimation',
-            value: function hasActiveAnimation() {
-                return this.currentAnimation != null;
-            }
-        }, {
-            key: 'isPaused',
-            value: function isPaused() {
-                return this.paused;
-            }
-        }, {
-            key: 'handle',
-            value: function handle(action, options) {
-                switch (action) {
-                    case CarouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO:
-                        if (options == null || typeof options.index !== 'number') throw new Error('Invalid options for \'' + CarouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO + '\'.');
-                        return this.handleGoTo(options);
-                    case CarouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT:
-                        options.index = (this.activeIndex + 1) % this.elementsManager.getLength();
-                        return this.handle(CarouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO, options);
-                    case CarouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_PREVIOUS:
-                        var elementsLength = this.elementsManager.getLength();
-                        options.index = ((this.activeIndex - 1) % elementsLength + elementsLength) % elementsLength;
-                        return this.handle(CarouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO, options);
-                }
-            }
-        }, {
-            key: 'pause',
-            value: function pause() {
-                if (!this.paused) {
-                    this.engineAnimation.pause(null);
-                    this.paused = true;
-                    this.eventEmitter.emit(CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, { value: _animationPlayState.AnimationPlayStateValue.paused });
-                }
-            }
-        }, {
-            key: 'removeListener',
-            value: function removeListener(event, listener) {
-                this.eventEmitter.removeListener(event, listener);
-            }
-        }, {
-            key: 'resume',
-            value: function resume() {
-                if (this.paused) {
-                    this.engineAnimation.resume(null);
-                    this.paused = false;
-                    this.eventEmitter.emit(CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_PLAY_STATE_CHANGE, { value: _animationPlayState.AnimationPlayStateValue.running });
-                }
-            }
-        }, {
-            key: 'handleGoTo',
-            value: function handleGoTo(options) {
-                if (options.index < 0 || options.index >= this.elementsManager.getLength()) throw new Error('Invalid index. There is no element with index ' + options.index + '.');
-                if (options.index == this.activeIndex) throw new Error('Invalid index. It\'s not allowed to go to the current active slide');
-                if (null == this.currentAnimation) this.currentAnimation = options;else {
-                    throw new Error('It\'s not allowed to start an animation while an existing animation over an slide element is active');
-                }
-                var oldActiveElement = this.elementsManager.getCollection()[this.activeIndex];
-                var newActiveIndex = options.index;
-                this.eventEmitter.emit(CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_START, {
-                    options: options
-                });
-                var that = this;
-                var onBeforeChange = function onBeforeChange(eventArgs) {
-                    var indexMap = eventArgs.getIndexMap();
-                    if (indexMap[newActiveIndex] == null) eventArgs.setPreventDefault();
-                };
-                var onAfterChange = function onAfterChange(eventArgs) {
-                    if (!eventArgs.getPreventDefault()) {
-                        var indexMap = eventArgs.getIndexMap();
-                        newActiveIndex = indexMap[newActiveIndex];
-                    }
-                };
-                this.addListener(_collectionManager.COLLECTION_MANAGER_EVENTS.collectionBeforeChange, onBeforeChange);
-                this.addListener(_collectionManager.COLLECTION_MANAGER_EVENTS.collectionAfterChange, onAfterChange);
-                var newActiveElement = this.elementsManager.getCollection()[newActiveIndex];
-                newActiveElement.classList.remove(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
-                var animationCanceled = false;
-                var cancelAnimationHandler = function cancelAnimationHandler() {
-                    animationCanceled = true;
-                    that.currentAnimation = null;
-                };
-                var animationFlow = this.generateGoToAnimationFlow(newActiveElement, oldActiveElement, options);
-                var animationPromises = this.engineAnimation.handle(animationFlow);
-                var ANIMATION_LEAVE_INDEX = 1;
-                var hideLeaveSlideAfterAnimationEnds = new _promise2.default(function (resolve, reject) {
-                    animationPromises[ANIMATION_LEAVE_INDEX].then(function (animationOptions) {
-                        if (!animationCanceled) oldActiveElement.classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
-                        resolve();
-                    }).catch(function (err) {
-                        reject(err);
-                    });
-                });
-                this.addListener(CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, cancelAnimationHandler);
-                var soraHandlerStatus = new _promise2.default(function (resolve, reject) {
-                    _promise2.default.all([animationPromises[0], hideLeaveSlideAfterAnimationEnds]).then(function () {
-                        if (!animationCanceled) {
-                            oldActiveElement.classList.remove(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-                            newActiveElement.classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-                            that.activeIndex = newActiveIndex;
-                            that.currentAnimation = null;
-                        }
-                        that.removeListener(_collectionManager.COLLECTION_MANAGER_EVENTS.collectionBeforeChange, onBeforeChange);
-                        that.removeListener(_collectionManager.COLLECTION_MANAGER_EVENTS.collectionAfterChange, onAfterChange);
-                        that.removeListener(CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, cancelAnimationHandler);
-                        that.eventEmitter.emit(CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS.ON_ANIMATION_END, {});
-                        resolve();
-                    }).catch(function (err) {
-                        reject(err);
-                    });
-                });
-                return {
-                    animationPromises: animationPromises,
-                    soraHandlerStatus: soraHandlerStatus
-                };
-            }
-        }, {
-            key: 'resetCarouselStructure',
-            value: function resetCarouselStructure(activeIndex) {
-                var collection = this.elementsManager.getCollection();
-                for (var i = 0; i < collection.length; ++i) {
-                    while (collection[i].classList.length > 0) {
-                        collection[i].classList.remove(collection[i].classList.item(0));
-                    }collection[i].classList.add(_carouselBase.CarouselBase.CAROUSEL_STYLES.SLIDE);
-                    if (activeIndex === i) collection[i].classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);else collection[i].classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
-                }
-            }
-        }]);
-        return SingleSlideCarousel;
-    }(_carouselBase.CarouselBase.CarouselBase);
-
-    CarouselBasic.SingleSlideCarousel = SingleSlideCarousel;
-})(CarouselBasic || (exports.CarouselBasic = CarouselBasic = {}));
+        }
+    }]);
+    return SingleSlideCarousel;
+}(_carouselBase.CarouselBase);
 
 
 
@@ -712,14 +725,14 @@ require('core-js/fn/promise');
 var sora = function () {
     return {
         actions: {
-            SINGLE_SLIDE_CAROUSEL_ACTIONS: _carouselBasic.CarouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS
+            SINGLE_SLIDE_CAROUSEL_ACTIONS: _carouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS
         },
         events: {
-            SINGLE_SLIDE_CAROUSEL_EVENTS: _carouselBasic.CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS
+            SINGLE_SLIDE_CAROUSEL_EVENTS: _carouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS
         },
-        SingleSlideCarousel: _carouselBasic.CarouselBasic.SingleSlideCarousel,
+        SingleSlideCarousel: _carouselBasic.SingleSlideCarousel,
         styles: {
-            SINGLE_SLIDE_CAROUSEL_STYLES: _carouselBasic.CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES
+            SINGLE_SLIDE_CAROUSEL_STYLES: _carouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES
         }
     };
 }();
@@ -844,10 +857,10 @@ var SingleAnimationEngine = exports.SingleAnimationEngine = function (_TaskEngin
                     var animationFunctions = new Array();
                     var currentAnimationIndex = null;
                     var onAnimationCancel = function onAnimationCancel(args) {
-                        element.classList.add(_carouselBase.CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                        element.classList.add(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
                         if (currentAnimationIndex != null) element.classList.remove(styles[currentAnimationIndex]);
                         that.unregisterAnimationListener(element, animationFunctions[currentAnimationIndex]);
-                        element.classList.remove(_carouselBase.CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                        element.classList.remove(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
                         that.animationCancelManager.unsubscribe(part.alias);
                         that.animationStateChangeManager.unsubscribe(part.alias);
                         resolve();
@@ -855,9 +868,9 @@ var SingleAnimationEngine = exports.SingleAnimationEngine = function (_TaskEngin
                     that.animationCancelManager.subscribe(part.alias, onAnimationCancel);
                     var onAnimationPlayStateChange = function onAnimationPlayStateChange(args) {
                         if (_animationPlayState.AnimationPlayStateValue.paused == args.value) {
-                            if (!element.classList.contains(_carouselBase.CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED)) element.classList.add(_carouselBase.CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
+                            if (!element.classList.contains(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED)) element.classList.add(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
                         } else if (_animationPlayState.AnimationPlayStateValue.running == args.value) {
-                            if (element.classList.contains(_carouselBase.CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED)) element.classList.remove(_carouselBase.CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
+                            if (element.classList.contains(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED)) element.classList.remove(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
                         }
                     };
                     that.animationStateChangeManager.subscribe(part.alias, onAnimationPlayStateChange);
@@ -873,9 +886,9 @@ var SingleAnimationEngine = exports.SingleAnimationEngine = function (_TaskEngin
                         }(i));
                     }
                     animationFunctions.push(function (event) {
-                        element.classList.add(_carouselBase.CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                        element.classList.add(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
                         element.classList.remove(styles[styles.length - 1]);
-                        element.classList.remove(_carouselBase.CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                        element.classList.remove(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
                         that.unregisterAnimationListener(element, animationFunctions[animationFunctions.length - 1]);
                         currentAnimationIndex = null;
                         that.animationCancelManager.unsubscribe(part.alias);

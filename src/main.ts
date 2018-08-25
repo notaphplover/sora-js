@@ -1,17 +1,22 @@
 require('core-js/fn/promise');
-import { CarouselBasic } from './carousel/carousel-basic';
+import {
+    SingleSlideCarousel,
+    SINGLE_SLIDE_CAROUSEL_ACTIONS,
+    SINGLE_SLIDE_CAROUSEL_EVENTS,
+    SINGLE_SLIDE_CAROUSEL_STYLES
+ } from './carousel/carousel-basic';
 
 var sora = function () {
     return {
         actions: {
-            SINGLE_SLIDE_CAROUSEL_ACTIONS : CarouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS,
+            SINGLE_SLIDE_CAROUSEL_ACTIONS : SINGLE_SLIDE_CAROUSEL_ACTIONS,
         },
         events: {
-            SINGLE_SLIDE_CAROUSEL_EVENTS : CarouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS,
+            SINGLE_SLIDE_CAROUSEL_EVENTS : SINGLE_SLIDE_CAROUSEL_EVENTS,
         },
-        SingleSlideCarousel : CarouselBasic.SingleSlideCarousel,
+        SingleSlideCarousel : SingleSlideCarousel,
         styles: {
-            SINGLE_SLIDE_CAROUSEL_STYLES : CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES,
+            SINGLE_SLIDE_CAROUSEL_STYLES : SINGLE_SLIDE_CAROUSEL_STYLES,
         }
     }
 } ();

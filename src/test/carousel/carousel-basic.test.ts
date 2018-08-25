@@ -1,10 +1,15 @@
-import { CarouselBase } from '../../../src/carousel/carousel-base'
-import { CarouselBasic } from '../../../src/carousel/carousel-basic'
+import { CAROUSEL_STYLES } from '../../../src/carousel/carousel-base'
+import {
+    ISingleSlideCarouselGoToAnimationStatus,
+    SINGLE_SLIDE_CAROUSEL_ACTIONS,
+    SINGLE_SLIDE_CAROUSEL_STYLES,
+    SingleSlideCarousel,
+} from '../../../src/carousel/carousel-basic'
 import { ITest } from "../ITest";
 import { ICarouselAnimation } from '../../carousel/animation/carousel-animation';
 
 interface IGoToAndCheckData {
-    goActionStatus : CarouselBasic.ISingleSlideCarouselGoToAnimationStatus,
+    goActionStatus : ISingleSlideCarouselGoToAnimationStatus,
     newElement : HTMLElement,
     oldElement : HTMLElement,
 }
@@ -19,7 +24,7 @@ export class SingleSlideCarouselTests implements ITest {
 
     protected generateBasicCarousel() : HTMLElement {
         var divElement : HTMLElement = document.createElement('div');
-        divElement.classList.add(CarouselBase.CAROUSEL_STYLES.CAROUSEL);
+        divElement.classList.add(CAROUSEL_STYLES.CAROUSEL);
         divElement.innerHTML =
 `<div class="sora-wrapper">
     <div class="sora-slide">
@@ -53,24 +58,24 @@ export class SingleSlideCarouselTests implements ITest {
 
     private performGoAndCheck(
         action : string,
-        carousel : CarouselBasic.SingleSlideCarousel,
+        carousel : SingleSlideCarousel,
         enterAnimation : ICarouselAnimation,
         leaveAnimation : ICarouselAnimation,
         shouldCheck : boolean = true,
     ) : IGoToAndCheckData {
 
         expect([
-            CarouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT,
-            CarouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_PREVIOUS,
+            SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT,
+            SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_PREVIOUS,
         ]).toContain(action);
 
         var currentActiveElement = carousel.getActiveElement();
         var activeIndex = carousel.getActiveIndex();
         var indexes = carousel.getElementsManager().getLength();
         var nextIndex = function(action) : number {
-            if (CarouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT == action)
+            if (SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT == action)
                 return (activeIndex + 1) % indexes;
-            else if (CarouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_PREVIOUS == action) {
+            else if (SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_PREVIOUS == action) {
                 return ((activeIndex - 1) + indexes) % indexes
             } else
                 throw new Error('Unexpected action');
@@ -88,10 +93,10 @@ export class SingleSlideCarouselTests implements ITest {
 
         if (shouldCheck)
             goActionStatus.soraHandlerStatus.then(function() {
-                expect(currentActiveElement.classList).not.toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-                expect(currentActiveElement.classList).toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
-                expect(nextElement.classList).toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-                expect(nextElement.classList).not.toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                expect(currentActiveElement.classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                expect(currentActiveElement.classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                expect(nextElement.classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                expect(nextElement.classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
             });
 
         return {
@@ -101,13 +106,13 @@ export class SingleSlideCarouselTests implements ITest {
         };
     }
 
-    private performGoNext(carousel : CarouselBasic.SingleSlideCarousel,
+    private performGoNext(carousel : SingleSlideCarousel,
         enterAnimation : ICarouselAnimation,
         leaveAnimation : ICarouselAnimation,
         shouldCheck : boolean = true,
     ) : IGoToAndCheckData {
         return this.performGoAndCheck(
-            CarouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT,
+            SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT,
             carousel,
             enterAnimation,
             leaveAnimation,
@@ -115,13 +120,13 @@ export class SingleSlideCarouselTests implements ITest {
         );
     }
 
-    private performGoPrevious(carousel : CarouselBasic.SingleSlideCarousel,
+    private performGoPrevious(carousel : SingleSlideCarousel,
         enterAnimation : ICarouselAnimation,
         leaveAnimation : ICarouselAnimation,
         shouldCheck : boolean = true,
     ) : IGoToAndCheckData {
         return this.performGoAndCheck(
-            CarouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_PREVIOUS,
+            SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_PREVIOUS,
             carousel,
             enterAnimation,
             leaveAnimation,
@@ -134,18 +139,18 @@ export class SingleSlideCarouselTests implements ITest {
         it('mustBeInitializable', () => {
             var divElement : HTMLElement = that.generateBasicCarousel();
 
-            var carousel : CarouselBasic.SingleSlideCarousel = new CarouselBasic.SingleSlideCarousel(divElement, { index: 0 });
+            var carousel : SingleSlideCarousel = new SingleSlideCarousel(divElement, { index: 0 });
             expect(carousel).not.toBeNull();
-            var wrapper = divElement.querySelectorAll('.' + CarouselBase.CAROUSEL_STYLES.WRAPPER);
+            var wrapper = divElement.querySelectorAll('.' + CAROUSEL_STYLES.WRAPPER);
             expect(wrapper.length).toBe(1);
-            var children = divElement.querySelectorAll('.' + CarouselBase.CAROUSEL_STYLES.WRAPPER + ' > .' + CarouselBase.CAROUSEL_STYLES.SLIDE);
+            var children = divElement.querySelectorAll('.' + CAROUSEL_STYLES.WRAPPER + ' > .' + CAROUSEL_STYLES.SLIDE);
             expect(children.length).toBe(3);
-            expect(children[0].classList).toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-            expect(children[0].classList).not.toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+            expect(children[0].classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+            expect(children[0].classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
 
             for (var i = 1; i < children.length; ++i) {
-                expect(children[i].classList).not.toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-                expect(children[i].classList).toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                expect(children[i].classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                expect(children[i].classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
             }
         });
     }
@@ -153,7 +158,7 @@ export class SingleSlideCarouselTests implements ITest {
     private itMustBeAbleToCancelAnimation() : void {
         var that = this;
         it('mustBeAbleToCancelAnimation', (done) => {
-            function goNext(carousel : CarouselBasic.SingleSlideCarousel) : IGoToAndCheckData {
+            function goNext(carousel : SingleSlideCarousel) : IGoToAndCheckData {
                 return that.performGoNext(
                     carousel,
                     { slideStyles: ['sora-fade-in-animation',]},
@@ -163,7 +168,7 @@ export class SingleSlideCarouselTests implements ITest {
             }
 
             var divElement : HTMLElement = that.generateBasicCarousel();
-            var carousel : CarouselBasic.SingleSlideCarousel = new CarouselBasic.SingleSlideCarousel(divElement, { index: 0 });
+            var carousel : SingleSlideCarousel = new SingleSlideCarousel(divElement, { index: 0 });
             document.body.appendChild(divElement);
 
             var executionPromise = new Promise<void>(function(resolve, reject) {
@@ -171,8 +176,8 @@ export class SingleSlideCarouselTests implements ITest {
                 carousel.forceActiveSlide(2);
                 var thirdElement = carousel.getElementsManager().getCollection()[2];
 
-                expect(thirdElement.classList).not.toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
-                expect(thirdElement.classList).toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                expect(thirdElement.classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                expect(thirdElement.classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
 
                 Promise.all([
                     animationStatus.goActionStatus.soraHandlerStatus,
@@ -181,12 +186,12 @@ export class SingleSlideCarouselTests implements ITest {
                     var newActiveElement = animationStatus.newElement;
 
                     expect(newActiveElement).toBe(carousel.getElementsManager().getCollection()[1]);
-                    expect(newActiveElement.classList).not.toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-                    expect(newActiveElement.classList).toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                    expect(newActiveElement.classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                    expect(newActiveElement.classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
 
                     expect(oldActiveElement).toBe(carousel.getElementsManager().getCollection()[0]);
-                    expect(oldActiveElement.classList).not.toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-                    expect(oldActiveElement.classList).toContain(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                    expect(oldActiveElement.classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                    expect(oldActiveElement.classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
 
                     resolve();
                 }).catch(function(err) {
@@ -206,15 +211,15 @@ export class SingleSlideCarouselTests implements ITest {
     private itMustBeAbleToGoToSlides() : void {
         var that = this;
         it('mustBeAbleToGoToSlides', function(done) {
-            function goNext(carousel : CarouselBasic.SingleSlideCarousel) : IGoToAndCheckData {
+            function goNext(carousel : SingleSlideCarousel) : IGoToAndCheckData {
                 return that.performGoNext(carousel, { slideStyles: ['sora-fade-in-animation',]}, { slideStyles: ['sora-fade-out-animation',] });
             }
-            function goPrevious(carousel : CarouselBasic.SingleSlideCarousel) : IGoToAndCheckData {
+            function goPrevious(carousel : SingleSlideCarousel) : IGoToAndCheckData {
                 return that.performGoPrevious(carousel, { slideStyles: ['sora-fade-in-animation',]}, { slideStyles: ['sora-fade-out-animation',] });
             }
 
             var divElement : HTMLElement = that.generateBasicCarousel();
-            var carousel : CarouselBasic.SingleSlideCarousel = new CarouselBasic.SingleSlideCarousel(divElement, { index: 0 });
+            var carousel : SingleSlideCarousel = new SingleSlideCarousel(divElement, { index: 0 });
             document.body.appendChild(divElement);
 
             var executionPromise = new Promise<void>(function(resolve, reject) {
@@ -261,35 +266,35 @@ export class SingleSlideCarouselTests implements ITest {
     private itMustBeAbleToGoToSlidesWhileAddingElements() {
         var that = this;
         it('mustBeAbleToGoToSlidesWhileAddingElements', function(done) {
-            function goNext(carousel : CarouselBasic.SingleSlideCarousel) : IGoToAndCheckData {
+            function goNext(carousel : SingleSlideCarousel) : IGoToAndCheckData {
                 return that.performGoNext(carousel, { slideStyles: ['sora-fade-in-animation',]}, { slideStyles: ['sora-fade-out-animation',] });
             }
-            function goPrevious(carousel : CarouselBasic.SingleSlideCarousel) : IGoToAndCheckData {
+            function goPrevious(carousel : SingleSlideCarousel) : IGoToAndCheckData {
                 return that.performGoPrevious(carousel, { slideStyles: ['sora-fade-in-animation',]}, { slideStyles: ['sora-fade-out-animation',] });
             }
 
             var divElement : HTMLElement = that.generateBasicCarousel();
-            var carousel : CarouselBasic.SingleSlideCarousel = new CarouselBasic.SingleSlideCarousel(divElement, { index: 0 });
+            var carousel : SingleSlideCarousel = new SingleSlideCarousel(divElement, { index: 0 });
             document.body.appendChild(divElement);
 
             var executionPromise = new Promise<void>(function(resolve, reject) {
                 var animationStatus = goNext(carousel);
 
                 var element0 = document.createElement('div');
-                element0.classList.add(CarouselBase.CAROUSEL_STYLES.SLIDE);
-                element0.classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                element0.classList.add(CAROUSEL_STYLES.SLIDE);
+                element0.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
                 element0.innerHTML = 'New Content 0';
                 var element1 = document.createElement('div');
-                element1.classList.add(CarouselBase.CAROUSEL_STYLES.SLIDE);
-                element1.classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                element1.classList.add(CAROUSEL_STYLES.SLIDE);
+                element1.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
                 element1.innerHTML = 'New Content 1';
                 var element2 = document.createElement('div');
-                element2.classList.add(CarouselBase.CAROUSEL_STYLES.SLIDE);
-                element2.classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                element2.classList.add(CAROUSEL_STYLES.SLIDE);
+                element2.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
                 element2.innerHTML = 'New Content 2';
                 var element3 = document.createElement('div');
-                element3.classList.add(CarouselBase.CAROUSEL_STYLES.SLIDE);
-                element3.classList.add(CarouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                element3.classList.add(CAROUSEL_STYLES.SLIDE);
+                element3.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
                 element3.innerHTML = 'New Content 3';
                 carousel.getElementsManager().insertElements({
                     0: element0,
@@ -356,12 +361,12 @@ export class SingleSlideCarouselTests implements ITest {
     private itMustBeAbleToGoToSlidesWhileRemovingAnimationElements() {
         var that = this;
         it('mustBeAbleToGoToSlidesWhileRemovingAnimationElements', function(done) {
-            function goNext(carousel : CarouselBasic.SingleSlideCarousel) : IGoToAndCheckData {
+            function goNext(carousel : SingleSlideCarousel) : IGoToAndCheckData {
                 return that.performGoNext(carousel, { slideStyles: ['sora-fade-in-animation',]}, { slideStyles: ['sora-fade-out-animation',] });
             }
 
             var divElement : HTMLElement = that.generateBasicCarousel();
-            var carousel : CarouselBasic.SingleSlideCarousel = new CarouselBasic.SingleSlideCarousel(divElement, { index: 0 });
+            var carousel : SingleSlideCarousel = new SingleSlideCarousel(divElement, { index: 0 });
             document.body.appendChild(divElement);
 
             var executionPromise = new Promise<void>(function(resolve, reject) {
@@ -398,12 +403,12 @@ export class SingleSlideCarouselTests implements ITest {
     private itMustBeAbleToGoToSlidesWhileRemovingOtherElements() {
         var that = this;
         it('mustBeAbleToGoToSlidesWhileRemovingOtherElements', function(done) {
-            function goNext(carousel : CarouselBasic.SingleSlideCarousel) : IGoToAndCheckData {
+            function goNext(carousel : SingleSlideCarousel) : IGoToAndCheckData {
                 return that.performGoNext(carousel, { slideStyles: ['sora-fade-in-animation',]}, { slideStyles: ['sora-fade-out-animation',] });
             }
 
             var divElement : HTMLElement = that.generateBasicCarousel();
-            var carousel : CarouselBasic.SingleSlideCarousel = new CarouselBasic.SingleSlideCarousel(divElement, { index: 0 });
+            var carousel : SingleSlideCarousel = new SingleSlideCarousel(divElement, { index: 0 });
             document.body.appendChild(divElement);
 
             var executionPromise = new Promise<void>(function(resolve, reject) {
@@ -441,7 +446,7 @@ export class SingleSlideCarouselTests implements ITest {
         var that = this;
 
         it('mustBeAbleToHandleChildrenAnimations', function(done) {
-            function goNext(carousel : CarouselBasic.SingleSlideCarousel) : IGoToAndCheckData {
+            function goNext(carousel : SingleSlideCarousel) : IGoToAndCheckData {
                 return that.performGoNext(carousel,
                     {
                         slideStyles: [ 'sora-fade-in-animation', ],
@@ -460,7 +465,7 @@ export class SingleSlideCarouselTests implements ITest {
                 );
             }
 
-            function goPrevious(carousel : CarouselBasic.SingleSlideCarousel) : IGoToAndCheckData {
+            function goPrevious(carousel : SingleSlideCarousel) : IGoToAndCheckData {
                 return that.performGoPrevious(carousel,
                     {
                         slideStyles: [ 'sora-fade-in-animation', ],
@@ -480,7 +485,7 @@ export class SingleSlideCarouselTests implements ITest {
             }
 
             var divElement : HTMLElement = that.generateBasicCarousel();
-            var carousel : CarouselBasic.SingleSlideCarousel = new CarouselBasic.SingleSlideCarousel(divElement, { index: 0 });
+            var carousel : SingleSlideCarousel = new SingleSlideCarousel(divElement, { index: 0 });
             document.body.appendChild(divElement);
 
             var executionPromise = new Promise<void>(function(resolve, reject) {
@@ -525,7 +530,7 @@ export class SingleSlideCarouselTests implements ITest {
         var that = this;
 
         it('mustBeAbleToPauseAndResumeAnimation', function(done) {
-            function goNext(carousel : CarouselBasic.SingleSlideCarousel) : IGoToAndCheckData {
+            function goNext(carousel : SingleSlideCarousel) : IGoToAndCheckData {
                 return that.performGoNext(
                     carousel,
                     { slideStyles: ['sora-fade-in-animation', 'sora-offset-left-in-animation', ]},
@@ -534,7 +539,7 @@ export class SingleSlideCarouselTests implements ITest {
             }
 
             var divElement : HTMLElement = that.generateBasicCarousel();
-            var carousel : CarouselBasic.SingleSlideCarousel = new CarouselBasic.SingleSlideCarousel(divElement, { index: 0 });
+            var carousel : SingleSlideCarousel = new SingleSlideCarousel(divElement, { index: 0 });
             document.body.appendChild(divElement);
 
             var executionPromise = new Promise<void>(function(resolve, reject) {
@@ -582,7 +587,7 @@ export class SingleSlideCarouselTests implements ITest {
         var that = this;
 
         it('mustBeAbleToRunComplexAnimations', function(done) {
-            function goNext(carousel : CarouselBasic.SingleSlideCarousel) : IGoToAndCheckData {
+            function goNext(carousel : SingleSlideCarousel) : IGoToAndCheckData {
                 return that.performGoNext(
                     carousel,
                     { slideStyles: ['sora-fade-in-animation', 'sora-offset-left-in-animation', ]},
@@ -590,7 +595,7 @@ export class SingleSlideCarouselTests implements ITest {
                 );
             }
 
-            function goPrevious(carousel : CarouselBasic.SingleSlideCarousel) : IGoToAndCheckData {
+            function goPrevious(carousel : SingleSlideCarousel) : IGoToAndCheckData {
                 return that.performGoPrevious(
                     carousel,
                     { slideStyles: ['sora-fade-in-animation', 'sora-offset-left-in-animation', ]},
@@ -599,7 +604,7 @@ export class SingleSlideCarouselTests implements ITest {
             }
 
             var divElement : HTMLElement = that.generateBasicCarousel();
-            var carousel : CarouselBasic.SingleSlideCarousel = new CarouselBasic.SingleSlideCarousel(divElement, { index: 0 });
+            var carousel : SingleSlideCarousel = new SingleSlideCarousel(divElement, { index: 0 });
             document.body.appendChild(divElement);
 
             var executionPromise = new Promise<void>(function(resolve, reject) {
@@ -639,5 +644,4 @@ export class SingleSlideCarouselTests implements ITest {
             });
         }, this.longTimeLimit);
     }
-
 }
