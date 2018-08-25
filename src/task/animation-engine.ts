@@ -1,8 +1,8 @@
 import { EventEmitter } from "events";
 import { CarouselBase } from "../carousel/carousel-base";
 import { AnimationPlayStateValue } from "../carousel/animation/animation-play-state";
-import { OperationManager, IOperationArgs } from "./operation-manager";
-import { ITaskFlowPart, TaskEngine, ITaskFlow } from "./task-engine";
+import { OperationManager } from "./operation-manager";
+import { ITaskFlowPart, TaskEngine } from "./task-engine";
 
 //#region Operation Events
 
