@@ -457,6 +457,7 @@ var SingleSlideCarousel = exports.SingleSlideCarousel = function (_CarouselBase)
             };
             var animationFlow = this.generateGoToAnimationFlow(newActiveElement, oldActiveElement, options);
             var animationPromises = this.engineAnimation.handle(animationFlow);
+            var ANIMATION_ENTER_INDEX = 0;
             var ANIMATION_LEAVE_INDEX = 1;
             var hideLeaveSlideAfterAnimationEnds = new _promise2.default(function (resolve, reject) {
                 animationPromises[ANIMATION_LEAVE_INDEX].then(function (animationOptions) {
@@ -470,7 +471,7 @@ var SingleSlideCarousel = exports.SingleSlideCarousel = function (_CarouselBase)
             });
             this.addListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, cancelAnimationHandler);
             var soraHandlerStatus = new _promise2.default(function (resolve, reject) {
-                _promise2.default.all([animationPromises[0], hideLeaveSlideAfterAnimationEnds]).then(function () {
+                _promise2.default.all([animationPromises[ANIMATION_ENTER_INDEX], hideLeaveSlideAfterAnimationEnds]).then(function () {
                     if (!animationCanceled) {
                         oldActiveElement.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
                         newActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
@@ -1470,14 +1471,6 @@ var SingleSlideCarouselTests = exports.SingleSlideCarouselTests = function () {
     }
 
     (0, _createClass3.default)(SingleSlideCarouselTests, [{
-        key: 'generateBasicCarousel',
-        value: function generateBasicCarousel() {
-            var divElement = document.createElement('div');
-            divElement.classList.add(_carouselBase.CAROUSEL_STYLES.CAROUSEL);
-            divElement.innerHTML = '<div class="sora-wrapper">\n    <div class="sora-slide">\n        <span>Content 1</span>\n    </div>\n    <div class="sora-slide">\n        <span>Content 2</span>\n    </div>\n    <div class="sora-slide">\n        <span>Content 3</span>\n    </div>\n</div>';
-            return divElement;
-        }
-    }, {
         key: 'performTests',
         value: function performTests() {
             var _this = this;
@@ -1495,6 +1488,14 @@ var SingleSlideCarouselTests = exports.SingleSlideCarouselTests = function () {
             });
         }
     }, {
+        key: 'generateBasicCarousel',
+        value: function generateBasicCarousel() {
+            var divElement = document.createElement('div');
+            divElement.classList.add(_carouselBase.CAROUSEL_STYLES.CAROUSEL);
+            divElement.innerHTML = '<div class="sora-wrapper">\n    <div class="sora-slide">\n        <span>Content 1</span>\n    </div>\n    <div class="sora-slide">\n        <span>Content 2</span>\n    </div>\n    <div class="sora-slide">\n        <span>Content 3</span>\n    </div>\n</div>';
+            return divElement;
+        }
+    }, {
         key: 'performGoAndCheck',
         value: function performGoAndCheck(action, carousel, enterAnimation, leaveAnimation) {
             var shouldCheck = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : true;
@@ -1504,21 +1505,27 @@ var SingleSlideCarouselTests = exports.SingleSlideCarouselTests = function () {
             var activeIndex = carousel.getActiveIndex();
             var indexes = carousel.getElementsManager().getLength();
             var nextIndex = function (action) {
-                if (_carouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT == action) return (activeIndex + 1) % indexes;else if (_carouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_PREVIOUS == action) {
+                if (_carouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_NEXT === action) {
+                    return (activeIndex + 1) % indexes;
+                } else if (_carouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS.GO_TO_PREVIOUS === action) {
                     return (activeIndex - 1 + indexes) % indexes;
-                } else throw new Error('Unexpected action');
+                } else {
+                    throw new Error('Unexpected action');
+                }
             }(action);
             var nextElement = carousel.getElementsManager().getCollection()[nextIndex];
             var goActionStatus = carousel.handle(action, {
                 enterAnimation: enterAnimation,
                 leaveAnimation: leaveAnimation
             });
-            if (shouldCheck) goActionStatus.soraHandlerStatus.then(function () {
-                expect(currentActiveElement.classList).not.toContain(_carouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-                expect(currentActiveElement.classList).toContain(_carouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
-                expect(nextElement.classList).toContain(_carouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-                expect(nextElement.classList).not.toContain(_carouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
-            });
+            if (shouldCheck) {
+                goActionStatus.soraHandlerStatus.then(function () {
+                    expect(currentActiveElement.classList).not.toContain(_carouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                    expect(currentActiveElement.classList).toContain(_carouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                    expect(nextElement.classList).toContain(_carouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                    expect(nextElement.classList).not.toContain(_carouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                });
+            }
             return {
                 goActionStatus: goActionStatus,
                 newElement: nextElement,
@@ -1789,32 +1796,32 @@ var SingleSlideCarouselTests = exports.SingleSlideCarouselTests = function () {
             it('mustBeAbleToHandleChildrenAnimations', function (done) {
                 function goNext(carousel) {
                     return that.performGoNext(carousel, {
-                        slideStyles: ['sora-fade-in-animation'],
                         childrenStyles: [{
                             selector: 'span',
                             styles: ['sora-fade-in-animation']
-                        }]
+                        }],
+                        slideStyles: ['sora-fade-in-animation']
                     }, {
-                        slideStyles: ['sora-fade-out-animation'],
                         childrenStyles: [{
                             selector: 'span',
                             styles: ['sora-fade-out-animation']
-                        }]
+                        }],
+                        slideStyles: ['sora-fade-out-animation']
                     });
                 }
                 function goPrevious(carousel) {
                     return that.performGoPrevious(carousel, {
-                        slideStyles: ['sora-fade-in-animation'],
                         childrenStyles: [{
                             selector: 'span',
                             styles: ['sora-fade-in-animation']
-                        }]
+                        }],
+                        slideStyles: ['sora-fade-in-animation']
                     }, {
-                        slideStyles: ['sora-fade-out-animation'],
                         childrenStyles: [{
                             selector: 'span',
                             styles: ['sora-fade-out-animation']
-                        }]
+                        }],
+                        slideStyles: ['sora-fade-out-animation']
                     });
                 }
                 var divElement = that.generateBasicCarousel();

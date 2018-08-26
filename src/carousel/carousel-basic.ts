@@ -670,7 +670,7 @@ export class SingleSlideCarousel extends CarouselBase {
 
         const animationFlow = this.generateGoToAnimationFlow(newActiveElement, oldActiveElement, options);
         const animationPromises: Array<Promise<void>> = this.engineAnimation.handle(animationFlow);
-
+        const ANIMATION_ENTER_INDEX: number = 0;
         const ANIMATION_LEAVE_INDEX: number = 1;
 
         const hideLeaveSlideAfterAnimationEnds = new Promise<void>(function(resolve, reject) {
@@ -688,7 +688,7 @@ export class SingleSlideCarousel extends CarouselBase {
 
         const soraHandlerStatus: Promise<void> = new Promise<void>(function(resolve, reject) {
             Promise.all([
-                animationPromises[0],
+                animationPromises[ANIMATION_ENTER_INDEX],
                 hideLeaveSlideAfterAnimationEnds,
             ]).then(function() {
                 if (!animationCanceled) {

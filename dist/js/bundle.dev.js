@@ -457,6 +457,7 @@ var SingleSlideCarousel = exports.SingleSlideCarousel = function (_CarouselBase)
             };
             var animationFlow = this.generateGoToAnimationFlow(newActiveElement, oldActiveElement, options);
             var animationPromises = this.engineAnimation.handle(animationFlow);
+            var ANIMATION_ENTER_INDEX = 0;
             var ANIMATION_LEAVE_INDEX = 1;
             var hideLeaveSlideAfterAnimationEnds = new _promise2.default(function (resolve, reject) {
                 animationPromises[ANIMATION_LEAVE_INDEX].then(function (animationOptions) {
@@ -470,7 +471,7 @@ var SingleSlideCarousel = exports.SingleSlideCarousel = function (_CarouselBase)
             });
             this.addListener(SINGLE_SLIDE_CAROUSEL_EVENTS.ON_CANCEL_ANIMATION, cancelAnimationHandler);
             var soraHandlerStatus = new _promise2.default(function (resolve, reject) {
-                _promise2.default.all([animationPromises[0], hideLeaveSlideAfterAnimationEnds]).then(function () {
+                _promise2.default.all([animationPromises[ANIMATION_ENTER_INDEX], hideLeaveSlideAfterAnimationEnds]).then(function () {
                     if (!animationCanceled) {
                         oldActiveElement.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
                         newActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
@@ -850,13 +851,13 @@ require('core-js/fn/promise');
 
 var sora = function () {
     return {
+        SingleSlideCarousel: _carouselBasic.SingleSlideCarousel,
         actions: {
             SINGLE_SLIDE_CAROUSEL_ACTIONS: _carouselBasic.SINGLE_SLIDE_CAROUSEL_ACTIONS
         },
         events: {
             SINGLE_SLIDE_CAROUSEL_EVENTS: _carouselBasic.SINGLE_SLIDE_CAROUSEL_EVENTS
         },
-        SingleSlideCarousel: _carouselBasic.SingleSlideCarousel,
         styles: {
             SINGLE_SLIDE_CAROUSEL_STYLES: _carouselBasic.SINGLE_SLIDE_CAROUSEL_STYLES
         }

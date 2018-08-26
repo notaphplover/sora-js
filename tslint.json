@@ -8,6 +8,7 @@
         "curly": true,
         "no-empty-interface": false,
         "no-var-keyword": false,
+        "no-var-requires": false,
         "no-shadowed-variable": false,
         "object-literal-shorthand": [true, "never"],
         "only-arrow-functions": false,
