@@ -1,58 +1,68 @@
+import {
+    IAnimationFlowPart,
+    SingleAnimationEngine,
+} from '../../task/animation-engine';
+import { ITaskFlow } from '../../task/flow/task-flow';
 import { ITest } from '../ITest';
-import { SingleAnimationEngine, IAnimationFlowPart } from '../../task/animation-engine';
-import { ITaskFlow } from '../../task/task-engine';
 
 export class AnimationEngineTests implements ITest {
 
-    public constructor() { }
+    //#region Public
 
-    protected generateDivElement() : HTMLElement {
-        var r = Math.ceil(Math.random() * 256);
-        var g = Math.ceil(Math.random() * 256);
-        var b = Math.ceil(Math.random() * 256);
-        var element : HTMLElement = document.createElement('div');
-        element.style.backgroundColor = 'rgb(' + r.toString() + ', ' + g.toString() + ', ' + b.toString() + ')';
-        const height : number = 100;
-        element.style.height = height + 'px';
-        return element;
-    }
-
-    public performTests() : void {
+    public performTests(): void {
         describe('Animation Engine Tests', () => {
             this.itMustBeInitializable();
             this.itMustBeAbleToPerformASimpleAnimation();
         });
     }
 
-    private itMustBeInitializable() : void {
+    //#endregion
+
+    //#region Protected
+
+    protected generateDivElement(): HTMLElement {
+        const r = Math.ceil(Math.random() * 256);
+        const g = Math.ceil(Math.random() * 256);
+        const b = Math.ceil(Math.random() * 256);
+        const element: HTMLElement = document.createElement('div');
+        element.style.backgroundColor = 'rgb(' + r.toString() + ', ' + g.toString() + ', ' + b.toString() + ')';
+        const height: number = 100;
+        element.style.height = height + 'px';
+        return element;
+    }
+
+    //#endregion
+
+    private itMustBeInitializable(): void {
         it('mustBeInitializable', () => {
-            var animationEngine : SingleAnimationEngine = new SingleAnimationEngine();
+            const animationEngine: SingleAnimationEngine = new SingleAnimationEngine();
             expect(animationEngine).not.toBeNull();
         });
     }
 
     private itMustBeAbleToPerformASimpleAnimation() {
         it('mustBeAbleToPerformASimpleAnimation', () => {
-            var element = this.generateDivElement();
-            var animationEngine : SingleAnimationEngine = new SingleAnimationEngine();
-            var taskFlow : ITaskFlow<IAnimationFlowPart> = {
+            const element = this.generateDivElement();
+            const animationEngine: SingleAnimationEngine = new SingleAnimationEngine();
+            const taskFlow: ITaskFlow<IAnimationFlowPart> = {
+                getPartByAlias: function(alias: string): IAnimationFlowPart {
+                    if ('elem' === alias) {
+                        return taskFlow.parts[0];
+                    } else {
+                        return null;
+                    }
+                },
                 parts: [
                     {
                         alias: 'elem',
-                        elements: [ element, ],
+                        elements: [ element ],
                         styles: [ 'sora-fade-out-animation' ],
                         when: null,
                     },
                 ],
-                getPartByAlias: function(alias : string) : IAnimationFlowPart {
-                    if ('elem' == alias)
-                        return taskFlow.parts[0];
-                    else
-                        return null;
-                }
             };
 
-            var promises: Promise<void>[] = animationEngine.handle(taskFlow);
+            const promises: Array<Promise<void>> = animationEngine.handle(taskFlow);
         });
     }
 }

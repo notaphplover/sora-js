@@ -1,8 +1,9 @@
-import { EventEmitter } from "events";
-import { CarouselBase } from "../carousel/carousel-base";
-import { AnimationPlayStateValue } from "../carousel/animation/animation-play-state";
-import { OperationManager } from "./operation-manager";
-import { ITaskFlowPart, TaskEngine } from "./task-engine";
+import { EventEmitter } from 'events';
+import { AnimationPlayStateValue } from '../carousel/animation/animation-play-state';
+import { CAROUSEL_STYLES } from '../carousel/carousel-base';
+import { ITaskFlowPart } from './flow/task-flow-part';
+import { OperationManager } from './operation-manager';
+import { TaskEngine } from './task-engine';
 
 //#region Operation Events
 
@@ -15,7 +16,7 @@ export const ANIMATION_OPERATION_EVENTS = {
      * Changes the animation play state of the elements of the animation.
      */
     ANIMATION_STATE_CHANGE: 'anim.state.change',
-}
+};
 
 /**
  * Arguments for the event emitter.
@@ -24,7 +25,7 @@ export interface IAnimationCancelEventArgs {
     /**
      * Aliases of the target parts or null to target all the parts of any animation.
      */
-    aliases : string[],
+    aliases: string[];
 }
 
 /**
@@ -34,11 +35,11 @@ export interface IAnimationStateChangeEventArgs {
     /**
      * Aliases of the target parts or null to target all the parts of any animation.
      */
-    aliases: string[],
+    aliases: string[];
     /**
      * Play state value.
      */
-    value : AnimationPlayStateValue,
+    value: AnimationPlayStateValue;
 }
 
 //#endregion
@@ -50,27 +51,26 @@ export interface IAnimationFlowPart extends ITaskFlowPart {
     /**
      * Elements targeted by the part.
      */
-    elements: HTMLElement[],
-
+    elements: HTMLElement[];
     /**
      * Pending operations.
      */
-    pendingOperations?: IAnimationFlowPartPendingOperations,
+    pendingOperations?: IAnimationFlowPartPendingOperations;
     /**
      * Animation styles to apply.
      */
-    styles: string[],
+    styles: string[];
 }
 
 export interface IAnimationFlowPartPendingOperations {
     /**
      * True if the part must be cancelled.
      */
-    cancel : boolean,
+    cancel: boolean;
     /**
      * True if the part must be paused.
      */
-    pause : boolean,
+    pause: boolean;
 }
 
 /**
@@ -85,19 +85,19 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
     /**
      * Animation cancel operation manager.
      */
-    protected animationCancelManager : OperationManager<IAnimationCancelEventArgs>;
+    protected animationCancelManager: OperationManager<IAnimationCancelEventArgs>;
 
     /**
      * Animation state change operation manager.
      */
-    protected animationStateChangeManager : OperationManager<IAnimationStateChangeEventArgs>
+    protected animationStateChangeManager: OperationManager<IAnimationStateChangeEventArgs>;
 
     //#endregion
 
     /**
      * Event emitter to use
      */
-    protected eventEmitter : EventEmitter;
+    protected eventEmitter: EventEmitter;
 
     //#endregion
 
@@ -108,9 +108,19 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
         super();
         this.eventEmitter = new EventEmitter();
 
-        this.animationCancelManager = new OperationManager<IAnimationCancelEventArgs>(ANIMATION_OPERATION_EVENTS.ANIMATION_CANCEL, this.eventEmitter);
-        this.animationStateChangeManager = new OperationManager<IAnimationStateChangeEventArgs>(ANIMATION_OPERATION_EVENTS.ANIMATION_STATE_CHANGE, this.eventEmitter);
+        this.animationCancelManager =
+            new OperationManager<IAnimationCancelEventArgs>(
+                ANIMATION_OPERATION_EVENTS.ANIMATION_CANCEL,
+                this.eventEmitter,
+            );
+        this.animationStateChangeManager =
+            new OperationManager<IAnimationStateChangeEventArgs>(
+                ANIMATION_OPERATION_EVENTS.ANIMATION_STATE_CHANGE,
+                this.eventEmitter,
+            );
     }
+
+    //#region Public
 
     /**
      * Disposes the instance.
@@ -119,6 +129,51 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
         this.animationCancelManager.dispose();
         this.animationStateChangeManager.dispose();
     }
+
+        //#region Operations
+
+    /**
+     * Cancels the animation.
+     * @param aliases Aliases of the parts to cancel or null to cancel all the parts.
+     */
+    public cancelAnimation(aliases: string[]): void {
+        this.eventEmitter.emit(
+            ANIMATION_OPERATION_EVENTS.ANIMATION_CANCEL,
+            { aliases : aliases } as IAnimationCancelEventArgs,
+        );
+    }
+
+    /**
+     * Pauses the engine animation.
+     * @param aliases Aliases of the animation parts to pause or null to pause all the parts.
+     */
+    public pause(aliases: string[]): void {
+        this.eventEmitter.emit(
+            ANIMATION_OPERATION_EVENTS.ANIMATION_STATE_CHANGE,
+            {
+                aliases: aliases,
+                value: AnimationPlayStateValue.paused,
+            } as IAnimationStateChangeEventArgs,
+        );
+    }
+
+    /**
+     * Resumes the engine animation.
+     * @param aliases Aliases of the animation parts to resume or null to resume all the parts.
+     */
+    public resume(aliases: string[]): void {
+        this.eventEmitter.emit(
+            ANIMATION_OPERATION_EVENTS.ANIMATION_STATE_CHANGE,
+            {
+                aliases: aliases,
+                value: AnimationPlayStateValue.running,
+            } as IAnimationStateChangeEventArgs,
+        );
+    }
+
+    //#endregion
+
+    //#endregion
 
     /**
      * Handles an animation part.
@@ -129,8 +184,8 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
      *
      * @returns Promise resolved once the animation of the part is finished.
      */
-    protected handleTaskPart(part : IAnimationFlowPart) : Promise<void> {
-        var that = this;
+    protected handleTaskPart(part: IAnimationFlowPart): Promise<void> {
+        const that = this;
         part.pendingOperations = {
             cancel: false,
             pause: false,
@@ -138,16 +193,16 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
 
         this.animationCancelManager.subscribe(
             part.alias,
-            function(eventArgs : IAnimationCancelEventArgs) {
+            function(eventArgs: IAnimationCancelEventArgs) {
                 part.pendingOperations.cancel = true;
                 that.animationCancelManager.unsubscribe(part.alias);
-            }
+            },
         );
         this.animationStateChangeManager.subscribe(
             part.alias,
-            function(eventArgs : IAnimationStateChangeEventArgs) {
-                part.pendingOperations.pause = eventArgs.value == AnimationPlayStateValue.paused;
-            }
+            function(eventArgs: IAnimationStateChangeEventArgs) {
+                part.pendingOperations.pause = eventArgs.value === AnimationPlayStateValue.paused;
+            },
         );
 
         return super.handleTaskPart(part);
@@ -158,23 +213,26 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
      * @param part Task part to be performed.
      * @returns Promise resolved once the part task is performed.
      */
-    protected performTask(part : IAnimationFlowPart) : PromiseLike<{} | void> {
+    protected performTask(part: IAnimationFlowPart): PromiseLike<{} | void> {
 
         this.animationCancelManager.unsubscribe(part.alias);
         this.animationStateChangeManager.unsubscribe(part.alias);
 
-        var promises : Promise<void>[] = new Array(part.elements.length);
+        const promises: Array<Promise<void>> = new Array(part.elements.length);
 
         // 2. Perform the animation.
-        for (var i = 0; i < part.elements.length; ++i)
+        for (var i = 0; i < part.elements.length; ++i) {
             promises[i] = this.handleAnimationOverElement(part.elements[i], part);
+        }
 
         if (part.pendingOperations) {
-            if (part.pendingOperations.pause)
+            if (part.pendingOperations.pause) {
                 this.pause([part.alias]);
+            }
 
-            if (part.pendingOperations.cancel)
+            if (part.pendingOperations.cancel) {
                 this.cancelAnimation([part.alias]);
+            }
         }
 
         return Promise.all(promises);
@@ -190,30 +248,33 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
      *
      * @returns Promise resolved once the animation over the element is finished.
      */
-    protected handleAnimationOverElement(element : HTMLElement, part : IAnimationFlowPart) : Promise<void> {
-        var styles : string[] = part.styles;
+    protected handleAnimationOverElement(element: HTMLElement, part: IAnimationFlowPart): Promise<void> {
+        const styles: string[] = part.styles;
 
         if (styles) {
-            if (styles.length < 1)
+            if (styles.length < 1) {
                 throw new Error('It\'s required to have at least one class to generate an animation.');
-        } else
+            }
+        } else {
             throw new Error('It\'s required to have an array of styles to generate an animation.');
+        }
 
-        var that = this;
+        const that = this;
 
         return new Promise<void>(function(resolve, reject) {
             try {
-                var animationFunctions : ((event : TransitionEvent) => void)[] = new Array();
-                var currentAnimationIndex : number = null;
+                const animationFunctions: Array<((event: TransitionEvent) => void)> = new Array();
+                var currentAnimationIndex: number = null;
 
-                var onAnimationCancel = function(args : IAnimationCancelEventArgs) {
-                    element.classList.add(CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                const onAnimationCancel = function(args: IAnimationCancelEventArgs) {
+                    element.classList.add(CAROUSEL_STYLES.CLEAR_ANIMATION);
 
-                    if (currentAnimationIndex != null)
+                    if (null != currentAnimationIndex) {
                         element.classList.remove(styles[currentAnimationIndex]);
+                    }
 
                     that.unregisterAnimationListener(element, animationFunctions[currentAnimationIndex]);
-                    element.classList.remove(CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                    element.classList.remove(CAROUSEL_STYLES.CLEAR_ANIMATION);
 
                     that.animationCancelManager.unsubscribe(part.alias);
                     that.animationStateChangeManager.unsubscribe(part.alias);
@@ -223,13 +284,15 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
 
                 that.animationCancelManager.subscribe(part.alias, onAnimationCancel);
 
-                var onAnimationPlayStateChange = function(args : IAnimationStateChangeEventArgs) {
-                    if (AnimationPlayStateValue.paused == args.value) {
-                        if (!element.classList.contains(CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED))
-                            element.classList.add(CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
-                    } else if (AnimationPlayStateValue.running == args.value) {
-                        if (element.classList.contains(CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED))
-                            element.classList.remove(CarouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
+                const onAnimationPlayStateChange = function(args: IAnimationStateChangeEventArgs) {
+                    if (AnimationPlayStateValue.paused === args.value) {
+                        if (!element.classList.contains(CAROUSEL_STYLES.ANIMATION_PAUSED)) {
+                            element.classList.add(CAROUSEL_STYLES.ANIMATION_PAUSED);
+                        }
+                    } else if (AnimationPlayStateValue.running === args.value) {
+                        if (element.classList.contains(CAROUSEL_STYLES.ANIMATION_PAUSED)) {
+                            element.classList.remove(CAROUSEL_STYLES.ANIMATION_PAUSED);
+                        }
                     }
                 };
 
@@ -237,21 +300,21 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
 
                 for (var i = 1; i < styles.length; ++i) {
                     animationFunctions.push(function(index) {
-                        return function(event : TransitionEvent) {
+                        return function(event: TransitionEvent) {
                             element.classList.remove(styles[index - 1]);
                             that.unregisterAnimationListener(element, animationFunctions[index - 1]);
                             that.registerAnimationListener(element, animationFunctions[index]);
                             element.classList.add(styles[index]);
                             currentAnimationIndex = index;
-                        }
+                        };
                     } (i));
                 }
 
-                //add the clear function
-                animationFunctions.push(function(event : TransitionEvent) {
-                    element.classList.add(CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                // Add the clear function
+                animationFunctions.push(function(event: TransitionEvent) {
+                    element.classList.add(CAROUSEL_STYLES.CLEAR_ANIMATION);
                     element.classList.remove(styles[styles.length - 1]);
-                    element.classList.remove(CarouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                    element.classList.remove(CAROUSEL_STYLES.CLEAR_ANIMATION);
                     that.unregisterAnimationListener(element, animationFunctions[animationFunctions.length - 1]);
                     currentAnimationIndex = null;
                     that.animationCancelManager.unsubscribe(part.alias);
@@ -262,7 +325,7 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
                 that.registerAnimationListener(element, animationFunctions[0]);
                 element.classList.add(styles[0]);
                 currentAnimationIndex = 0;
-            } catch(ex) {
+            } catch (ex) {
                 reject(ex);
             }
         });
@@ -273,7 +336,7 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
      * @param element Element whose event will be handled.
      * @param listener Event listener.
      */
-    private registerAnimationListener(element : HTMLElement, listener : (element : TransitionEvent) => void) : void {
+    private registerAnimationListener(element: HTMLElement, listener: (element: TransitionEvent) => void): void {
         element.addEventListener('animationend', listener);
         element.addEventListener('webkitAnimationEnd', listener);
     }
@@ -283,54 +346,9 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
      * @param element Target element.
      * @param listener Listener to be unsubscribed.
      */
-    private unregisterAnimationListener(element : HTMLElement, listener : (element : TransitionEvent) => void) : void {
+    private unregisterAnimationListener(element: HTMLElement, listener: (element: TransitionEvent) => void): void {
         element.removeEventListener('animationend', listener);
         element.removeEventListener('webkitAnimationEnd', listener);
-    }
-
-    //#endregion
-
-    //#region Operations
-
-    /**
-     * Cancels the animation.
-     * @param aliases Aliases of the parts to cancel or null to cancel all the parts.
-     */
-    public cancelAnimation(aliases : string[]) : void {
-        this.eventEmitter.emit(
-            ANIMATION_OPERATION_EVENTS.ANIMATION_CANCEL,
-            {
-                aliases : aliases,
-            } as IAnimationCancelEventArgs
-        );
-    }
-
-    /**
-     * Pauses the engine animation.
-     * @param aliases Aliases of the animation parts to pause or null to pause all the parts.
-     */
-    public pause(aliases : string[]) : void {
-        this.eventEmitter.emit(
-            ANIMATION_OPERATION_EVENTS.ANIMATION_STATE_CHANGE,
-            {
-                aliases: aliases,
-                value: AnimationPlayStateValue.paused,
-            } as IAnimationStateChangeEventArgs
-        );
-    }
-
-    /**
-     * Resumes the engine animation.
-     * @param aliases Aliases of the animation parts to resume or null to resume all the parts.
-     */
-    public resume(aliases : string[]) : void {
-        this.eventEmitter.emit(
-            ANIMATION_OPERATION_EVENTS.ANIMATION_STATE_CHANGE,
-            {
-                aliases: aliases,
-                value: AnimationPlayStateValue.running,
-            } as IAnimationStateChangeEventArgs
-        );
     }
 
     //#endregion

@@ -1,10 +1,10 @@
-import { EventEmitter } from "events";
+import { EventEmitter } from 'events';
 
 /**
  * Operation arguments
  */
 export interface IOperationArgs {
-    aliases : string[],
+    aliases: string[];
 }
 
 /**
@@ -18,22 +18,22 @@ export class OperationManager<Args extends IOperationArgs> {
     /**
      * Function to be called to handle the event.
      */
-    protected callFunction : (eventArgs: Args) => void;
+    protected callFunction: (eventArgs: Args) => void;
 
     /**
      * Alias of the event.
      */
-    protected eventAlias : string;
+    protected eventAlias: string;
 
     /**
      * Event emmitter of the event.
      */
-    protected eventEmitter : EventEmitter;
+    protected eventEmitter: EventEmitter;
 
     /**
      * Object to storage all the functions subscribed.
      */
-    protected suscriptionStorage : {[alias : string] : (eventArgs: Args) => void}
+    protected suscriptionStorage: { [alias: string]: (eventArgs: Args) => void };
 
     //#endregion
 
@@ -42,21 +42,26 @@ export class OperationManager<Args extends IOperationArgs> {
      * @param eventAlias Event alias.
      * @param eventEmitter Event emitter.
      */
-    public constructor(eventAlias : string, eventEmitter : EventEmitter) {
-        var that = this;
-        this.callFunction = function(eventArgs : Args) : void {
-            if (eventArgs.aliases == null)
-                for (var alias in that.suscriptionStorage) {
-                    var subscriber = that.suscriptionStorage[alias];
-                    if (subscriber != null)
-                        subscriber(eventArgs);
+    public constructor(eventAlias: string, eventEmitter: EventEmitter) {
+        const that = this;
+        this.callFunction = function(eventArgs: Args): void {
+            if (eventArgs.aliases == null) {
+                for (const alias in that.suscriptionStorage) {
+                    if (that.suscriptionStorage.hasOwnProperty(alias)) {
+                        const subscriber = that.suscriptionStorage[alias];
+                        if (subscriber != null) {
+                            subscriber(eventArgs);
+                        }
+                    }
                 }
-            else
-                for(var i = 0; i < eventArgs.aliases.length; ++i) {
-                    var subscriber = that.suscriptionStorage[eventArgs.aliases[i]];
-                    if (subscriber != null)
+            } else {
+                for (const alias of eventArgs.aliases) {
+                    const subscriber = that.suscriptionStorage[alias];
+                    if (null != subscriber) {
                         subscriber(eventArgs);
+                    }
                 }
+            }
         };
 
         this.eventAlias = eventAlias;
@@ -69,7 +74,7 @@ export class OperationManager<Args extends IOperationArgs> {
     /**
      * Disposes the instance.
      */
-    public dispose() : void {
+    public dispose(): void {
         this.eventEmitter.removeListener(this.eventAlias, this.callFunction);
     }
 
@@ -78,7 +83,7 @@ export class OperationManager<Args extends IOperationArgs> {
      * @param alias Alias of the handler.
      * @param handler Handler to be subscribed.
      */
-    public subscribe(alias : string, handler : (eventArgs: Args) => void) : void {
+    public subscribe(alias: string, handler: (eventArgs: Args) => void): void {
         this.suscriptionStorage[alias] = handler;
     }
 
@@ -86,7 +91,7 @@ export class OperationManager<Args extends IOperationArgs> {
      * Unsubstribes a handler under an alias.
      * @param alias Alias of the handler.
      */
-    public unsubscribe(alias : string) {
+    public unsubscribe(alias: string) {
         delete this.suscriptionStorage[alias];
     }
 }

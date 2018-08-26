@@ -1,39 +1,25 @@
-import { EventEmitter } from "events";
-
-/**
- * Task constraint types
- */
-export const TASK_CONSTRAINT_TYPES = {
-    /**
-     * Requires the end of a task part.
-     */
-    END: 'anim.end',
-    /**
-     * Requires a group of constraints.
-     */
-    GROUP: 'group',
-    /**
-     * Requires the start of a task part.
-     */
-    START : 'anim.start',
-    /**
-     * Requires an amount of time.
-     */
-    WAIT_FOR: 'wait',
-};
+import { EventEmitter } from 'events';
+import { ITaskFlow } from './flow/task-flow';
+import { ITaskFlowPart } from './flow/task-flow-part';
+import { ITaskPartWhenConstraint } from './flow/task-flow-when';
+import { TaskPartBeginConstraint } from './flow/task-part-begin-constraint';
+import { TASK_CONSTRAINT_TYPES } from './flow/task-part-constraint';
+import { TaskPartEndConstraint } from './flow/task-part-end-constraint';
+import { TaskGroupConstraint } from './flow/task-part-group-constraint';
+import { TaskTimeConstraint } from './flow/task-part-time-constraint';
 
 /**
  * Prefixes used to ganerate alias for events over task parts.
  */
 const TASK_PART_WHEN_EVENT_PREFIXES = {
     /**
-     * Prefix for any event raised once a task part is started.
-     */
-    START: 'anim.start.',
-    /**
      * Prefix for any event raised once a task part is ended.
      */
     END: 'anim.end.',
+    /**
+     * Prefix for any event raised once a task part is started.
+     */
+    START: 'anim.start.',
 };
 
 //#region Enum
@@ -55,158 +41,7 @@ export enum TaskPartWhenOperator {
 //#endregion
 
 /**
- * Task flow.
- *
- * The flow is composed by parts.
- */
-export interface ITaskFlow<TPart extends ITaskFlowPart> {
-    /**
-     * Task parts.
-     */
-    parts : TPart[],
-
-    /**
-     * Search a task part by its alias.
-     * @param alias Alias of the part to search.
-     */
-    getPartByAlias(alias : string) : TPart,
-}
-
-/**
- * Task flow part.
- */
-export interface ITaskFlowPart {
-    /**
-     * Alias of the part
-     */
-    alias: string,
-    /**
-     * Constraints to ensure before applying the styles.
-     */
-    when: ITaskPartWhenConstraint,
-}
-
-/**
- * Constraint that determines the start of the task part.
- */
-export interface ITaskPartWhenConstraint {
-    /**
-     * When entity to check once this constraint is ensured.
-     */
-    after: ITaskPartWhenConstraint,
-    /**
-     * Type of this constraint.
-     */
-    constraintType: string,
-}
-
-/**
- * Constraint that determines the start of the task part.
- */
-export abstract class TaskPartWhenConstraint implements ITaskPartWhenConstraint {
-    /**
-     * When entity to check once this constraint is ensured.
-     */
-    public after : ITaskPartWhenConstraint;
-    /**
-     * Type of this constraint.
-     */
-    public constraintType : string;
-
-    /**
-     * Creates a new task part constraint.
-     * @param after Constraint to apply after this constraint is checked.
-     * @param constraintType Constraint type.
-     */
-    public constructor(after : ITaskPartWhenConstraint, constraintType : string) {
-        this.after = after;
-        this.constraintType = constraintType;
-    }
-}
-
-export abstract class TaskPartConstraint extends TaskPartWhenConstraint {
-    /**
-     * Aliases of the parts affected by this constraint.
-     */
-    public alias : string;
-
-    /**
-     * Creates a new task part constraint.
-     * @param after Constraint to apply after this constraint is checked.
-     * @param alias Aliases of the parts affected by this constraint.
-     * @param constraintType Constraint type.
-     */
-    public constructor(after : ITaskPartWhenConstraint, alias : string, constraintType : string) {
-        super(after, constraintType);
-
-        this.alias = alias;
-    }
-}
-
-/**
- * Represents a when constraint that is checked once a task part starts.
- */
-export class TaskPartBeginConstraint extends TaskPartConstraint {
-    public constructor(after : ITaskPartWhenConstraint, alias : string) {
-        super(after, alias, TASK_CONSTRAINT_TYPES.START)
-    }
-}
-
-/**
- * Represents a when constraint that is checked once a task part ends.
- */
-export class TaskPartEndConstraint extends TaskPartConstraint {
-    public constructor(after : ITaskPartWhenConstraint, alias : string) {
-        super(after, alias, TASK_CONSTRAINT_TYPES.END)
-    }
-}
-
-/**
- * Represents a when constraint that is checked once an amount of time passes.
- */
-export class TaskTimeConstraint extends TaskPartWhenConstraint {
-    /**
-     * Milliseconds to wait.
-     */
-    public millis : number;
-
-    public constructor(after : ITaskPartWhenConstraint, millis : number) {
-        super(after, TASK_CONSTRAINT_TYPES.WAIT_FOR);
-
-        this.millis = millis;
-    }
-}
-
-/**
- * Represents a when constraint that is checked once a group of constraints are checked.
- */
-export class TaskGroupConstraint extends TaskPartWhenConstraint {
-    /**
-     * Constraints to ensure
-     */
-    public constraints: ITaskPartWhenConstraint[];
-    /**
-     * Logical operator
-     */
-    public operator: TaskPartWhenOperator;
-
-    /**
-     * Creates a new instance.
-     *
-     * @param after Constraint to check after all the constraitns of the group have successfully checked.
-     * @param constraints Group of constraints to check.
-     * @param operator Logical operator to apply.
-     */
-    public constructor(after : ITaskPartWhenConstraint, constraints: ITaskPartWhenConstraint[], operator: TaskPartWhenOperator) {
-        super(after, TASK_CONSTRAINT_TYPES.GROUP);
-
-        this.constraints = constraints;
-        this.operator = operator;
-    }
-}
-
-/**
- * Represenrts a task engine.
+ * Represents a task engine.
  */
 export abstract class TaskEngine<TPart extends ITaskFlowPart> {
     //#region Attributes
@@ -214,12 +49,12 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
     /**
      * Task currently managed.
      */
-    protected currentTask : ITaskFlow<TPart>;
+    protected currentTask: ITaskFlow<TPart>;
 
     /**
      * Event emitter to use
      */
-    protected eventEmitter : EventEmitter;
+    protected eventEmitter: EventEmitter;
 
     //#endregion
 
@@ -235,19 +70,20 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
      * @param taskFlow Task flow to be managed.
      * @returns Task part promises.
      */
-    public handle(taskFlow : ITaskFlow<TPart>) : Promise<void>[] {
-
-        if (taskFlow == null)
+    public handle(taskFlow: ITaskFlow<TPart>): Array<Promise<void>> {
+        if (taskFlow == null) {
             throw new Error('It\'s required a task flow.');
-
-        if (taskFlow.parts == null)
+        }
+        if (taskFlow.parts == null) {
             throw new Error('It\'s required a task flow with parts.');
+        }
 
         this.currentTask = taskFlow;
-        var partPromises : Promise<void>[] = new Array(taskFlow.parts.length);
+        const partPromises: Array<Promise<void>> = new Array(taskFlow.parts.length);
 
-        for (var i = 0; i < taskFlow.parts.length; ++i)
+        for (var i = 0; i < taskFlow.parts.length; ++i) {
             partPromises[i] = this.handleTaskPart(taskFlow.parts[i]);
+        }
 
         return partPromises;
     }
@@ -259,22 +95,22 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
      *
      * @returns Promise resolved once the part of the task is finished.
      */
-    protected handleTaskPart(part : TPart) : Promise<void> {
-        var that = this;
+    protected handleTaskPart(part: TPart): Promise<void> {
+        const that = this;
 
         return new Promise<void>(function(resolve, reject) {
             that.handleTaskPartWhen(part.when).then(function() {
-                //1. Emit the start of task part.
+                // 1. Emit the start of task part.
                 that.eventEmitter.emit(TASK_PART_WHEN_EVENT_PREFIXES.START + part.alias, {});
 
-                var promise : PromiseLike<{} | void> = that.performTask(part);
+                const promise: PromiseLike<{} | void> = that.performTask(part);
 
                 promise.then(function() {
                     // 3. Emit the end of the task part and resolve the promise.
                     that.eventEmitter.emit(TASK_PART_WHEN_EVENT_PREFIXES.END + part.alias, {});
                     resolve();
                 });
-            }).catch(function(err : any) {
+            }).catch(function(err: any) {
                 reject(err);
             });
         });
@@ -285,7 +121,7 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
      * @param part Task part to be performed.
      * @returns Promise resolved once the part task is performed.
      */
-    protected abstract performTask(part : TPart) : PromiseLike<{} | void>
+    protected abstract performTask(part: TPart): PromiseLike<{} | void>;
 
     //#region TaskPartWhenconstraint
 
@@ -296,13 +132,13 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
      *
      * @returns Promise resolved once the when entity is checked.
      */
-    protected handleTaskPartWhen(whenEntity : ITaskPartWhenConstraint) : Promise<void> {
-        var that = this;
+    protected handleTaskPartWhen(whenEntity: ITaskPartWhenConstraint): Promise<void> {
+        const that = this;
         return new Promise<void>(function(resolve, reject) {
-            if (whenEntity == null)
+            if (null == whenEntity) {
                 resolve();
-            else
-                switch(whenEntity.constraintType) {
+            } else {
+                switch (whenEntity.constraintType) {
                     case TASK_CONSTRAINT_TYPES.START:
                         that.handleTaskPartWhenPartBegins(whenEntity as TaskPartBeginConstraint)
                             .then(resolve);
@@ -322,6 +158,7 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
                     default:
                         throw new Error('Unexpected when entity type.');
                 }
+            }
         });
     }
 
@@ -331,17 +168,18 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
      * @param whenEntity When entity to handle.
      * @returns Promise resolved once the when entity is checked.
      */
-    protected handleTaskPartWhenPartBegins(whenEntity : TaskPartBeginConstraint) : Promise<void> {
-        var that = this;
+    protected handleTaskPartWhenPartBegins(whenEntity: TaskPartBeginConstraint): Promise<void> {
+        const that = this;
         return new Promise<void>(function(resolve, reject) {
-            var eventName = TASK_PART_WHEN_EVENT_PREFIXES.START + whenEntity.alias;
-            var eventHandler = function() {
+            const eventName = TASK_PART_WHEN_EVENT_PREFIXES.START + whenEntity.alias;
+            const eventHandler = function() {
                 that.eventEmitter.removeListener(eventName, eventHandler);
-                if (whenEntity.after == null)
+                if (null == whenEntity.after) {
                     resolve();
-                else
+                } else {
                     that.handleTaskPartWhen(whenEntity.after)
                         .then(resolve);
+                }
             };
             that.eventEmitter.addListener(eventName, eventHandler);
         });
@@ -353,17 +191,18 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
      * @param whenEntity When entity to handle.
      * @returns Promise resolved once the when entity is checked.
      */
-    protected handleTaskPartWhenPartEnds(whenEntity : TaskPartEndConstraint) : Promise<void> {
-        var that = this;
+    protected handleTaskPartWhenPartEnds(whenEntity: TaskPartEndConstraint): Promise<void> {
+        const that = this;
         return new Promise<void>(function(resolve, reject) {
-            var eventName = TASK_PART_WHEN_EVENT_PREFIXES.END + whenEntity.alias;
-            var eventHandler = function() {
+            const eventName = TASK_PART_WHEN_EVENT_PREFIXES.END + whenEntity.alias;
+            const eventHandler = function() {
                 that.eventEmitter.removeListener(eventName, eventHandler);
-                if (whenEntity.after == null)
+                if (null == whenEntity.after) {
                     resolve();
-                else
+                } else {
                     that.handleTaskPartWhen(whenEntity.after)
                         .then(resolve);
+                }
             };
             that.eventEmitter.addListener(eventName, eventHandler);
         });
@@ -376,10 +215,10 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
      *
      * @returns Promise resolved once the when entity is checked.
      */
-    protected handleTaskPartWhenPartGroup(whenEntity : TaskGroupConstraint) : Promise<void> {
-        var that = this;
+    protected handleTaskPartWhenPartGroup(whenEntity: TaskGroupConstraint): Promise<void> {
+        const that = this;
         return new Promise<void>(function(resolve, reject) {
-            var childPromises : Promise<void>[] = new Array(whenEntity.constraints.length);
+            const childPromises: Array<Promise<void>> = new Array(whenEntity.constraints.length);
 
             for (var i = 0; i < whenEntity.constraints.length; ++i) {
                 childPromises[i] = new Promise<void>(function(resolve, reject) {
@@ -388,18 +227,19 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
                 });
             }
 
-            if (TaskPartWhenOperator.AND == whenEntity.operator)
+            if (TaskPartWhenOperator.AND === whenEntity.operator) {
                 Promise.all(childPromises)
                     .then(function() {
                         resolve();
                     });
-            else if (TaskPartWhenOperator.OR == whenEntity.operator)
+            } else if (TaskPartWhenOperator.OR === whenEntity.operator) {
                 Promise.race(childPromises)
                 .then(function() {
                     resolve();
                 });
-            else
-                reject('Unexpected operator.')
+            } else {
+                reject('Unexpected operator.');
+            }
         });
     }
 
@@ -410,8 +250,8 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
      *
      * @returns Promise resolved once the when entity is checked.
      */
-    protected handleTaskPartWhenWaitFor(whenEntity : TaskTimeConstraint) : Promise<void> {
-        var that = this;
+    protected handleTaskPartWhenWaitFor(whenEntity: TaskTimeConstraint): Promise<void> {
+        const that = this;
         return new Promise<void>(function(resolve, reject) {
             setTimeout(function() {
                 if (whenEntity.after == null) {
