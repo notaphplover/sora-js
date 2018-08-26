@@ -1,8 +1,9 @@
 import { EventEmitter } from 'events';
 import { AnimationPlayStateValue } from '../carousel/animation/animation-play-state';
 import { CAROUSEL_STYLES } from '../carousel/carousel-base';
+import { ITaskFlowPart } from './flow/task-flow-part';
 import { OperationManager } from './operation-manager';
-import { ITaskFlowPart, TaskEngine } from './task-engine';
+import { TaskEngine } from './task-engine';
 
 //#region Operation Events
 

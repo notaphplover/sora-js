@@ -9,7 +9,7 @@ import {
     IAnimationFlowPart,
     SingleAnimationEngine,
 } from '../task/animation-engine';
-import { ITaskFlow } from '../task/task-engine';
+import { ITaskFlow } from '../task/flow/task-flow';
 import { AnimationPlayStateValue } from './animation/animation-play-state';
 import {
     ICarouselAnimation,

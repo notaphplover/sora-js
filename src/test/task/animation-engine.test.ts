@@ -2,7 +2,7 @@ import {
     IAnimationFlowPart,
     SingleAnimationEngine,
 } from '../../task/animation-engine';
-import { ITaskFlow } from '../../task/task-engine';
+import { ITaskFlow } from '../../task/flow/task-flow';
 import { ITest } from '../ITest';
 
 export class AnimationEngineTests implements ITest {
