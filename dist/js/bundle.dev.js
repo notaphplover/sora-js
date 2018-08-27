@@ -108,8 +108,8 @@ var SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES = {
     LEAVE: 'leave-part'
 };
 var SINGLE_SLIDE_CAROUSEL_STYLES = exports.SINGLE_SLIDE_CAROUSEL_STYLES = {
-    SLIDE_ACTIVE: 'sora-slide-active',
-    SLIDE_HIDDEN: 'sora-hidden'
+    SLIDE_HIDDEN: 'sora-hidden',
+    SORA_RELATIVE: 'sora-relative'
 };
 
 var SingleSlideCarousel = exports.SingleSlideCarousel = function (_CarouselBase) {
@@ -145,7 +145,7 @@ var SingleSlideCarousel = exports.SingleSlideCarousel = function (_CarouselBase)
         }
         for (var i = 0; i < children.length; ++i) {
             if (i === _this.activeIndex) {
-                children[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                children[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
             } else {
                 children[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
             }
@@ -408,7 +408,7 @@ var SingleSlideCarousel = exports.SingleSlideCarousel = function (_CarouselBase)
                 }
                 collection[i].classList.add(_carouselBase.CAROUSEL_STYLES.SLIDE);
                 if (i === activeIndex) {
-                    collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                    collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
                 } else {
                     collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
                 }
@@ -463,6 +463,8 @@ var SingleSlideCarousel = exports.SingleSlideCarousel = function (_CarouselBase)
                 animationPromises[ANIMATION_LEAVE_INDEX].then(function (animationOptions) {
                     if (!animationCanceled) {
                         oldActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                        oldActiveElement.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
+                        newActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
                     }
                     resolve();
                 }).catch(function (err) {
@@ -473,8 +475,6 @@ var SingleSlideCarousel = exports.SingleSlideCarousel = function (_CarouselBase)
             var soraHandlerStatus = new _promise2.default(function (resolve, reject) {
                 _promise2.default.all([animationPromises[ANIMATION_ENTER_INDEX], hideLeaveSlideAfterAnimationEnds]).then(function () {
                     if (!animationCanceled) {
-                        oldActiveElement.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-                        newActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
                         that.activeIndex = newActiveIndex;
                         that.currentAnimation = null;
                     }

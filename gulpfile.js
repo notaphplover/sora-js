@@ -38,7 +38,6 @@ const TASKS = {
     COMPILE_SASS: 'compile-sass',
     DEFAULT: 'default',
     TEST: 'test',
-    WATCH_DEV: 'watch-dev',
 };
 
 //#region OPTIONS

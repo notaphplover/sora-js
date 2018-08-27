@@ -2,18 +2,19 @@
   "name": "sora",
   "version": "1.0.0",
   "description": "Carousel library based on CSS transitions",
-  "main": "dist/main.js",
-  "scripts": {
-    "test": "jest"
+  "main": "dist/js/bundle.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/notaphplover/sora-js.git"
   },
+  "scripts": {},
   "author": "Roberto Pintos López",
   "license": "ISC",
   "devDependencies": {
     "@types/jasmine": "^2.8.8",
-    "@types/node": "^10.7.1",
+    "@types/node": "^10.9.2",
     "@types/puppeteer": "^1.6.0",
     "babel-core": "^6.26.3",
-    "babel-jest": "^23.4.2",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.7.0",
     "babelify": "^8.0.0",
@@ -31,8 +32,7 @@
     "tslint": "^5.11.0",
     "typescript": "^3.0.1",
     "vinyl-buffer": "^1.0.1",
-    "vinyl-source-stream": "^2.0.0",
-    "watchify": "^3.11.0"
+    "vinyl-source-stream": "^2.0.0"
   },
   "dependencies": {
     "core-js": "^2.5.7",

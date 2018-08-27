@@ -94,9 +94,9 @@ export class SingleSlideCarouselTests implements ITest {
 
         if (shouldCheck) {
             goActionStatus.soraHandlerStatus.then(function() {
-                expect(currentActiveElement.classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                expect(currentActiveElement.classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
                 expect(currentActiveElement.classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
-                expect(nextElement.classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                expect(nextElement.classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
                 expect(nextElement.classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
             });
         }
@@ -150,11 +150,11 @@ export class SingleSlideCarouselTests implements ITest {
                 '.' + CAROUSEL_STYLES.WRAPPER + ' > .' + CAROUSEL_STYLES.SLIDE,
             );
             expect(children.length).toBe(3);
-            expect(children[0].classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+            expect(children[0].classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
             expect(children[0].classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
 
             for (var i = 1; i < children.length; ++i) {
-                expect(children[i].classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                expect(children[i].classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
                 expect(children[i].classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
             }
         });
@@ -182,7 +182,7 @@ export class SingleSlideCarouselTests implements ITest {
                 const thirdElement = carousel.getElementsManager().getCollection()[2];
 
                 expect(thirdElement.classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
-                expect(thirdElement.classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                expect(thirdElement.classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
 
                 Promise.all([
                     animationStatus.goActionStatus.soraHandlerStatus,
@@ -191,11 +191,11 @@ export class SingleSlideCarouselTests implements ITest {
                     const newActiveElement = animationStatus.newElement;
 
                     expect(newActiveElement).toBe(carousel.getElementsManager().getCollection()[1]);
-                    expect(newActiveElement.classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                    expect(newActiveElement.classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
                     expect(newActiveElement.classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
 
                     expect(oldActiveElement).toBe(carousel.getElementsManager().getCollection()[0]);
-                    expect(oldActiveElement.classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                    expect(oldActiveElement.classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
                     expect(oldActiveElement.classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
 
                     resolve();

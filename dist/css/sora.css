@@ -6,7 +6,7 @@
       position: absolute;
       top: 0;
       width: 100%; }
-      .sora-carousel .sora-wrapper .sora-slide.sora-slide-active {
+      .sora-carousel .sora-wrapper .sora-slide.sora-relative {
         position: relative; }
       .sora-carousel .sora-wrapper .sora-slide.sora-hidden {
         display: none !important; }

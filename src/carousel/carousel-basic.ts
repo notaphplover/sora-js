@@ -176,13 +176,13 @@ const SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES = {
  */
 export const SINGLE_SLIDE_CAROUSEL_STYLES = {
     /**
-     * Style to apply to the active slides.
-     */
-    SLIDE_ACTIVE: 'sora-slide-active',
-    /**
      * Style to apply to hidden slides.
      */
     SLIDE_HIDDEN: 'sora-hidden',
+    /**
+     * Style to apply to achieve position: relative.
+     */
+    SORA_RELATIVE: 'sora-relative',
 };
 
 /* #endregion */
@@ -269,7 +269,7 @@ export class SingleSlideCarousel extends CarouselBase {
 
         for (var i = 0; i < children.length; ++i) {
             if (i === this.activeIndex) {
-                children[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                children[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
             } else {
                 children[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
             }
@@ -600,7 +600,7 @@ export class SingleSlideCarousel extends CarouselBase {
             collection[i].classList.add(CAROUSEL_STYLES.SLIDE);
 
             if (i === activeIndex) {
-                collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
+                collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
             } else {
                 collection[i].classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
             }
@@ -677,6 +677,8 @@ export class SingleSlideCarousel extends CarouselBase {
             animationPromises[ANIMATION_LEAVE_INDEX].then(function(animationOptions) {
                 if (!animationCanceled) {
                     oldActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
+                    oldActiveElement.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
+                    newActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
                 }
                 resolve();
             }).catch(function(err) {
@@ -692,8 +694,6 @@ export class SingleSlideCarousel extends CarouselBase {
                 hideLeaveSlideAfterAnimationEnds,
             ]).then(function() {
                 if (!animationCanceled) {
-                    oldActiveElement.classList.remove(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
-                    newActiveElement.classList.add(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_ACTIVE);
                     that.activeIndex = newActiveIndex;
                     that.currentAnimation = null;
                 }
