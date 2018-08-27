@@ -10,6 +10,12 @@ import {
     SingleAnimationEngine,
 } from '../task/animation-engine';
 import { ITaskFlow } from '../task/flow/task-flow';
+import {
+    ISingleSlideCarouselAnimationEndEventArgs,
+    ISingleSlideCarouselAnimationPlayStateChangeEventArgs,
+    ISingleSlideCarouselAnimationStartEventArgs,
+    ISingleSlideCarouselCancelAnimationEventArgs,
+} from './animation/animation-events';
 import { AnimationPlayStateValue } from './animation/animation-play-state';
 import {
     ICarouselAnimation,
@@ -21,55 +27,6 @@ import {
 } from './carousel-base';
 
 /* #region Interfaces */
-
-/**
- * Options for animating an element
- */
-export interface ISingleSlideCarouselAnimateElementOptions {
-    /**
-     * Element to be animated
-     */
-    element: HTMLElement;
-    /**
-     * Styles too be applied.
-     */
-    styles: string[];
-}
-
-/**
- * Arguments for the event emitter.
- */
-export interface ISingleSlideCarouselAnimationEndEventArgs { }
-
-/**
- * Aguments for the event emitter.
- */
-export interface ISingleSlideCarouselAnimationPlayStateChangeEventArgs {
-    /**
-     * New play state value.
-     */
-    value: AnimationPlayStateValue;
-}
-
-/**
- * Arguments for the event emitter.
- */
-export interface ISingleSlideCarouselAnimationStartEventArgs {
-    /**
-     * Animation options.
-     */
-    options: ISingleSlideCarouselGotoOptions;
-}
-
-/**
- * Arguments for the event emitted.
- */
-export interface ISingleSlideCarouselCancelAnimationEventArgs {
-    /**
-     * New active index once the animation is canceled.
-     */
-    activeIndex: number;
-}
 
 /**
  * Options for creating a promise that waits for an amount of time.
@@ -128,18 +85,6 @@ export interface ISingleSlideCarouselGotoOptions {
      */
     leaveAnimation: ICarouselAnimation;
 }
-
-/**
- * Options for the event
- */
-export interface ISingleSlideCarouselSlideEnterEventArgs
-    extends ISingleSlideCarouselAnimateElementOptions { }
-
-/**
- * Options for the event
- */
-export interface ISingleSlideCarouselSlideLeaveEventArgs
-    extends ISingleSlideCarouselAnimateElementOptions { }
 
 /* #endregion */
 
