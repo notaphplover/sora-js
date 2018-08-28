@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import { TokenMap } from '../collection/token-map';
 
 /**
  * Operation arguments
@@ -33,7 +34,7 @@ export class OperationManager<Args extends IOperationArgs> {
     /**
      * Object to storage all the functions subscribed.
      */
-    protected suscriptionStorage: { [alias: string]: (eventArgs: Args) => void };
+    protected subscriptionStorage: { [alias: string]: TokenMap<(eventArgs: Args) => void> };
 
     //#endregion
 
@@ -46,19 +47,23 @@ export class OperationManager<Args extends IOperationArgs> {
         const that = this;
         this.callFunction = function(eventArgs: Args): void {
             if (eventArgs.aliases == null) {
-                for (const alias in that.suscriptionStorage) {
-                    if (that.suscriptionStorage.hasOwnProperty(alias)) {
-                        const subscriber = that.suscriptionStorage[alias];
-                        if (subscriber != null) {
-                            subscriber(eventArgs);
+                for (const alias in that.subscriptionStorage) {
+                    if (that.subscriptionStorage.hasOwnProperty(alias)) {
+                        const subscribers = that.subscriptionStorage[alias];
+                        if (subscribers != null) {
+                            subscribers.foreach(function(value: (eventArgs: Args) => void) {
+                                value(eventArgs);
+                            });
                         }
                     }
                 }
             } else {
                 for (const alias of eventArgs.aliases) {
-                    const subscriber = that.suscriptionStorage[alias];
-                    if (null != subscriber) {
-                        subscriber(eventArgs);
+                    const subscribers = that.subscriptionStorage[alias];
+                    if (subscribers != null) {
+                        subscribers.foreach(function(value: (eventArgs: Args) => void) {
+                            value(eventArgs);
+                        });
                     }
                 }
             }
@@ -66,7 +71,7 @@ export class OperationManager<Args extends IOperationArgs> {
 
         this.eventAlias = eventAlias;
         this.eventEmitter = eventEmitter;
-        this.suscriptionStorage = {};
+        this.subscriptionStorage = {};
 
         this.eventEmitter.addListener(this.eventAlias, this.callFunction);
     }
@@ -83,15 +88,23 @@ export class OperationManager<Args extends IOperationArgs> {
      * @param alias Alias of the handler.
      * @param handler Handler to be subscribed.
      */
-    public subscribe(alias: string, handler: (eventArgs: Args) => void): void {
-        this.suscriptionStorage[alias] = handler;
+    public subscribe(alias: string, handler: (eventArgs: Args) => void): number {
+        if (null == this.subscriptionStorage[alias]) {
+            this.subscriptionStorage[alias] = new TokenMap();
+        }
+        return this.subscriptionStorage[alias].add(handler);
     }
 
     /**
-     * Unsubstribes a handler under an alias.
+     * Unsubscribes a handler under an alias.
      * @param alias Alias of the handler.
+     * @param index Index of the handler.
      */
-    public unsubscribe(alias: string) {
-        delete this.suscriptionStorage[alias];
+    public unsubscribe(alias: string, index: number): boolean {
+        if (null == this.subscriptionStorage[alias]) {
+            return false;
+        } else {
+            return this.subscriptionStorage[alias].remove(index);
+        }
     }
 }

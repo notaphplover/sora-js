@@ -5,7 +5,6 @@ import {
     COLLECTION_MANAGER_EVENTS,
     CollectionManager,
 } from '../../collection/collection-manager';
-
 import { ITest } from '../ITest';
 
 export class CollectionManagerTests implements ITest {
