@@ -1,5 +1,5 @@
-import { ISingleSlideCarouselGotoOptions } from '../carousel-basic';
-import { AnimationPlayStateValue } from './animation-play-state';
+import { AnimationPlayStateValue } from '../animation/animation-play-state';
+import { ISingleSlideCarouselGotoOptions } from './go-to-options';
 
 /**
  * Arguments for the event emitter.

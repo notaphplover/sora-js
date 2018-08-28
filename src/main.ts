@@ -5,7 +5,7 @@ import {
     SINGLE_SLIDE_CAROUSEL_EVENTS,
     SINGLE_SLIDE_CAROUSEL_STYLES,
     SingleSlideCarousel,
- } from './carousel/carousel-basic';
+ } from './carousel/single-slide/single-slide-carousel';
 
 const sora = function() {
     return {

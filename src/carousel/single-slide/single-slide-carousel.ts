@@ -1,92 +1,31 @@
 import { EventEmitter } from 'events';
-import { CancelableCollectionChangeEventArgs } from '../collection/cancelable-collection-change-args';
-import { CollectionChangeEventArgs } from '../collection/collection-change-args';
+import { CancelableCollectionChangeEventArgs } from '../../collection/cancelable-collection-change-args';
+import { CollectionChangeEventArgs } from '../../collection/collection-change-args';
 import {
     COLLECTION_MANAGER_EVENTS,
-} from '../collection/collection-manager';
-import { HtmlChildrenManager } from '../collection/html-children-manager';
+} from '../../collection/collection-manager';
+import { HtmlChildrenManager } from '../../collection/html-children-manager';
 import {
     IAnimationFlowPart,
     SingleAnimationEngine,
-} from '../task/animation-engine';
-import { ITaskFlow } from '../task/flow/task-flow';
+} from '../../task/animation-engine';
+import { ITaskFlow } from '../../task/flow/task-flow';
+import { AnimationPlayStateValue } from '../animation/animation-play-state';
+import { ICarouselAnimationChildrenStyles } from '../animation/carousel-animation';
+import {
+    CAROUSEL_STYLES,
+    CarouselBase,
+} from '../carousel-base';
 import {
     ISingleSlideCarouselAnimationEndEventArgs,
     ISingleSlideCarouselAnimationPlayStateChangeEventArgs,
     ISingleSlideCarouselAnimationStartEventArgs,
     ISingleSlideCarouselCancelAnimationEventArgs,
-} from './animation/animation-events';
-import { AnimationPlayStateValue } from './animation/animation-play-state';
-import {
-    ICarouselAnimation,
-    ICarouselAnimationChildrenStyles,
-} from './animation/carousel-animation';
-import {
-    CAROUSEL_STYLES,
-    CarouselBase,
-} from './carousel-base';
-
-/* #region Interfaces */
-
-/**
- * Options for creating a promise that waits for an amount of time.
- *
- * If the carousel is paused, the amount of time in this state will be ignored by the promise.
- */
-export interface ISingleSlideCarouselCreateWaitPromiseOptions {
-    /**
-     * Amount of milliseconds to wait
-     */
-    millis: number;
-    /**
-     * If set to true, the promise will be resolved if the animation is canceled.
-     */
-    stopOnCancelAnimation: boolean;
-}
-
-/**
- * Options for creating a carousel.
- */
-export interface ISingleSlideCarouselCreationOptions {
-    /**
-     * First slide to be displayed.
-     */
-    index?: number;
-}
-
-/**
- * Status of a GoTo animation
- */
-export interface ISingleSlideCarouselGoToAnimationStatus {
-    /**
-     * Animation promises
-     */
-    animationPromises: Array<Promise<void>>;
-    /**
-     * Promise resolved once Sora has ended the handling of the animation.
-     */
-    soraHandlerStatus: Promise<void>;
-}
-
-/**
- * Options for the handleGoTo method.
- */
-export interface ISingleSlideCarouselGotoOptions {
-    /**
-     * Custom animation for the incoming slide.
-     */
-    enterAnimation: ICarouselAnimation;
-    /**
-     * Index of the element to display.
-     */
-    index: number;
-    /**
-     * Custom animation for the outcoming slide.
-     */
-    leaveAnimation: ICarouselAnimation;
-}
-
-/* #endregion */
+} from './animation-events';
+import { ISingleSlideCarouselCreateWaitPromiseOptions } from './create-wait-promise-options';
+import { ISingleSlideCarouselCreationOptions } from './creation-options';
+import { ISingleSlideCarouselGoToAnimationStatus } from './go-to-animation-status';
+import { ISingleSlideCarouselGotoOptions } from './go-to-options';
 
 /* #region Constants */
 
@@ -335,15 +274,9 @@ export class SingleSlideCarousel extends CarouselBase {
     public forceActiveSlide(activeIndex: number) {
         const eventArgs: ISingleSlideCarouselCancelAnimationEventArgs = { activeIndex: activeIndex };
 
-        /*
-            * In the initial state, the carousel is not paused. This must be true even if there are
-            * no active animations. We need to request this in order to clean children elements correctly.
-            */
-        if (this.isPaused()) {
-            this.resume();
-        }
-
         this.engineAnimation.cancelAnimation(null);
+        // The call over cancelAnimation will resume any paused animation.
+        this.paused = false;
         this.activeIndex = activeIndex;
         this.resetCarouselStructure(activeIndex);
 

@@ -1,4 +1,3 @@
-import { EventEmitter } from 'events';
 import { AnimationPlayStateValue } from '../carousel/animation/animation-play-state';
 import { CAROUSEL_STYLES } from '../carousel/carousel-base';
 import { ITaskFlowPart } from './flow/task-flow-part';
@@ -66,11 +65,22 @@ export interface IAnimationFlowPartPendingOperations {
     /**
      * True if the part must be cancelled.
      */
-    cancel: boolean;
+    cancel: IAnimationFlowPartPendingOperation;
     /**
      * True if the part must be paused.
      */
-    pause: boolean;
+    pause: IAnimationFlowPartPendingOperation;
+}
+
+export interface IAnimationFlowPartPendingOperation {
+    /**
+     * Token of the subscriber of the operation;
+     */
+    operationToken: number;
+    /**
+     * True if the operation is pending.
+     */
+    isPending: boolean;
 }
 
 /**
@@ -92,21 +102,11 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
      */
     protected animationStateChangeManager: OperationManager<IAnimationStateChangeEventArgs>;
 
-    //#endregion
-
-    /**
-     * Event emitter to use
-     */
-    protected eventEmitter: EventEmitter;
-
-    //#endregion
-
     /**
      * Creates a new instance.
      */
     public constructor() {
         super();
-        this.eventEmitter = new EventEmitter();
 
         this.animationCancelManager =
             new OperationManager<IAnimationCancelEventArgs>(
@@ -187,23 +187,29 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
     protected handleTaskPart(part: IAnimationFlowPart): Promise<void> {
         const that = this;
         part.pendingOperations = {
-            cancel: false,
-            pause: false,
+            cancel: {
+                isPending: false,
+                operationToken: this.animationCancelManager.subscribe(
+                    part.alias,
+                    function(eventArgs: IAnimationCancelEventArgs) {
+                        part.pendingOperations.cancel.isPending = true;
+                        that.animationCancelManager.unsubscribe(
+                            part.alias, part.pendingOperations.cancel.operationToken,
+                        );
+                    },
+                ),
+            },
+            pause: {
+                isPending: false,
+                operationToken: this.animationStateChangeManager.subscribe(
+                    part.alias,
+                    function(eventArgs: IAnimationStateChangeEventArgs) {
+                        part.pendingOperations.pause.isPending =
+                            eventArgs.value === AnimationPlayStateValue.paused;
+                    },
+                ),
+            },
         };
-
-        this.animationCancelManager.subscribe(
-            part.alias,
-            function(eventArgs: IAnimationCancelEventArgs) {
-                part.pendingOperations.cancel = true;
-                that.animationCancelManager.unsubscribe(part.alias);
-            },
-        );
-        this.animationStateChangeManager.subscribe(
-            part.alias,
-            function(eventArgs: IAnimationStateChangeEventArgs) {
-                part.pendingOperations.pause = eventArgs.value === AnimationPlayStateValue.paused;
-            },
-        );
 
         return super.handleTaskPart(part);
     }
@@ -215,8 +221,8 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
      */
     protected performTask(part: IAnimationFlowPart): PromiseLike<{} | void> {
 
-        this.animationCancelManager.unsubscribe(part.alias);
-        this.animationStateChangeManager.unsubscribe(part.alias);
+        this.animationCancelManager.unsubscribe(part.alias, part.pendingOperations.cancel.operationToken);
+        this.animationStateChangeManager.unsubscribe(part.alias, part.pendingOperations.pause.operationToken);
 
         const promises: Array<Promise<void>> = new Array(part.elements.length);
 
@@ -226,11 +232,11 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
         }
 
         if (part.pendingOperations) {
-            if (part.pendingOperations.pause) {
+            if (part.pendingOperations.pause.isPending) {
                 this.pause([part.alias]);
             }
 
-            if (part.pendingOperations.cancel) {
+            if (part.pendingOperations.cancel.isPending) {
                 this.cancelAnimation([part.alias]);
             }
         }
@@ -267,6 +273,9 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
                 var currentAnimationIndex: number = null;
 
                 const onAnimationCancel = function(args: IAnimationCancelEventArgs) {
+                    // Resume the animation if it is paused.
+                    onAnimationPlayStateChange({aliases: args.aliases, value: AnimationPlayStateValue.running});
+
                     element.classList.add(CAROUSEL_STYLES.CLEAR_ANIMATION);
 
                     if (null != currentAnimationIndex) {
@@ -276,13 +285,13 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
                     that.unregisterAnimationListener(element, animationFunctions[currentAnimationIndex]);
                     element.classList.remove(CAROUSEL_STYLES.CLEAR_ANIMATION);
 
-                    that.animationCancelManager.unsubscribe(part.alias);
-                    that.animationStateChangeManager.unsubscribe(part.alias);
+                    that.animationCancelManager.unsubscribe(part.alias, cancelToken);
+                    that.animationStateChangeManager.unsubscribe(part.alias, playStateChangetoken);
 
                     resolve();
                 };
 
-                that.animationCancelManager.subscribe(part.alias, onAnimationCancel);
+                const cancelToken = that.animationCancelManager.subscribe(part.alias, onAnimationCancel);
 
                 const onAnimationPlayStateChange = function(args: IAnimationStateChangeEventArgs) {
                     if (AnimationPlayStateValue.paused === args.value) {
@@ -296,7 +305,8 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
                     }
                 };
 
-                that.animationStateChangeManager.subscribe(part.alias, onAnimationPlayStateChange);
+                const playStateChangetoken =
+                    that.animationStateChangeManager.subscribe(part.alias, onAnimationPlayStateChange);
 
                 for (var i = 1; i < styles.length; ++i) {
                     animationFunctions.push(function(index) {
@@ -317,8 +327,8 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
                     element.classList.remove(CAROUSEL_STYLES.CLEAR_ANIMATION);
                     that.unregisterAnimationListener(element, animationFunctions[animationFunctions.length - 1]);
                     currentAnimationIndex = null;
-                    that.animationCancelManager.unsubscribe(part.alias);
-                    that.animationStateChangeManager.unsubscribe(part.alias);
+                    that.animationCancelManager.unsubscribe(part.alias, cancelToken);
+                    that.animationStateChangeManager.unsubscribe(part.alias, playStateChangetoken);
                     resolve();
                 });
 

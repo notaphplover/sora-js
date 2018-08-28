@@ -1,5 +1,6 @@
-import { SingleSlideCarouselTests } from './test/carousel/carousel-basic.test';
+import { SingleSlideCarouselTests } from './test/carousel/single-slide-carousel.test';
 import { CollectionManagerTests } from './test/collection/collection-manager.test';
+import { TokenMapTests } from './test/collection/token-map.test';
 import { AnimationEngineTests } from './test/task/animation-engine.test';
 
 const soraTest = function() {
@@ -8,6 +9,7 @@ const soraTest = function() {
             new AnimationEngineTests().performTests();
             new CollectionManagerTests().performTests();
             new SingleSlideCarouselTests().performTests();
+            new TokenMapTests().performTests();
         },
     };
 } ();

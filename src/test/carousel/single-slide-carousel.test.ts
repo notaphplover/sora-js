@@ -1,11 +1,11 @@
-import { CAROUSEL_STYLES } from '../../../src/carousel/carousel-base';
+import { ICarouselAnimation } from '../../carousel/animation/carousel-animation';
+import { CAROUSEL_STYLES } from '../../carousel/carousel-base';
+import { ISingleSlideCarouselGoToAnimationStatus } from '../../carousel/single-slide/go-to-animation-status';
 import {
-    ISingleSlideCarouselGoToAnimationStatus,
     SINGLE_SLIDE_CAROUSEL_ACTIONS,
     SINGLE_SLIDE_CAROUSEL_STYLES,
     SingleSlideCarousel,
-} from '../../../src/carousel/carousel-basic';
-import { ICarouselAnimation } from '../../carousel/animation/carousel-animation';
+} from '../../carousel/single-slide/single-slide-carousel';
 import { ITest } from '../ITest';
 
 interface IGoToAndCheckData {
