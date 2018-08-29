@@ -1,4 +1,4 @@
-import { TaskPartWhenOperator } from '../task-engine';
+import { TaskPartWhenOperator } from '../task-part-when-operator';
 import {
     ITaskPartWhenConstraint,
     TaskPartWhenConstraint,

@@ -1,7 +1,5 @@
-import {
-    IAnimationFlowPart,
-    SingleAnimationEngine,
-} from '../../task/animation-engine';
+import { SingleAnimationEngine } from '../../task/animation-engine';
+import { IAnimationFlowPart } from '../../task/animation/animation-flow-part';
 import { ITaskFlow } from '../../task/flow/task-flow';
 import { ITest } from '../ITest';
 

@@ -1,44 +1,19 @@
 import { EventEmitter } from 'events';
+import { OperationManager } from './event/operation-manager';
 import { ITaskFlow } from './flow/task-flow';
 import { ITaskFlowPart } from './flow/task-flow-part';
+import {
+    ITaskFlowPartEndArgs,
+    ITaskFlowPartStartArgs,
+} from './flow/task-flow-part-event-args';
 import { ITaskPartWhenConstraint } from './flow/task-flow-when';
 import { TaskPartBeginConstraint } from './flow/task-part-begin-constraint';
 import { TASK_CONSTRAINT_TYPES } from './flow/task-part-constraint';
 import { TaskPartEndConstraint } from './flow/task-part-end-constraint';
 import { TaskGroupConstraint } from './flow/task-part-group-constraint';
 import { TaskTimeConstraint } from './flow/task-part-time-constraint';
-
-/**
- * Prefixes used to ganerate alias for events over task parts.
- */
-const TASK_PART_WHEN_EVENT_PREFIXES = {
-    /**
-     * Prefix for any event raised once a task part is ended.
-     */
-    END: 'anim.end.',
-    /**
-     * Prefix for any event raised once a task part is started.
-     */
-    START: 'anim.start.',
-};
-
-//#region Enum
-
-/**
- * Logical operator to apply.
- */
-export enum TaskPartWhenOperator {
-    /**
-     * And operator.
-     */
-    AND,
-    /**
-     * Or operator.
-     */
-    OR,
-}
-
-//#endregion
+import { TASK_PART_WHEN_EVENTS } from './task-part-when-events';
+import { TaskPartWhenOperator } from './task-part-when-operator';
 
 /**
  * Represents a task engine.
@@ -56,13 +31,38 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
      */
     protected eventEmitter: EventEmitter;
 
+    //#region Operations
+
+    /**
+     * Manager that handles the part end event.
+     */
+    protected partEndManager: OperationManager<ITaskFlowPartEndArgs>;
+
+    /**
+     * Manager that handles the part start event.
+     */
+    protected partStartManager: OperationManager<ITaskFlowPartStartArgs>;
+
     //#endregion
+
+    //#endregion
+
+    //#region Public
 
     /**
      * Creates a new instance.
      */
     public constructor() {
         this.eventEmitter = new EventEmitter();
+
+        this.partEndManager = new OperationManager<ITaskFlowPartEndArgs>(
+            TASK_PART_WHEN_EVENTS.END,
+            this.eventEmitter,
+        );
+        this.partStartManager = new OperationManager<ITaskFlowPartStartArgs>(
+            TASK_PART_WHEN_EVENTS.START,
+            this.eventEmitter,
+        );
     }
 
     /**
@@ -89,6 +89,54 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
     }
 
     /**
+     * Subscribes a handler to the part start manager.
+     * @param alias: Alias of the target part.
+     * @param handler: Listener to attach.
+     * @returns Token associated to the listener.
+     */
+    public subscribePartEndListener(
+        alias: string,
+        handler: (eventArgs: ITaskFlowPartEndArgs) => void,
+    ): number {
+        return this.partEndManager.subscribe(alias, handler);
+    }
+
+    /**
+     * Subscribes a handler to the part start manager.
+     * @param alias: Alias of the target part.
+     * @param handler: Listener to attach.
+     * @returns Token associated to the listener.
+     */
+    public subscribePartStartListener(
+        alias: string,
+        handler: (eventArgs: ITaskFlowPartStartArgs) => void,
+    ): number {
+        return this.partStartManager.subscribe(alias, handler);
+    }
+
+    /**
+     * Unsubscribes a handler from the part end manager.
+     * @param alias Alias of the target part.
+     * @param index Index of the handler to be unsubscribed.
+     * @returns Result of the operation.
+     */
+    public unsubscribePartEndListener(alias: string, index: number): boolean {
+        return this.partEndManager.unsubscribe(alias, index);
+    }
+
+    /**
+     * Unsubscribes a handler from the part start manager.
+     * @param alias Alias of the target part.
+     * @param index Index of the handler to be unsubscribed.
+     * @returns Result of the operation.
+     */
+    public unsubscribePartStartListener(alias: string, index: number): boolean {
+        return this.partStartManager.unsubscribe(alias, index);
+    }
+
+    //#endregion
+
+    /**
      * Handles a task part.
      *
      * @param part Task part to handle.
@@ -101,13 +149,25 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
         return new Promise<void>(function(resolve, reject) {
             that.handleTaskPartWhen(part.when).then(function() {
                 // 1. Emit the start of task part.
-                that.eventEmitter.emit(TASK_PART_WHEN_EVENT_PREFIXES.START + part.alias, {});
+                that.eventEmitter.emit(
+                    TASK_PART_WHEN_EVENTS.START,
+                    {
+                        aliases: [part.alias],
+                        part: part,
+                    } as ITaskFlowPartStartArgs,
+                );
 
                 const promise: PromiseLike<{} | void> = that.performTask(part);
 
                 promise.then(function() {
                     // 3. Emit the end of the task part and resolve the promise.
-                    that.eventEmitter.emit(TASK_PART_WHEN_EVENT_PREFIXES.END + part.alias, {});
+                    that.eventEmitter.emit(
+                        TASK_PART_WHEN_EVENTS.END,
+                        {
+                            aliases: [part.alias],
+                            part: part,
+                        } as ITaskFlowPartEndArgs,
+                    );
                     resolve();
                 });
             }).catch(function(err: any) {
@@ -171,9 +231,8 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
     protected handleTaskPartWhenPartBegins(whenEntity: TaskPartBeginConstraint): Promise<void> {
         const that = this;
         return new Promise<void>(function(resolve, reject) {
-            const eventName = TASK_PART_WHEN_EVENT_PREFIXES.START + whenEntity.alias;
             const eventHandler = function() {
-                that.eventEmitter.removeListener(eventName, eventHandler);
+                that.partStartManager.unsubscribe(whenEntity.alias, token);
                 if (null == whenEntity.after) {
                     resolve();
                 } else {
@@ -181,7 +240,7 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
                         .then(resolve);
                 }
             };
-            that.eventEmitter.addListener(eventName, eventHandler);
+            const token: number = that.partStartManager.subscribe(whenEntity.alias, eventHandler);
         });
     }
 
@@ -194,9 +253,8 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
     protected handleTaskPartWhenPartEnds(whenEntity: TaskPartEndConstraint): Promise<void> {
         const that = this;
         return new Promise<void>(function(resolve, reject) {
-            const eventName = TASK_PART_WHEN_EVENT_PREFIXES.END + whenEntity.alias;
             const eventHandler = function() {
-                that.eventEmitter.removeListener(eventName, eventHandler);
+                that.partEndManager.unsubscribe(whenEntity.alias, token);
                 if (null == whenEntity.after) {
                     resolve();
                 } else {
@@ -204,7 +262,7 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
                         .then(resolve);
                 }
             };
-            that.eventEmitter.addListener(eventName, eventHandler);
+            const token: number = that.partEndManager.subscribe(whenEntity.alias, eventHandler);
         });
     }
 

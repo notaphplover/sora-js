@@ -1,87 +1,11 @@
 import { AnimationPlayStateValue } from '../carousel/animation/animation-play-state';
 import { CAROUSEL_STYLES } from '../carousel/carousel-base';
-import { ITaskFlowPart } from './flow/task-flow-part';
-import { OperationManager } from './operation-manager';
+import { IAnimationCancelEventArgs } from './animation/animation-cancel-event-args';
+import { IAnimationFlowPart } from './animation/animation-flow-part';
+import { ANIMATION_OPERATION_EVENTS } from './animation/animation-operation-events';
+import { IAnimationStateChangeEventArgs } from './animation/animation-state-change-event-args';
+import { OperationManager } from './event/operation-manager';
 import { TaskEngine } from './task-engine';
-
-//#region Operation Events
-
-export const ANIMATION_OPERATION_EVENTS = {
-    /**
-     * Forces the cancelation of the current animation.
-     */
-    ANIMATION_CANCEL: 'anim.cancel',
-    /**
-     * Changes the animation play state of the elements of the animation.
-     */
-    ANIMATION_STATE_CHANGE: 'anim.state.change',
-};
-
-/**
- * Arguments for the event emitter.
- */
-export interface IAnimationCancelEventArgs {
-    /**
-     * Aliases of the target parts or null to target all the parts of any animation.
-     */
-    aliases: string[];
-}
-
-/**
- * Aguments for the event emitter.
- */
-export interface IAnimationStateChangeEventArgs {
-    /**
-     * Aliases of the target parts or null to target all the parts of any animation.
-     */
-    aliases: string[];
-    /**
-     * Play state value.
-     */
-    value: AnimationPlayStateValue;
-}
-
-//#endregion
-
-/**
- * Animation flow part.
- */
-export interface IAnimationFlowPart extends ITaskFlowPart {
-    /**
-     * Elements targeted by the part.
-     */
-    elements: HTMLElement[];
-    /**
-     * Pending operations.
-     */
-    pendingOperations?: IAnimationFlowPartPendingOperations;
-    /**
-     * Animation styles to apply.
-     */
-    styles: string[];
-}
-
-export interface IAnimationFlowPartPendingOperations {
-    /**
-     * True if the part must be cancelled.
-     */
-    cancel: IAnimationFlowPartPendingOperation;
-    /**
-     * True if the part must be paused.
-     */
-    pause: IAnimationFlowPartPendingOperation;
-}
-
-export interface IAnimationFlowPartPendingOperation {
-    /**
-     * Token of the subscriber of the operation;
-     */
-    operationToken: number;
-    /**
-     * True if the operation is pending.
-     */
-    isPending: boolean;
-}
 
 /**
  * Represenrts a single animation engine.
@@ -221,8 +145,10 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
      */
     protected performTask(part: IAnimationFlowPart): PromiseLike<{} | void> {
 
-        this.animationCancelManager.unsubscribe(part.alias, part.pendingOperations.cancel.operationToken);
-        this.animationStateChangeManager.unsubscribe(part.alias, part.pendingOperations.pause.operationToken);
+        if (part.pendingOperations) {
+            this.animationCancelManager.unsubscribe(part.alias, part.pendingOperations.cancel.operationToken);
+            this.animationStateChangeManager.unsubscribe(part.alias, part.pendingOperations.pause.operationToken);
+        }
 
         const promises: Array<Promise<void>> = new Array(part.elements.length);
 
@@ -234,10 +160,12 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
         if (part.pendingOperations) {
             if (part.pendingOperations.pause.isPending) {
                 this.pause([part.alias]);
+                part.pendingOperations.pause.isPending = false;
             }
 
             if (part.pendingOperations.cancel.isPending) {
                 this.cancelAnimation([part.alias]);
+                part.pendingOperations.cancel.isPending = false;
             }
         }
 

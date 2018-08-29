@@ -1,14 +1,10 @@
 import { EventEmitter } from 'events';
 import { CancelableCollectionChangeEventArgs } from '../../collection/cancelable-collection-change-args';
 import { CollectionChangeEventArgs } from '../../collection/collection-change-args';
-import {
-    COLLECTION_MANAGER_EVENTS,
-} from '../../collection/collection-manager';
+import { COLLECTION_MANAGER_EVENTS } from '../../collection/collection-manager';
 import { HtmlChildrenManager } from '../../collection/html-children-manager';
-import {
-    IAnimationFlowPart,
-    SingleAnimationEngine,
-} from '../../task/animation-engine';
+import { SingleAnimationEngine } from '../../task/animation-engine';
+import { IAnimationFlowPart } from '../../task/animation/animation-flow-part';
 import { ITaskFlow } from '../../task/flow/task-flow';
 import { AnimationPlayStateValue } from '../animation/animation-play-state';
 import { ICarouselAnimationChildrenStyles } from '../animation/carousel-animation';
@@ -46,8 +42,6 @@ export const SINGLE_SLIDE_CAROUSEL_EVENTS = {
     ON_ANIMATION_PLAY_STATE_CHANGE: 'car.anim.state.ch',
     ON_ANIMATION_START: 'car.anim.in',
     ON_CANCEL_ANIMATION: 'car.anim.cancel',
-    ON_SLIDE_ENTER: 'car.sl.in',
-    ON_SLIDE_LEAVE: 'car.sl.out',
 };
 
 const SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES = {
@@ -593,6 +587,14 @@ export class SingleSlideCarousel extends CarouselBase {
 
         return {
             animationPromises: animationPromises,
+            partEndEventAccess: {
+                subscribe: this.engineAnimation.subscribePartEndListener,
+                unsubscribe: this.engineAnimation.unsubscribePartEndListener,
+            },
+            partStartEventAccess: {
+                subscribe: this.engineAnimation.subscribePartStartListener,
+                unsubscribe: this.engineAnimation.unsubscribePartStartListener,
+            },
             soraHandlerStatus: soraHandlerStatus,
         };
     }

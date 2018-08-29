@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
-import { TokenMap } from '../collection/token-map';
+import { TokenMap } from '../../collection/token-map';
+import { IOperationManagerAccess } from './operation-manager-access';
 
 /**
  * Operation arguments
@@ -12,7 +13,7 @@ export interface IOperationArgs {
  * Represents an operation manager. The operation is propagated using an event.
  * All the subscribers
  */
-export class OperationManager<Args extends IOperationArgs> {
+export class OperationManager<Args extends IOperationArgs> implements IOperationManagerAccess<Args> {
 
     //#region Attributes
 

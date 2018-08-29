@@ -27,7 +27,7 @@ export const TASK_CONSTRAINT_TYPES = {
 
 export abstract class TaskPartConstraint extends TaskPartWhenConstraint {
     /**
-     * Aliases of the parts affected by this constraint.
+     * Alias of the part affected by this constraint.
      */
     public alias: string;
 
