@@ -1,11 +1,17 @@
+import { IAnimationFlowPart } from '../../animation/animation-flow-part';
 import { CAROUSEL_STYLES } from '../../carousel/carousel-base';
 import { ICarouselAnimation } from '../../carousel/single-slide/carousel-animation';
 import { ISingleSlideCarouselGoToAnimationStatus } from '../../carousel/single-slide/go-to-animation-status';
 import {
     SINGLE_SLIDE_CAROUSEL_ACTIONS,
+    SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES,
     SINGLE_SLIDE_CAROUSEL_STYLES,
     SingleSlideCarousel,
 } from '../../carousel/single-slide/single-slide-carousel';
+import {
+    ITaskFlowPartEndArgs,
+    ITaskFlowPartStartArgs,
+} from '../../task/flow/task-flow-part-event-args';
 import { ITest } from '../ITest';
 
 interface IGoToAndCheckData {
@@ -92,14 +98,54 @@ export class SingleSlideCarouselTests implements ITest {
             },
         );
 
-        if (shouldCheck) {
-            goActionStatus.soraHandlerStatus.then(function() {
+        // Check the start of the enter animation.
+        var enterAnimationStartEventRaised: boolean = false;
+        const onEnterAnimationStart =
+            function(eventArgs: ITaskFlowPartStartArgs<IAnimationFlowPart>): void {
+                enterAnimationStartEventRaised = true;
+                eventArgs.part.styles.forEach(function(style: string) {
+                    expect(enterAnimation.slideStyles).toContain(style);
+                });
+                goActionStatus.partStartEventAccess.unsubscribe(
+                    SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER,
+                    onEnterAnimationStartToken,
+                );
+            };
+        const onEnterAnimationStartToken: number =
+            goActionStatus.partStartEventAccess.subscribe(
+                SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER,
+                onEnterAnimationStart,
+            );
+
+        // Check the start of the leave animation.
+        var leaveAnimationStartEventRaised: boolean = false;
+        const onLeaveAnimationStart =
+            function(eventArgs: ITaskFlowPartEndArgs<IAnimationFlowPart>): void {
+                leaveAnimationStartEventRaised = true;
+                eventArgs.part.styles.forEach(function(style: string) {
+                    expect(leaveAnimation.slideStyles).toContain(style);
+                });
+                goActionStatus.partEndEventAccess.unsubscribe(
+                    SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE,
+                    onLeaveAnimationStartToken,
+                );
+            };
+        const onLeaveAnimationStartToken: number =
+            goActionStatus.partEndEventAccess.subscribe(
+                SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE,
+                onLeaveAnimationStart,
+            );
+
+        goActionStatus.soraHandlerStatus.then(function() {
+            expect(enterAnimationStartEventRaised).toBe(true);
+            expect(leaveAnimationStartEventRaised).toBe(true);
+            if (shouldCheck) {
                 expect(currentActiveElement.classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
                 expect(currentActiveElement.classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
                 expect(nextElement.classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
                 expect(nextElement.classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
-            });
-        }
+            }
+        });
 
         return {
             goActionStatus: goActionStatus,

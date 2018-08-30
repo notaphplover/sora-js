@@ -285,7 +285,7 @@ var CarouselBase = exports.CarouselBase = function CarouselBase() {
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.SingleSlideCarousel = exports.SINGLE_SLIDE_CAROUSEL_STYLES = exports.SINGLE_SLIDE_CAROUSEL_EVENTS = exports.SINGLE_SLIDE_CAROUSEL_ACTIONS = undefined;
+exports.SingleSlideCarousel = exports.SINGLE_SLIDE_CAROUSEL_STYLES = exports.SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES = exports.SINGLE_SLIDE_CAROUSEL_EVENTS = exports.SINGLE_SLIDE_CAROUSEL_ACTIONS = undefined;
 
 var _getIterator2 = require('babel-runtime/core-js/get-iterator');
 
@@ -340,7 +340,7 @@ var SINGLE_SLIDE_CAROUSEL_EVENTS = exports.SINGLE_SLIDE_CAROUSEL_EVENTS = {
     ON_ANIMATION_START: 'car.anim.in',
     ON_CANCEL_ANIMATION: 'car.anim.cancel'
 };
-var SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES = {
+var SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES = exports.SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES = {
     ENTER: 'enter-part',
     LEAVE: 'leave-part'
 };
@@ -724,14 +724,8 @@ var SingleSlideCarousel = exports.SingleSlideCarousel = function (_CarouselBase)
             });
             return {
                 animationPromises: animationPromises,
-                partEndEventAccess: {
-                    subscribe: this.engineAnimation.subscribePartEndListener,
-                    unsubscribe: this.engineAnimation.unsubscribePartEndListener
-                },
-                partStartEventAccess: {
-                    subscribe: this.engineAnimation.subscribePartStartListener,
-                    unsubscribe: this.engineAnimation.unsubscribePartStartListener
-                },
+                partEndEventAccess: that.engineAnimation.getPartEndListenerAccess(),
+                partStartEventAccess: that.engineAnimation.getPartStartListenerAccess(),
                 soraHandlerStatus: soraHandlerStatus
             };
         }
@@ -1412,6 +1406,32 @@ var TaskEngine = exports.TaskEngine = function () {
     }
 
     (0, _createClass3.default)(TaskEngine, [{
+        key: 'getPartEndListenerAccess',
+        value: function getPartEndListenerAccess() {
+            var that = this;
+            return {
+                subscribe: function subscribe(alias, handler) {
+                    return that.partEndManager.subscribe(alias, handler);
+                },
+                unsubscribe: function unsubscribe(alias, index) {
+                    return that.partEndManager.unsubscribe(alias, index);
+                }
+            };
+        }
+    }, {
+        key: 'getPartStartListenerAccess',
+        value: function getPartStartListenerAccess() {
+            var that = this;
+            return {
+                subscribe: function subscribe(alias, handler) {
+                    return that.partStartManager.subscribe(alias, handler);
+                },
+                unsubscribe: function unsubscribe(alias, index) {
+                    return that.partStartManager.unsubscribe(alias, index);
+                }
+            };
+        }
+    }, {
         key: 'handle',
         value: function handle(taskFlow) {
             if (taskFlow == null) {
@@ -1426,26 +1446,6 @@ var TaskEngine = exports.TaskEngine = function () {
                 partPromises[i] = this.handleTaskPart(taskFlow.parts[i]);
             }
             return partPromises;
-        }
-    }, {
-        key: 'subscribePartEndListener',
-        value: function subscribePartEndListener(alias, handler) {
-            return this.partEndManager.subscribe(alias, handler);
-        }
-    }, {
-        key: 'subscribePartStartListener',
-        value: function subscribePartStartListener(alias, handler) {
-            return this.partStartManager.subscribe(alias, handler);
-        }
-    }, {
-        key: 'unsubscribePartEndListener',
-        value: function unsubscribePartEndListener(alias, index) {
-            return this.partEndManager.unsubscribe(alias, index);
-        }
-    }, {
-        key: 'unsubscribePartStartListener',
-        value: function unsubscribePartStartListener(alias, index) {
-            return this.partStartManager.unsubscribe(alias, index);
         }
     }, {
         key: 'handleTaskPart',

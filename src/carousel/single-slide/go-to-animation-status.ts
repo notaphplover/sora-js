@@ -1,3 +1,4 @@
+import { IAnimationFlowPart } from '../../animation/animation-flow-part';
 import {
     ITaskFlowPartEndArgs,
     ITaskFlowPartStartArgs,
@@ -15,11 +16,11 @@ export interface ISingleSlideCarouselGoToAnimationStatus {
     /**
      * Part start event acess for the current animation.
      */
-    partEndEventAccess: IOperationManagerAccess<ITaskFlowPartEndArgs>;
+    partEndEventAccess: IOperationManagerAccess<ITaskFlowPartEndArgs<IAnimationFlowPart>>;
     /**
      * Part start event acess for the current animation.
      */
-    partStartEventAccess: IOperationManagerAccess<ITaskFlowPartStartArgs>;
+    partStartEventAccess: IOperationManagerAccess<ITaskFlowPartStartArgs<IAnimationFlowPart>>;
     /**
      * Promise resolved once Sora has ended the handling of the animation.
      */
