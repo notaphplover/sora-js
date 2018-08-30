@@ -1,4 +1,4 @@
-import { ITaskFlowPart } from '../flow/task-flow-part';
+import { ITaskFlowPart } from '../task/flow/task-flow-part';
 import { IAnimationFlowPartPendingOperations } from './animation-pending-operations';
 
 /**

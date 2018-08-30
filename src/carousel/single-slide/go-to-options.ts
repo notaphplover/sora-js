@@ -1,4 +1,4 @@
-import { ICarouselAnimation } from '../animation/carousel-animation';
+import { ICarouselAnimation } from './carousel-animation';
 
 /**
  * Options for the handleGoTo method.

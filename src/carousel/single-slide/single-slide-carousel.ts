@@ -1,13 +1,12 @@
 import { EventEmitter } from 'events';
+import { SingleAnimationEngine } from '../../animation/animation-engine';
+import { IAnimationFlowPart } from '../../animation/animation-flow-part';
+import { AnimationPlayStateValue } from '../../animation/animation-play-state';
 import { CancelableCollectionChangeEventArgs } from '../../collection/cancelable-collection-change-args';
 import { CollectionChangeEventArgs } from '../../collection/collection-change-args';
 import { COLLECTION_MANAGER_EVENTS } from '../../collection/collection-manager';
 import { HtmlChildrenManager } from '../../collection/html-children-manager';
-import { SingleAnimationEngine } from '../../task/animation-engine';
-import { IAnimationFlowPart } from '../../task/animation/animation-flow-part';
 import { ITaskFlow } from '../../task/flow/task-flow';
-import { AnimationPlayStateValue } from '../animation/animation-play-state';
-import { ICarouselAnimationChildrenStyles } from '../animation/carousel-animation';
 import {
     CAROUSEL_STYLES,
     CarouselBase,
@@ -18,6 +17,7 @@ import {
     ISingleSlideCarouselAnimationStartEventArgs,
     ISingleSlideCarouselCancelAnimationEventArgs,
 } from './animation-events';
+import { ICarouselAnimationChildrenStyles } from './carousel-animation';
 import { ISingleSlideCarouselCreateWaitPromiseOptions } from './create-wait-promise-options';
 import { ISingleSlideCarouselCreationOptions } from './creation-options';
 import { ISingleSlideCarouselGoToAnimationStatus } from './go-to-animation-status';

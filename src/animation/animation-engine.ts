@@ -1,11 +1,11 @@
-import { AnimationPlayStateValue } from '../carousel/animation/animation-play-state';
 import { CAROUSEL_STYLES } from '../carousel/carousel-base';
-import { IAnimationCancelEventArgs } from './animation/animation-cancel-event-args';
-import { IAnimationFlowPart } from './animation/animation-flow-part';
-import { ANIMATION_OPERATION_EVENTS } from './animation/animation-operation-events';
-import { IAnimationStateChangeEventArgs } from './animation/animation-state-change-event-args';
-import { OperationManager } from './event/operation-manager';
-import { TaskEngine } from './task-engine';
+import { OperationManager } from '../task/operation/operation-manager';
+import { TaskEngine } from '../task/task-engine';
+import { IAnimationCancelEventArgs } from './animation-cancel-event-args';
+import { IAnimationFlowPart } from './animation-flow-part';
+import { ANIMATION_OPERATION_EVENTS } from './animation-operation-events';
+import { AnimationPlayStateValue } from './animation-play-state';
+import { IAnimationStateChangeEventArgs } from './animation-state-change-event-args';
 
 /**
  * Represenrts a single animation engine.

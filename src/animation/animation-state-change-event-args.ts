@@ -1,4 +1,4 @@
-import { AnimationPlayStateValue } from '../../carousel/animation/animation-play-state';
+import { AnimationPlayStateValue } from './animation-play-state';
 
 /**
  * Aguments for the event emitter.

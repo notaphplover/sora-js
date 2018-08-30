@@ -1,8 +1,8 @@
-import { IOperationManagerAccess } from '../../task/event/operation-manager-access';
 import {
     ITaskFlowPartEndArgs,
     ITaskFlowPartStartArgs,
 } from '../../task/flow/task-flow-part-event-args';
+import { IOperationManagerAccess } from '../../task/operation/operation-manager-access';
 
 /**
  * Status of a GoTo animation

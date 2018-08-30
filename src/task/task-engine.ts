@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events';
-import { OperationManager } from './event/operation-manager';
 import { ITaskFlow } from './flow/task-flow';
 import { ITaskFlowPart } from './flow/task-flow-part';
 import {
@@ -12,6 +11,7 @@ import { TASK_CONSTRAINT_TYPES } from './flow/task-part-constraint';
 import { TaskPartEndConstraint } from './flow/task-part-end-constraint';
 import { TaskGroupConstraint } from './flow/task-part-group-constraint';
 import { TaskTimeConstraint } from './flow/task-part-time-constraint';
+import { OperationManager } from './operation/operation-manager';
 import { TASK_PART_WHEN_EVENTS } from './task-part-when-events';
 import { TaskPartWhenOperator } from './task-part-when-operator';
 

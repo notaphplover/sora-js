@@ -1,5 +1,5 @@
-import { ICarouselAnimation } from '../../carousel/animation/carousel-animation';
 import { CAROUSEL_STYLES } from '../../carousel/carousel-base';
+import { ICarouselAnimation } from '../../carousel/single-slide/carousel-animation';
 import { ISingleSlideCarouselGoToAnimationStatus } from '../../carousel/single-slide/go-to-animation-status';
 import {
     SINGLE_SLIDE_CAROUSEL_ACTIONS,

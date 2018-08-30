@@ -1,4 +1,243 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.soraTest = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.SingleAnimationEngine = undefined;
+
+var _promise = require('babel-runtime/core-js/promise');
+
+var _promise2 = _interopRequireDefault(_promise);
+
+var _getPrototypeOf = require('babel-runtime/core-js/object/get-prototype-of');
+
+var _getPrototypeOf2 = _interopRequireDefault(_getPrototypeOf);
+
+var _classCallCheck2 = require('babel-runtime/helpers/classCallCheck');
+
+var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
+
+var _createClass2 = require('babel-runtime/helpers/createClass');
+
+var _createClass3 = _interopRequireDefault(_createClass2);
+
+var _possibleConstructorReturn2 = require('babel-runtime/helpers/possibleConstructorReturn');
+
+var _possibleConstructorReturn3 = _interopRequireDefault(_possibleConstructorReturn2);
+
+var _get2 = require('babel-runtime/helpers/get');
+
+var _get3 = _interopRequireDefault(_get2);
+
+var _inherits2 = require('babel-runtime/helpers/inherits');
+
+var _inherits3 = _interopRequireDefault(_inherits2);
+
+var _carouselBase = require('../carousel/carousel-base');
+
+var _operationManager = require('../task/operation/operation-manager');
+
+var _taskEngine = require('../task/task-engine');
+
+var _animationOperationEvents = require('./animation-operation-events');
+
+var _animationPlayState = require('./animation-play-state');
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var SingleAnimationEngine = exports.SingleAnimationEngine = function (_TaskEngine) {
+    (0, _inherits3.default)(SingleAnimationEngine, _TaskEngine);
+
+    function SingleAnimationEngine() {
+        (0, _classCallCheck3.default)(this, SingleAnimationEngine);
+
+        var _this = (0, _possibleConstructorReturn3.default)(this, (SingleAnimationEngine.__proto__ || (0, _getPrototypeOf2.default)(SingleAnimationEngine)).call(this));
+
+        _this.animationCancelManager = new _operationManager.OperationManager(_animationOperationEvents.ANIMATION_OPERATION_EVENTS.ANIMATION_CANCEL, _this.eventEmitter);
+        _this.animationStateChangeManager = new _operationManager.OperationManager(_animationOperationEvents.ANIMATION_OPERATION_EVENTS.ANIMATION_STATE_CHANGE, _this.eventEmitter);
+        return _this;
+    }
+
+    (0, _createClass3.default)(SingleAnimationEngine, [{
+        key: 'dispose',
+        value: function dispose() {
+            this.animationCancelManager.dispose();
+            this.animationStateChangeManager.dispose();
+        }
+    }, {
+        key: 'cancelAnimation',
+        value: function cancelAnimation(aliases) {
+            this.eventEmitter.emit(_animationOperationEvents.ANIMATION_OPERATION_EVENTS.ANIMATION_CANCEL, { aliases: aliases });
+        }
+    }, {
+        key: 'pause',
+        value: function pause(aliases) {
+            this.eventEmitter.emit(_animationOperationEvents.ANIMATION_OPERATION_EVENTS.ANIMATION_STATE_CHANGE, {
+                aliases: aliases,
+                value: _animationPlayState.AnimationPlayStateValue.paused
+            });
+        }
+    }, {
+        key: 'resume',
+        value: function resume(aliases) {
+            this.eventEmitter.emit(_animationOperationEvents.ANIMATION_OPERATION_EVENTS.ANIMATION_STATE_CHANGE, {
+                aliases: aliases,
+                value: _animationPlayState.AnimationPlayStateValue.running
+            });
+        }
+    }, {
+        key: 'handleTaskPart',
+        value: function handleTaskPart(part) {
+            var that = this;
+            part.pendingOperations = {
+                cancel: {
+                    isPending: false,
+                    operationToken: this.animationCancelManager.subscribe(part.alias, function (eventArgs) {
+                        part.pendingOperations.cancel.isPending = true;
+                        that.animationCancelManager.unsubscribe(part.alias, part.pendingOperations.cancel.operationToken);
+                    })
+                },
+                pause: {
+                    isPending: false,
+                    operationToken: this.animationStateChangeManager.subscribe(part.alias, function (eventArgs) {
+                        part.pendingOperations.pause.isPending = eventArgs.value === _animationPlayState.AnimationPlayStateValue.paused;
+                    })
+                }
+            };
+            return (0, _get3.default)(SingleAnimationEngine.prototype.__proto__ || (0, _getPrototypeOf2.default)(SingleAnimationEngine.prototype), 'handleTaskPart', this).call(this, part);
+        }
+    }, {
+        key: 'performTask',
+        value: function performTask(part) {
+            if (part.pendingOperations) {
+                this.animationCancelManager.unsubscribe(part.alias, part.pendingOperations.cancel.operationToken);
+                this.animationStateChangeManager.unsubscribe(part.alias, part.pendingOperations.pause.operationToken);
+            }
+            var promises = new Array(part.elements.length);
+            for (var i = 0; i < part.elements.length; ++i) {
+                promises[i] = this.handleAnimationOverElement(part.elements[i], part);
+            }
+            if (part.pendingOperations) {
+                if (part.pendingOperations.pause.isPending) {
+                    this.pause([part.alias]);
+                    part.pendingOperations.pause.isPending = false;
+                }
+                if (part.pendingOperations.cancel.isPending) {
+                    this.cancelAnimation([part.alias]);
+                    part.pendingOperations.cancel.isPending = false;
+                }
+            }
+            return _promise2.default.all(promises);
+        }
+    }, {
+        key: 'handleAnimationOverElement',
+        value: function handleAnimationOverElement(element, part) {
+            var styles = part.styles;
+            if (styles) {
+                if (styles.length < 1) {
+                    throw new Error('It\'s required to have at least one class to generate an animation.');
+                }
+            } else {
+                throw new Error('It\'s required to have an array of styles to generate an animation.');
+            }
+            var that = this;
+            return new _promise2.default(function (resolve, reject) {
+                try {
+                    var currentAnimationIndex;
+                    var i;
+
+                    (function () {
+                        var animationFunctions = new Array();
+                        currentAnimationIndex = null;
+
+                        var onAnimationCancel = function onAnimationCancel(args) {
+                            onAnimationPlayStateChange({ aliases: args.aliases, value: _animationPlayState.AnimationPlayStateValue.running });
+                            element.classList.add(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                            if (null != currentAnimationIndex) {
+                                element.classList.remove(styles[currentAnimationIndex]);
+                            }
+                            that.unregisterAnimationListener(element, animationFunctions[currentAnimationIndex]);
+                            element.classList.remove(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                            that.animationCancelManager.unsubscribe(part.alias, cancelToken);
+                            that.animationStateChangeManager.unsubscribe(part.alias, playStateChangetoken);
+                            resolve();
+                        };
+                        var cancelToken = that.animationCancelManager.subscribe(part.alias, onAnimationCancel);
+                        var onAnimationPlayStateChange = function onAnimationPlayStateChange(args) {
+                            if (_animationPlayState.AnimationPlayStateValue.paused === args.value) {
+                                if (!element.classList.contains(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED)) {
+                                    element.classList.add(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
+                                }
+                            } else if (_animationPlayState.AnimationPlayStateValue.running === args.value) {
+                                if (element.classList.contains(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED)) {
+                                    element.classList.remove(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
+                                }
+                            }
+                        };
+                        var playStateChangetoken = that.animationStateChangeManager.subscribe(part.alias, onAnimationPlayStateChange);
+                        for (i = 1; i < styles.length; ++i) {
+                            animationFunctions.push(function (index) {
+                                return function (event) {
+                                    element.classList.remove(styles[index - 1]);
+                                    that.unregisterAnimationListener(element, animationFunctions[index - 1]);
+                                    that.registerAnimationListener(element, animationFunctions[index]);
+                                    element.classList.add(styles[index]);
+                                    currentAnimationIndex = index;
+                                };
+                            }(i));
+                        }
+                        animationFunctions.push(function (event) {
+                            element.classList.add(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                            element.classList.remove(styles[styles.length - 1]);
+                            element.classList.remove(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
+                            that.unregisterAnimationListener(element, animationFunctions[animationFunctions.length - 1]);
+                            currentAnimationIndex = null;
+                            that.animationCancelManager.unsubscribe(part.alias, cancelToken);
+                            that.animationStateChangeManager.unsubscribe(part.alias, playStateChangetoken);
+                            resolve();
+                        });
+                        that.registerAnimationListener(element, animationFunctions[0]);
+                        element.classList.add(styles[0]);
+                        currentAnimationIndex = 0;
+                    })();
+                } catch (ex) {
+                    reject(ex);
+                }
+            });
+        }
+    }, {
+        key: 'registerAnimationListener',
+        value: function registerAnimationListener(element, listener) {
+            element.addEventListener('animationend', listener);
+            element.addEventListener('webkitAnimationEnd', listener);
+        }
+    }, {
+        key: 'unregisterAnimationListener',
+        value: function unregisterAnimationListener(element, listener) {
+            element.removeEventListener('animationend', listener);
+            element.removeEventListener('webkitAnimationEnd', listener);
+        }
+    }]);
+    return SingleAnimationEngine;
+}(_taskEngine.TaskEngine);
+
+
+
+},{"../carousel/carousel-base":4,"../task/operation/operation-manager":14,"../task/task-engine":15,"./animation-operation-events":2,"./animation-play-state":3,"babel-runtime/core-js/object/get-prototype-of":28,"babel-runtime/core-js/promise":30,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34,"babel-runtime/helpers/get":35,"babel-runtime/helpers/inherits":36,"babel-runtime/helpers/possibleConstructorReturn":37}],2:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+var ANIMATION_OPERATION_EVENTS = exports.ANIMATION_OPERATION_EVENTS = {
+    ANIMATION_CANCEL: 'anim.cancel',
+    ANIMATION_STATE_CHANGE: 'anim.state.change'
+};
+
+
+
+},{}],3:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -12,7 +251,7 @@ var AnimationPlayStateValue = exports.AnimationPlayStateValue = undefined;
 
 
 
-},{}],2:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -40,7 +279,7 @@ var CarouselBase = exports.CarouselBase = function CarouselBase() {
 
 
 
-},{"babel-runtime/helpers/classCallCheck":33}],3:[function(require,module,exports){
+},{"babel-runtime/helpers/classCallCheck":33}],5:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -78,13 +317,13 @@ var _inherits3 = _interopRequireDefault(_inherits2);
 
 var _events = require('events');
 
+var _animationEngine = require('../../animation/animation-engine');
+
+var _animationPlayState = require('../../animation/animation-play-state');
+
 var _collectionManager = require('../../collection/collection-manager');
 
 var _htmlChildrenManager = require('../../collection/html-children-manager');
-
-var _animationEngine = require('../../task/animation-engine');
-
-var _animationPlayState = require('../animation/animation-play-state');
 
 var _carouselBase = require('../carousel-base');
 
@@ -502,7 +741,7 @@ var SingleSlideCarousel = exports.SingleSlideCarousel = function (_CarouselBase)
 
 
 
-},{"../../collection/collection-manager":6,"../../collection/html-children-manager":7,"../../task/animation-engine":10,"../animation/animation-play-state":1,"../carousel-base":2,"babel-runtime/core-js/get-iterator":22,"babel-runtime/core-js/object/get-prototype-of":28,"babel-runtime/core-js/promise":30,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34,"babel-runtime/helpers/inherits":36,"babel-runtime/helpers/possibleConstructorReturn":37,"events":156}],4:[function(require,module,exports){
+},{"../../animation/animation-engine":1,"../../animation/animation-play-state":3,"../../collection/collection-manager":8,"../../collection/html-children-manager":9,"../carousel-base":4,"babel-runtime/core-js/get-iterator":22,"babel-runtime/core-js/object/get-prototype-of":28,"babel-runtime/core-js/promise":30,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34,"babel-runtime/helpers/inherits":36,"babel-runtime/helpers/possibleConstructorReturn":37,"events":156}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -553,7 +792,7 @@ var CancelableCollectionChangeEventArgs = exports.CancelableCollectionChangeEven
 
 
 
-},{"./collection-change-args":5,"babel-runtime/core-js/object/get-prototype-of":28,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34,"babel-runtime/helpers/inherits":36,"babel-runtime/helpers/possibleConstructorReturn":37}],5:[function(require,module,exports){
+},{"./collection-change-args":7,"babel-runtime/core-js/object/get-prototype-of":28,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34,"babel-runtime/helpers/inherits":36,"babel-runtime/helpers/possibleConstructorReturn":37}],7:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -605,7 +844,7 @@ var CollectionChangeEventArgs = exports.CollectionChangeEventArgs = function () 
 
 
 
-},{"babel-runtime/core-js/object/assign":24,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34}],6:[function(require,module,exports){
+},{"babel-runtime/core-js/object/assign":24,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -758,7 +997,7 @@ var CollectionManager = exports.CollectionManager = function () {
 
 
 
-},{"./cancelable-collection-change-args":4,"./collection-change-args":5,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34}],7:[function(require,module,exports){
+},{"./cancelable-collection-change-args":6,"./collection-change-args":7,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -846,7 +1085,7 @@ var HtmlChildrenManager = exports.HtmlChildrenManager = function (_CollectionMan
 
 
 
-},{"./collection-manager":6,"babel-runtime/core-js/object/get-prototype-of":28,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34,"babel-runtime/helpers/get":35,"babel-runtime/helpers/inherits":36,"babel-runtime/helpers/possibleConstructorReturn":37}],8:[function(require,module,exports){
+},{"./collection-manager":8,"babel-runtime/core-js/object/get-prototype-of":28,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34,"babel-runtime/helpers/get":35,"babel-runtime/helpers/inherits":36,"babel-runtime/helpers/possibleConstructorReturn":37}],10:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -924,7 +1163,7 @@ var TokenMap = exports.TokenMap = function () {
 
 
 
-},{"babel-runtime/core-js/map":23,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34}],9:[function(require,module,exports){
+},{"babel-runtime/core-js/map":23,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34}],11:[function(require,module,exports){
 'use strict';
 
 var _singleSlideCarousel = require('./test/carousel/single-slide-carousel.test');
@@ -949,17 +1188,36 @@ module.exports = soraTest;
 
 
 
-},{"./test/carousel/single-slide-carousel.test":18,"./test/collection/collection-manager.test":19,"./test/collection/token-map.test":20,"./test/task/animation-engine.test":21}],10:[function(require,module,exports){
+},{"./test/carousel/single-slide-carousel.test":18,"./test/collection/collection-manager.test":19,"./test/collection/token-map.test":20,"./test/task/animation-engine.test":21}],12:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.TaskPartWhenConstraint = undefined;
+
+var _classCallCheck2 = require("babel-runtime/helpers/classCallCheck");
+
+var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var TaskPartWhenConstraint = exports.TaskPartWhenConstraint = function TaskPartWhenConstraint(after, constraintType) {
+    (0, _classCallCheck3.default)(this, TaskPartWhenConstraint);
+
+    this.after = after;
+    this.constraintType = constraintType;
+};
+
+
+
+},{"babel-runtime/helpers/classCallCheck":33}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.SingleAnimationEngine = undefined;
-
-var _promise = require('babel-runtime/core-js/promise');
-
-var _promise2 = _interopRequireDefault(_promise);
+exports.TaskPartConstraint = exports.TASK_CONSTRAINT_TYPES = undefined;
 
 var _getPrototypeOf = require('babel-runtime/core-js/object/get-prototype-of');
 
@@ -969,226 +1227,43 @@ var _classCallCheck2 = require('babel-runtime/helpers/classCallCheck');
 
 var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
 
-var _createClass2 = require('babel-runtime/helpers/createClass');
-
-var _createClass3 = _interopRequireDefault(_createClass2);
-
 var _possibleConstructorReturn2 = require('babel-runtime/helpers/possibleConstructorReturn');
 
 var _possibleConstructorReturn3 = _interopRequireDefault(_possibleConstructorReturn2);
-
-var _get2 = require('babel-runtime/helpers/get');
-
-var _get3 = _interopRequireDefault(_get2);
 
 var _inherits2 = require('babel-runtime/helpers/inherits');
 
 var _inherits3 = _interopRequireDefault(_inherits2);
 
-var _animationPlayState = require('../carousel/animation/animation-play-state');
-
-var _carouselBase = require('../carousel/carousel-base');
-
-var _animationOperationEvents = require('./animation/animation-operation-events');
-
-var _operationManager = require('./event/operation-manager');
-
-var _taskEngine = require('./task-engine');
+var _taskFlowWhen = require('./task-flow-when');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var SingleAnimationEngine = exports.SingleAnimationEngine = function (_TaskEngine) {
-    (0, _inherits3.default)(SingleAnimationEngine, _TaskEngine);
+var TASK_CONSTRAINT_TYPES = exports.TASK_CONSTRAINT_TYPES = {
+    END: 'anim.end',
+    GROUP: 'group',
+    START: 'anim.start',
+    WAIT_FOR: 'wait'
+};
 
-    function SingleAnimationEngine() {
-        (0, _classCallCheck3.default)(this, SingleAnimationEngine);
+var TaskPartConstraint = exports.TaskPartConstraint = function (_TaskPartWhenConstrai) {
+    (0, _inherits3.default)(TaskPartConstraint, _TaskPartWhenConstrai);
 
-        var _this = (0, _possibleConstructorReturn3.default)(this, (SingleAnimationEngine.__proto__ || (0, _getPrototypeOf2.default)(SingleAnimationEngine)).call(this));
+    function TaskPartConstraint(after, alias, constraintType) {
+        (0, _classCallCheck3.default)(this, TaskPartConstraint);
 
-        _this.animationCancelManager = new _operationManager.OperationManager(_animationOperationEvents.ANIMATION_OPERATION_EVENTS.ANIMATION_CANCEL, _this.eventEmitter);
-        _this.animationStateChangeManager = new _operationManager.OperationManager(_animationOperationEvents.ANIMATION_OPERATION_EVENTS.ANIMATION_STATE_CHANGE, _this.eventEmitter);
+        var _this = (0, _possibleConstructorReturn3.default)(this, (TaskPartConstraint.__proto__ || (0, _getPrototypeOf2.default)(TaskPartConstraint)).call(this, after, constraintType));
+
+        _this.alias = alias;
         return _this;
     }
 
-    (0, _createClass3.default)(SingleAnimationEngine, [{
-        key: 'dispose',
-        value: function dispose() {
-            this.animationCancelManager.dispose();
-            this.animationStateChangeManager.dispose();
-        }
-    }, {
-        key: 'cancelAnimation',
-        value: function cancelAnimation(aliases) {
-            this.eventEmitter.emit(_animationOperationEvents.ANIMATION_OPERATION_EVENTS.ANIMATION_CANCEL, { aliases: aliases });
-        }
-    }, {
-        key: 'pause',
-        value: function pause(aliases) {
-            this.eventEmitter.emit(_animationOperationEvents.ANIMATION_OPERATION_EVENTS.ANIMATION_STATE_CHANGE, {
-                aliases: aliases,
-                value: _animationPlayState.AnimationPlayStateValue.paused
-            });
-        }
-    }, {
-        key: 'resume',
-        value: function resume(aliases) {
-            this.eventEmitter.emit(_animationOperationEvents.ANIMATION_OPERATION_EVENTS.ANIMATION_STATE_CHANGE, {
-                aliases: aliases,
-                value: _animationPlayState.AnimationPlayStateValue.running
-            });
-        }
-    }, {
-        key: 'handleTaskPart',
-        value: function handleTaskPart(part) {
-            var that = this;
-            part.pendingOperations = {
-                cancel: {
-                    isPending: false,
-                    operationToken: this.animationCancelManager.subscribe(part.alias, function (eventArgs) {
-                        part.pendingOperations.cancel.isPending = true;
-                        that.animationCancelManager.unsubscribe(part.alias, part.pendingOperations.cancel.operationToken);
-                    })
-                },
-                pause: {
-                    isPending: false,
-                    operationToken: this.animationStateChangeManager.subscribe(part.alias, function (eventArgs) {
-                        part.pendingOperations.pause.isPending = eventArgs.value === _animationPlayState.AnimationPlayStateValue.paused;
-                    })
-                }
-            };
-            return (0, _get3.default)(SingleAnimationEngine.prototype.__proto__ || (0, _getPrototypeOf2.default)(SingleAnimationEngine.prototype), 'handleTaskPart', this).call(this, part);
-        }
-    }, {
-        key: 'performTask',
-        value: function performTask(part) {
-            if (part.pendingOperations) {
-                this.animationCancelManager.unsubscribe(part.alias, part.pendingOperations.cancel.operationToken);
-                this.animationStateChangeManager.unsubscribe(part.alias, part.pendingOperations.pause.operationToken);
-            }
-            var promises = new Array(part.elements.length);
-            for (var i = 0; i < part.elements.length; ++i) {
-                promises[i] = this.handleAnimationOverElement(part.elements[i], part);
-            }
-            if (part.pendingOperations) {
-                if (part.pendingOperations.pause.isPending) {
-                    this.pause([part.alias]);
-                    part.pendingOperations.pause.isPending = false;
-                }
-                if (part.pendingOperations.cancel.isPending) {
-                    this.cancelAnimation([part.alias]);
-                    part.pendingOperations.cancel.isPending = false;
-                }
-            }
-            return _promise2.default.all(promises);
-        }
-    }, {
-        key: 'handleAnimationOverElement',
-        value: function handleAnimationOverElement(element, part) {
-            var styles = part.styles;
-            if (styles) {
-                if (styles.length < 1) {
-                    throw new Error('It\'s required to have at least one class to generate an animation.');
-                }
-            } else {
-                throw new Error('It\'s required to have an array of styles to generate an animation.');
-            }
-            var that = this;
-            return new _promise2.default(function (resolve, reject) {
-                try {
-                    var currentAnimationIndex;
-                    var i;
-
-                    (function () {
-                        var animationFunctions = new Array();
-                        currentAnimationIndex = null;
-
-                        var onAnimationCancel = function onAnimationCancel(args) {
-                            onAnimationPlayStateChange({ aliases: args.aliases, value: _animationPlayState.AnimationPlayStateValue.running });
-                            element.classList.add(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
-                            if (null != currentAnimationIndex) {
-                                element.classList.remove(styles[currentAnimationIndex]);
-                            }
-                            that.unregisterAnimationListener(element, animationFunctions[currentAnimationIndex]);
-                            element.classList.remove(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
-                            that.animationCancelManager.unsubscribe(part.alias, cancelToken);
-                            that.animationStateChangeManager.unsubscribe(part.alias, playStateChangetoken);
-                            resolve();
-                        };
-                        var cancelToken = that.animationCancelManager.subscribe(part.alias, onAnimationCancel);
-                        var onAnimationPlayStateChange = function onAnimationPlayStateChange(args) {
-                            if (_animationPlayState.AnimationPlayStateValue.paused === args.value) {
-                                if (!element.classList.contains(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED)) {
-                                    element.classList.add(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
-                                }
-                            } else if (_animationPlayState.AnimationPlayStateValue.running === args.value) {
-                                if (element.classList.contains(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED)) {
-                                    element.classList.remove(_carouselBase.CAROUSEL_STYLES.ANIMATION_PAUSED);
-                                }
-                            }
-                        };
-                        var playStateChangetoken = that.animationStateChangeManager.subscribe(part.alias, onAnimationPlayStateChange);
-                        for (i = 1; i < styles.length; ++i) {
-                            animationFunctions.push(function (index) {
-                                return function (event) {
-                                    element.classList.remove(styles[index - 1]);
-                                    that.unregisterAnimationListener(element, animationFunctions[index - 1]);
-                                    that.registerAnimationListener(element, animationFunctions[index]);
-                                    element.classList.add(styles[index]);
-                                    currentAnimationIndex = index;
-                                };
-                            }(i));
-                        }
-                        animationFunctions.push(function (event) {
-                            element.classList.add(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
-                            element.classList.remove(styles[styles.length - 1]);
-                            element.classList.remove(_carouselBase.CAROUSEL_STYLES.CLEAR_ANIMATION);
-                            that.unregisterAnimationListener(element, animationFunctions[animationFunctions.length - 1]);
-                            currentAnimationIndex = null;
-                            that.animationCancelManager.unsubscribe(part.alias, cancelToken);
-                            that.animationStateChangeManager.unsubscribe(part.alias, playStateChangetoken);
-                            resolve();
-                        });
-                        that.registerAnimationListener(element, animationFunctions[0]);
-                        element.classList.add(styles[0]);
-                        currentAnimationIndex = 0;
-                    })();
-                } catch (ex) {
-                    reject(ex);
-                }
-            });
-        }
-    }, {
-        key: 'registerAnimationListener',
-        value: function registerAnimationListener(element, listener) {
-            element.addEventListener('animationend', listener);
-            element.addEventListener('webkitAnimationEnd', listener);
-        }
-    }, {
-        key: 'unregisterAnimationListener',
-        value: function unregisterAnimationListener(element, listener) {
-            element.removeEventListener('animationend', listener);
-            element.removeEventListener('webkitAnimationEnd', listener);
-        }
-    }]);
-    return SingleAnimationEngine;
-}(_taskEngine.TaskEngine);
+    return TaskPartConstraint;
+}(_taskFlowWhen.TaskPartWhenConstraint);
 
 
 
-},{"../carousel/animation/animation-play-state":1,"../carousel/carousel-base":2,"./animation/animation-operation-events":11,"./event/operation-manager":12,"./task-engine":15,"babel-runtime/core-js/object/get-prototype-of":28,"babel-runtime/core-js/promise":30,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34,"babel-runtime/helpers/get":35,"babel-runtime/helpers/inherits":36,"babel-runtime/helpers/possibleConstructorReturn":37}],11:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-var ANIMATION_OPERATION_EVENTS = exports.ANIMATION_OPERATION_EVENTS = {
-    ANIMATION_CANCEL: 'anim.cancel',
-    ANIMATION_STATE_CHANGE: 'anim.state.change'
-};
-
-
-
-},{}],12:[function(require,module,exports){
+},{"./task-flow-when":12,"babel-runtime/core-js/object/get-prototype-of":28,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/inherits":36,"babel-runtime/helpers/possibleConstructorReturn":37}],14:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1295,82 +1370,7 @@ var OperationManager = exports.OperationManager = function () {
 
 
 
-},{"../../collection/token-map":8,"babel-runtime/core-js/get-iterator":22,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34}],13:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.TaskPartWhenConstraint = undefined;
-
-var _classCallCheck2 = require("babel-runtime/helpers/classCallCheck");
-
-var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var TaskPartWhenConstraint = exports.TaskPartWhenConstraint = function TaskPartWhenConstraint(after, constraintType) {
-    (0, _classCallCheck3.default)(this, TaskPartWhenConstraint);
-
-    this.after = after;
-    this.constraintType = constraintType;
-};
-
-
-
-},{"babel-runtime/helpers/classCallCheck":33}],14:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.TaskPartConstraint = exports.TASK_CONSTRAINT_TYPES = undefined;
-
-var _getPrototypeOf = require('babel-runtime/core-js/object/get-prototype-of');
-
-var _getPrototypeOf2 = _interopRequireDefault(_getPrototypeOf);
-
-var _classCallCheck2 = require('babel-runtime/helpers/classCallCheck');
-
-var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
-
-var _possibleConstructorReturn2 = require('babel-runtime/helpers/possibleConstructorReturn');
-
-var _possibleConstructorReturn3 = _interopRequireDefault(_possibleConstructorReturn2);
-
-var _inherits2 = require('babel-runtime/helpers/inherits');
-
-var _inherits3 = _interopRequireDefault(_inherits2);
-
-var _taskFlowWhen = require('./task-flow-when');
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var TASK_CONSTRAINT_TYPES = exports.TASK_CONSTRAINT_TYPES = {
-    END: 'anim.end',
-    GROUP: 'group',
-    START: 'anim.start',
-    WAIT_FOR: 'wait'
-};
-
-var TaskPartConstraint = exports.TaskPartConstraint = function (_TaskPartWhenConstrai) {
-    (0, _inherits3.default)(TaskPartConstraint, _TaskPartWhenConstrai);
-
-    function TaskPartConstraint(after, alias, constraintType) {
-        (0, _classCallCheck3.default)(this, TaskPartConstraint);
-
-        var _this = (0, _possibleConstructorReturn3.default)(this, (TaskPartConstraint.__proto__ || (0, _getPrototypeOf2.default)(TaskPartConstraint)).call(this, after, constraintType));
-
-        _this.alias = alias;
-        return _this;
-    }
-
-    return TaskPartConstraint;
-}(_taskFlowWhen.TaskPartWhenConstraint);
-
-
-
-},{"./task-flow-when":13,"babel-runtime/core-js/object/get-prototype-of":28,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/inherits":36,"babel-runtime/helpers/possibleConstructorReturn":37}],15:[function(require,module,exports){
+},{"../../collection/token-map":10,"babel-runtime/core-js/get-iterator":22,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34}],15:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1392,9 +1392,9 @@ var _createClass3 = _interopRequireDefault(_createClass2);
 
 var _events = require('events');
 
-var _operationManager = require('./event/operation-manager');
-
 var _taskPartConstraint = require('./flow/task-part-constraint');
+
+var _operationManager = require('./operation/operation-manager');
 
 var _taskPartWhenEvents = require('./task-part-when-events');
 
@@ -1573,7 +1573,7 @@ var TaskEngine = exports.TaskEngine = function () {
 
 
 
-},{"./event/operation-manager":12,"./flow/task-part-constraint":14,"./task-part-when-events":16,"./task-part-when-operator":17,"babel-runtime/core-js/promise":30,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34,"events":156}],16:[function(require,module,exports){
+},{"./flow/task-part-constraint":13,"./operation/operation-manager":14,"./task-part-when-events":16,"./task-part-when-operator":17,"babel-runtime/core-js/promise":30,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34,"events":156}],16:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2112,7 +2112,7 @@ var SingleSlideCarouselTests = exports.SingleSlideCarouselTests = function () {
 
 
 
-},{"../../carousel/carousel-base":2,"../../carousel/single-slide/single-slide-carousel":3,"babel-runtime/core-js/promise":30,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34}],19:[function(require,module,exports){
+},{"../../carousel/carousel-base":4,"../../carousel/single-slide/single-slide-carousel":5,"babel-runtime/core-js/promise":30,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2315,7 +2315,7 @@ var CollectionManagerTests = exports.CollectionManagerTests = function () {
 
 
 
-},{"../../collection/collection-manager":6,"babel-runtime/core-js/get-iterator":22,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34,"events":156}],20:[function(require,module,exports){
+},{"../../collection/collection-manager":8,"babel-runtime/core-js/get-iterator":22,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34,"events":156}],20:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2423,7 +2423,7 @@ var TokenMapTests = exports.TokenMapTests = function () {
 
 
 
-},{"../../collection/token-map":8,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34}],21:[function(require,module,exports){
+},{"../../collection/token-map":10,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34}],21:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2439,7 +2439,7 @@ var _createClass2 = require('babel-runtime/helpers/createClass');
 
 var _createClass3 = _interopRequireDefault(_createClass2);
 
-var _animationEngine = require('../../task/animation-engine');
+var _animationEngine = require('../../animation/animation-engine');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -2510,7 +2510,7 @@ var AnimationEngineTests = exports.AnimationEngineTests = function () {
 
 
 
-},{"../../task/animation-engine":10,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34}],22:[function(require,module,exports){
+},{"../../animation/animation-engine":1,"babel-runtime/helpers/classCallCheck":33,"babel-runtime/helpers/createClass":34}],22:[function(require,module,exports){
 module.exports = { "default": require("core-js/library/fn/get-iterator"), __esModule: true };
 },{"core-js/library/fn/get-iterator":39}],23:[function(require,module,exports){
 module.exports = { "default": require("core-js/library/fn/map"), __esModule: true };
@@ -5530,7 +5530,7 @@ function functionBindPolyfill(context) {
   };
 }
 
-},{}]},{},[9])(9)
+},{}]},{},[11])(11)
 });
 
 //# sourceMappingURL=bundle.test.js.map

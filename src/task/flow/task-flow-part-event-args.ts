@@ -1,4 +1,4 @@
-import { IOperationArgs } from '../event/operation-manager';
+import { IOperationArgs } from '../operation/operation-manager';
 import { ITaskFlowPart } from './task-flow-part';
 
 export interface ITaskFlowPartArgs extends IOperationArgs {
