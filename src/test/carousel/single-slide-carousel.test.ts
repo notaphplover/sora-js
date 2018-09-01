@@ -9,9 +9,11 @@ import {
     SingleSlideCarousel,
 } from '../../carousel/single-slide/single-slide-carousel';
 import {
+    ITaskFlowPartArgs,
     ITaskFlowPartEndArgs,
     ITaskFlowPartStartArgs,
 } from '../../task/flow/task-flow-part-event-args';
+import { IOperationManagerAccess } from '../../task/operation/operation-manager-access';
 import { ITest } from '../ITest';
 
 interface IGoToAndCheckData {
@@ -98,47 +100,66 @@ export class SingleSlideCarouselTests implements ITest {
             },
         );
 
-        // Check the start of the enter animation.
-        var enterAnimationStartEventRaised: boolean = false;
-        const onEnterAnimationStart =
-            function(eventArgs: ITaskFlowPartStartArgs<IAnimationFlowPart>): void {
-                enterAnimationStartEventRaised = true;
+        const checkFunction = function<
+            TArgs extends ITaskFlowPartArgs<TPart>,
+            TPart extends IAnimationFlowPart,
+        >(
+            partAlias: string,
+            animation: ICarouselAnimation,
+            operationManagerAccess: IOperationManagerAccess<TArgs>,
+        ): () => boolean {
+            var eventRaised: boolean = false;
+            const eventHandler = function(eventArgs: TArgs) {
+                eventRaised = true;
                 eventArgs.part.styles.forEach(function(style: string) {
-                    expect(enterAnimation.slideStyles).toContain(style);
+                    expect(animation.slideStyles).toContain(style);
                 });
-                goActionStatus.partStartEventAccess.unsubscribe(
-                    SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER,
-                    onEnterAnimationStartToken,
-                );
+                expect(operationManagerAccess.unsubscribe(
+                    partAlias,
+                    handlerToken,
+                )).toBe(true);
             };
-        const onEnterAnimationStartToken: number =
-            goActionStatus.partStartEventAccess.subscribe(
-                SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER,
-                onEnterAnimationStart,
-            );
+            const handlerToken: number =
+                operationManagerAccess.subscribe(
+                    partAlias,
+                    eventHandler,
+                );
+            return function() { return eventRaised; };
+        };
+
+        // Check the end of the enter animation.
+        const enterAnimationEndStatus = checkFunction(
+            SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER,
+            enterAnimation,
+            goActionStatus.partEndEventAccess,
+        );
+
+        // Check the end of the leave animation
+        const leaveAnimationEndStatus = checkFunction(
+            SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE,
+            leaveAnimation,
+            goActionStatus.partEndEventAccess,
+        );
+
+        // Check the start of the enter animation.
+        const enterAnimationStartStatus = checkFunction(
+            SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER,
+            enterAnimation,
+            goActionStatus.partStartEventAccess,
+        );
 
         // Check the start of the leave animation.
-        var leaveAnimationStartEventRaised: boolean = false;
-        const onLeaveAnimationStart =
-            function(eventArgs: ITaskFlowPartEndArgs<IAnimationFlowPart>): void {
-                leaveAnimationStartEventRaised = true;
-                eventArgs.part.styles.forEach(function(style: string) {
-                    expect(leaveAnimation.slideStyles).toContain(style);
-                });
-                goActionStatus.partEndEventAccess.unsubscribe(
-                    SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE,
-                    onLeaveAnimationStartToken,
-                );
-            };
-        const onLeaveAnimationStartToken: number =
-            goActionStatus.partEndEventAccess.subscribe(
-                SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE,
-                onLeaveAnimationStart,
-            );
+        const leaveAnimationStartStatus = checkFunction(
+            SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE,
+            leaveAnimation,
+            goActionStatus.partStartEventAccess,
+        );
 
         goActionStatus.soraHandlerStatus.then(function() {
-            expect(enterAnimationStartEventRaised).toBe(true);
-            expect(leaveAnimationStartEventRaised).toBe(true);
+            expect(enterAnimationEndStatus()).toBe(true);
+            expect(leaveAnimationEndStatus()).toBe(true);
+            expect(enterAnimationStartStatus()).toBe(true);
+            expect(leaveAnimationStartStatus()).toBe(true);
             if (shouldCheck) {
                 expect(currentActiveElement.classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
                 expect(currentActiveElement.classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);

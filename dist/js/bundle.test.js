@@ -1681,27 +1681,29 @@ var SingleSlideCarouselTests = exports.SingleSlideCarouselTests = function () {
                 enterAnimation: enterAnimation,
                 leaveAnimation: leaveAnimation
             });
-            var enterAnimationStartEventRaised = false;
-            var onEnterAnimationStart = function onEnterAnimationStart(eventArgs) {
-                enterAnimationStartEventRaised = true;
-                eventArgs.part.styles.forEach(function (style) {
-                    expect(enterAnimation.slideStyles).toContain(style);
-                });
-                goActionStatus.partStartEventAccess.unsubscribe(_singleSlideCarousel.SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER, onEnterAnimationStartToken);
+            var checkFunction = function checkFunction(partAlias, animation, operationManagerAccess) {
+                var eventRaised = false;
+                var eventHandler = function eventHandler(eventArgs) {
+                    eventRaised = true;
+                    eventArgs.part.styles.forEach(function (style) {
+                        expect(animation.slideStyles).toContain(style);
+                    });
+                    expect(operationManagerAccess.unsubscribe(partAlias, handlerToken)).toBe(true);
+                };
+                var handlerToken = operationManagerAccess.subscribe(partAlias, eventHandler);
+                return function () {
+                    return eventRaised;
+                };
             };
-            var onEnterAnimationStartToken = goActionStatus.partStartEventAccess.subscribe(_singleSlideCarousel.SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER, onEnterAnimationStart);
-            var leaveAnimationStartEventRaised = false;
-            var onLeaveAnimationStart = function onLeaveAnimationStart(eventArgs) {
-                leaveAnimationStartEventRaised = true;
-                eventArgs.part.styles.forEach(function (style) {
-                    expect(leaveAnimation.slideStyles).toContain(style);
-                });
-                goActionStatus.partEndEventAccess.unsubscribe(_singleSlideCarousel.SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE, onLeaveAnimationStartToken);
-            };
-            var onLeaveAnimationStartToken = goActionStatus.partEndEventAccess.subscribe(_singleSlideCarousel.SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE, onLeaveAnimationStart);
+            var enterAnimationEndStatus = checkFunction(_singleSlideCarousel.SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER, enterAnimation, goActionStatus.partEndEventAccess);
+            var leaveAnimationEndStatus = checkFunction(_singleSlideCarousel.SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE, leaveAnimation, goActionStatus.partEndEventAccess);
+            var enterAnimationStartStatus = checkFunction(_singleSlideCarousel.SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER, enterAnimation, goActionStatus.partStartEventAccess);
+            var leaveAnimationStartStatus = checkFunction(_singleSlideCarousel.SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE, leaveAnimation, goActionStatus.partStartEventAccess);
             goActionStatus.soraHandlerStatus.then(function () {
-                expect(enterAnimationStartEventRaised).toBe(true);
-                expect(leaveAnimationStartEventRaised).toBe(true);
+                expect(enterAnimationEndStatus()).toBe(true);
+                expect(leaveAnimationEndStatus()).toBe(true);
+                expect(enterAnimationStartStatus()).toBe(true);
+                expect(leaveAnimationStartStatus()).toBe(true);
                 if (shouldCheck) {
                     expect(currentActiveElement.classList).not.toContain(_singleSlideCarousel.SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
                     expect(currentActiveElement.classList).toContain(_singleSlideCarousel.SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
