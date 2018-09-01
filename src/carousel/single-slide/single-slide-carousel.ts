@@ -44,7 +44,7 @@ export const SINGLE_SLIDE_CAROUSEL_EVENTS = {
     ON_CANCEL_ANIMATION: 'car.anim.cancel',
 };
 
-const SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES = {
+export const SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES = {
     ENTER: 'enter-part',
     LEAVE: 'leave-part',
 };
@@ -587,14 +587,8 @@ export class SingleSlideCarousel extends CarouselBase {
 
         return {
             animationPromises: animationPromises,
-            partEndEventAccess: {
-                subscribe: this.engineAnimation.subscribePartEndListener,
-                unsubscribe: this.engineAnimation.unsubscribePartEndListener,
-            },
-            partStartEventAccess: {
-                subscribe: this.engineAnimation.subscribePartStartListener,
-                unsubscribe: this.engineAnimation.unsubscribePartStartListener,
-            },
+            partEndEventAccess: that.engineAnimation.getPartEndListenerAccess(),
+            partStartEventAccess: that.engineAnimation.getPartStartListenerAccess(),
             soraHandlerStatus: soraHandlerStatus,
         };
     }

@@ -1,11 +1,19 @@
+import { IAnimationFlowPart } from '../../animation/animation-flow-part';
 import { CAROUSEL_STYLES } from '../../carousel/carousel-base';
 import { ICarouselAnimation } from '../../carousel/single-slide/carousel-animation';
 import { ISingleSlideCarouselGoToAnimationStatus } from '../../carousel/single-slide/go-to-animation-status';
 import {
     SINGLE_SLIDE_CAROUSEL_ACTIONS,
+    SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES,
     SINGLE_SLIDE_CAROUSEL_STYLES,
     SingleSlideCarousel,
 } from '../../carousel/single-slide/single-slide-carousel';
+import {
+    ITaskFlowPartArgs,
+    ITaskFlowPartEndArgs,
+    ITaskFlowPartStartArgs,
+} from '../../task/flow/task-flow-part-event-args';
+import { IOperationManagerAccess } from '../../task/operation/operation-manager-access';
 import { ITest } from '../ITest';
 
 interface IGoToAndCheckData {
@@ -92,14 +100,73 @@ export class SingleSlideCarouselTests implements ITest {
             },
         );
 
-        if (shouldCheck) {
-            goActionStatus.soraHandlerStatus.then(function() {
+        const checkFunction = function<
+            TArgs extends ITaskFlowPartArgs<TPart>,
+            TPart extends IAnimationFlowPart,
+        >(
+            partAlias: string,
+            animation: ICarouselAnimation,
+            operationManagerAccess: IOperationManagerAccess<TArgs>,
+        ): () => boolean {
+            var eventRaised: boolean = false;
+            const eventHandler = function(eventArgs: TArgs) {
+                eventRaised = true;
+                eventArgs.part.styles.forEach(function(style: string) {
+                    expect(animation.slideStyles).toContain(style);
+                });
+                expect(operationManagerAccess.unsubscribe(
+                    partAlias,
+                    handlerToken,
+                )).toBe(true);
+            };
+            const handlerToken: number =
+                operationManagerAccess.subscribe(
+                    partAlias,
+                    eventHandler,
+                );
+            return function() { return eventRaised; };
+        };
+
+        // Check the end of the enter animation.
+        const enterAnimationEndStatus = checkFunction(
+            SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER,
+            enterAnimation,
+            goActionStatus.partEndEventAccess,
+        );
+
+        // Check the end of the leave animation
+        const leaveAnimationEndStatus = checkFunction(
+            SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE,
+            leaveAnimation,
+            goActionStatus.partEndEventAccess,
+        );
+
+        // Check the start of the enter animation.
+        const enterAnimationStartStatus = checkFunction(
+            SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.ENTER,
+            enterAnimation,
+            goActionStatus.partStartEventAccess,
+        );
+
+        // Check the start of the leave animation.
+        const leaveAnimationStartStatus = checkFunction(
+            SINGLE_SLIDE_CAROUSEL_PARTS_ALIASES.LEAVE,
+            leaveAnimation,
+            goActionStatus.partStartEventAccess,
+        );
+
+        goActionStatus.soraHandlerStatus.then(function() {
+            expect(enterAnimationEndStatus()).toBe(true);
+            expect(leaveAnimationEndStatus()).toBe(true);
+            expect(enterAnimationStartStatus()).toBe(true);
+            expect(leaveAnimationStartStatus()).toBe(true);
+            if (shouldCheck) {
                 expect(currentActiveElement.classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
                 expect(currentActiveElement.classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
                 expect(nextElement.classList).toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SORA_RELATIVE);
                 expect(nextElement.classList).not.toContain(SINGLE_SLIDE_CAROUSEL_STYLES.SLIDE_HIDDEN);
-            });
-        }
+            }
+        });
 
         return {
             goActionStatus: goActionStatus,

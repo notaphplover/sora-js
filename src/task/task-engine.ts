@@ -12,6 +12,7 @@ import { TaskPartEndConstraint } from './flow/task-part-end-constraint';
 import { TaskGroupConstraint } from './flow/task-part-group-constraint';
 import { TaskTimeConstraint } from './flow/task-part-time-constraint';
 import { OperationManager } from './operation/operation-manager';
+import { IOperationManagerAccess } from './operation/operation-manager-access';
 import { TASK_PART_WHEN_EVENTS } from './task-part-when-events';
 import { TaskPartWhenOperator } from './task-part-when-operator';
 
@@ -36,12 +37,12 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
     /**
      * Manager that handles the part end event.
      */
-    protected partEndManager: OperationManager<ITaskFlowPartEndArgs>;
+    protected partEndManager: OperationManager<ITaskFlowPartEndArgs<TPart>>;
 
     /**
      * Manager that handles the part start event.
      */
-    protected partStartManager: OperationManager<ITaskFlowPartStartArgs>;
+    protected partStartManager: OperationManager<ITaskFlowPartStartArgs<TPart>>;
 
     //#endregion
 
@@ -55,14 +56,52 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
     public constructor() {
         this.eventEmitter = new EventEmitter();
 
-        this.partEndManager = new OperationManager<ITaskFlowPartEndArgs>(
+        this.partEndManager = new OperationManager<ITaskFlowPartEndArgs<TPart>>(
             TASK_PART_WHEN_EVENTS.END,
             this.eventEmitter,
         );
-        this.partStartManager = new OperationManager<ITaskFlowPartStartArgs>(
+        this.partStartManager = new OperationManager<ITaskFlowPartStartArgs<TPart>>(
             TASK_PART_WHEN_EVENTS.START,
             this.eventEmitter,
         );
+    }
+
+    /**
+     * Obtains the access of the part end event.
+     * @returns Access of the part end event.
+     */
+    public getPartEndListenerAccess(): IOperationManagerAccess<ITaskFlowPartEndArgs<TPart>> {
+        const that = this;
+        return {
+            subscribe: function(
+                alias: string,
+                handler: (eventArgs: ITaskFlowPartEndArgs<TPart>) => void,
+            ): number {
+                return that.partEndManager.subscribe(alias, handler);
+            },
+            unsubscribe: function(alias: string, index: number): boolean {
+                return that.partEndManager.unsubscribe(alias, index);
+            },
+        };
+    }
+
+    /**
+     * Obtains the access of the part start event.
+     * @returns Access of the part start event.
+     */
+    public getPartStartListenerAccess(): IOperationManagerAccess<ITaskFlowPartStartArgs<TPart>> {
+        const that = this;
+        return {
+            subscribe: function(
+                alias: string,
+                handler: (eventArgs: ITaskFlowPartStartArgs<TPart>) => void,
+            ): number {
+                return that.partStartManager.subscribe(alias, handler);
+            },
+            unsubscribe: function(alias: string, index: number): boolean {
+                return that.partStartManager.unsubscribe(alias, index);
+            },
+        };
     }
 
     /**
@@ -88,52 +127,6 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
         return partPromises;
     }
 
-    /**
-     * Subscribes a handler to the part start manager.
-     * @param alias: Alias of the target part.
-     * @param handler: Listener to attach.
-     * @returns Token associated to the listener.
-     */
-    public subscribePartEndListener(
-        alias: string,
-        handler: (eventArgs: ITaskFlowPartEndArgs) => void,
-    ): number {
-        return this.partEndManager.subscribe(alias, handler);
-    }
-
-    /**
-     * Subscribes a handler to the part start manager.
-     * @param alias: Alias of the target part.
-     * @param handler: Listener to attach.
-     * @returns Token associated to the listener.
-     */
-    public subscribePartStartListener(
-        alias: string,
-        handler: (eventArgs: ITaskFlowPartStartArgs) => void,
-    ): number {
-        return this.partStartManager.subscribe(alias, handler);
-    }
-
-    /**
-     * Unsubscribes a handler from the part end manager.
-     * @param alias Alias of the target part.
-     * @param index Index of the handler to be unsubscribed.
-     * @returns Result of the operation.
-     */
-    public unsubscribePartEndListener(alias: string, index: number): boolean {
-        return this.partEndManager.unsubscribe(alias, index);
-    }
-
-    /**
-     * Unsubscribes a handler from the part start manager.
-     * @param alias Alias of the target part.
-     * @param index Index of the handler to be unsubscribed.
-     * @returns Result of the operation.
-     */
-    public unsubscribePartStartListener(alias: string, index: number): boolean {
-        return this.partStartManager.unsubscribe(alias, index);
-    }
-
     //#endregion
 
     /**
@@ -154,7 +147,7 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
                     {
                         aliases: [part.alias],
                         part: part,
-                    } as ITaskFlowPartStartArgs,
+                    } as ITaskFlowPartStartArgs<TPart>,
                 );
 
                 const promise: PromiseLike<{} | void> = that.performTask(part);
@@ -166,7 +159,7 @@ export abstract class TaskEngine<TPart extends ITaskFlowPart> {
                         {
                             aliases: [part.alias],
                             part: part,
-                        } as ITaskFlowPartEndArgs,
+                        } as ITaskFlowPartEndArgs<TPart>,
                     );
                     resolve();
                 });
