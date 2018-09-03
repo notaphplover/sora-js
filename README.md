@@ -10,6 +10,8 @@
 
 ## Status
 
+![Build status](https://travis-ci.com/notaphplover/sora-js.svg?branch=master)
+
 Just in alpha, so please don´t use it for now.
 
 ## Acknowledgements
