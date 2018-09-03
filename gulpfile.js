@@ -182,7 +182,7 @@ gulp.task(
 
 //#region Test
 
-gulp.task(TASKS.TEST, function() {
+gulp.task(TASKS.TEST, gulp.series(TASKS.BUILD, function() {
     return new Promise(function(resolve, reject) {
         (puppeteer.launch({
             args: ['--no-sandbox'],
@@ -236,7 +236,7 @@ gulp.task(TASKS.TEST, function() {
             });
     });
 
-});
+}));
 
 //#endregion
 
