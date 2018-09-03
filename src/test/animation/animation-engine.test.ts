@@ -4,6 +4,7 @@ import { ITaskFlow } from '../../task/flow/task-flow';
 import { ITaskFlowPartArgs } from '../../task/flow/task-flow-part-event-args';
 import { TaskPartBeginConstraint } from '../../task/flow/task-part-begin-constraint';
 import { TaskPartEndConstraint } from '../../task/flow/task-part-end-constraint';
+import { TaskTimeConstraint } from '../../task/flow/task-part-time-constraint';
 import { IOperationManagerAccess } from '../../task/operation/operation-manager-access';
 import { ITest } from '../ITest';
 
@@ -18,6 +19,7 @@ export class AnimationEngineTests implements ITest {
             this.itMustBeAbleToPerformMultipleAnimations();
             this.itMustBeAbleToPerformAnimationsWhenAnimationEnds();
             this.itMustBeAbleToPerformAnimationsWhenAnimationStarts();
+            this.itMustBeAbleToPerformAnimationAfterMillis();
         });
     }
 
@@ -287,6 +289,48 @@ export class AnimationEngineTests implements ITest {
                 expect(partStartToken1()).toBe(true);
                 document.body.removeChild(element0);
                 document.body.removeChild(element1);
+                done();
+            }).catch(function(err) {
+                done.fail(err);
+            });
+        });
+    }
+
+    private itMustBeAbleToPerformAnimationAfterMillis() {
+        it('mustBeAbleToPerformAnimationAfterMillis', (done) => {
+            const element = this.generateDivElement();
+            document.body.appendChild(element);
+            const animationEngine: SingleAnimationEngine = new SingleAnimationEngine();
+            const timeToWait = 1000;
+            const taskFlow: ITaskFlow<IAnimationFlowPart> = {
+                parts: [
+                    {
+                        alias: 'elem',
+                        elements: [ element ],
+                        styles: [ 'sora-fade-out-animation' ],
+                        when: new TaskTimeConstraint(null, timeToWait),
+                    },
+                ],
+            };
+            const partStartAccess = animationEngine.getPartStartListenerAccess();
+            const partEndAccess = animationEngine.getPartEndListenerAccess();
+            const partEndToken = this.checkAnimation(
+                null,
+                partEndAccess,
+                taskFlow.parts[0],
+            );
+            const partStartToken = this.checkAnimation(
+                null,
+                partStartAccess,
+                taskFlow.parts[0],
+            );
+            const now = new Date();
+            const promises: Array<Promise<void>> = animationEngine.handle(taskFlow);
+            Promise.all(promises).then(function() {
+                expect(new Date().getTime() - now.getTime()).toBeGreaterThanOrEqual(timeToWait);
+                expect(partEndToken()).toBe(true);
+                expect(partStartToken()).toBe(true);
+                document.body.removeChild(element);
                 done();
             }).catch(function(err) {
                 done.fail(err);

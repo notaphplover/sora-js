@@ -198,36 +198,42 @@ gulp.task(TASKS.TEST, gulp.series(TASKS.BUILD, function() {
                             var evaluationResult = page.evaluate(function() {
                                 return new Promise(function(resolve, reject) {
                                     if('complete' === document.readyState)
-                                        customJasmineBoot.initialize().then(function() {
-                                            resolve();
+                                        customJasmineBoot.initialize().then(function(doneResult) {
+                                            resolve(doneResult);
                                         });
                                     else
                                         window.addEventListener('load', function() {
-                                            customJasmineBoot.initialize().then(function() {
-                                                resolve();
+                                            customJasmineBoot.initialize().then(function(doneResult) {
+                                                resolve(doneResult);
                                             });
                                         });
                                 });
 
                             });
-                            evaluationResult.then(function() {
-                                Promise.all([
-                                    page.coverage.stopJSCoverage(),
-                                    page.coverage.stopCSSCoverage(),
-                                ]).then(function(coverageData) {
-                                    var jsCoverage = coverageData[0];
-                                    pti.write(jsCoverage);
-                                    execSync(
-                                        'node ./node_modules/nyc/bin/nyc.js report --reporter=html',
-                                        {
-                                            cwd: __dirname,
-                                        },
-                                    );
-                                    browser.close().then(function() {
-                                        resolve();
+                            evaluationResult.then(function(doneResult) {
+                                if ('failed' === doneResult.overallStatus) {
+                                    reject('At least one test failed!');
+                                } else {
+                                    Promise.all([
+                                        page.coverage.stopJSCoverage(),
+                                        page.coverage.stopCSSCoverage(),
+                                    ]).then(function(coverageData) {
+                                        var jsCoverage = coverageData[0];
+                                        pti.write(jsCoverage);
+                                        execSync(
+                                            'node ./node_modules/nyc/bin/nyc.js report --reporter=html',
+                                            {
+                                                cwd: __dirname,
+                                            },
+                                        );
+                                        browser.close().then(function() {
+                                            resolve();
+                                        });
                                     });
-                                });
-                            });
+                                }
+                            })
+                        }).catch(function(cause) {
+                            reject(cause);
                         });
                     });
                 });
