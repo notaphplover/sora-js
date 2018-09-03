@@ -106,7 +106,7 @@ window.customJasmineBoot = (function() {
         var donePromise = new Promise(function(resolve, reject) {
             htmlReporter.jasmineDone = function(doneResult) {
                 oldJasmineDone(doneResult);
-                resolve();
+                resolve(doneResult);
             };
         });
         htmlReporter.initialize();
