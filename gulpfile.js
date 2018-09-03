@@ -185,7 +185,8 @@ gulp.task(
 gulp.task(TASKS.TEST, function() {
     return new Promise(function(resolve, reject) {
         (puppeteer.launch({
-            devtools: true,
+            args: ['--no-sandbox'],
+            headless: true,
         }))
             .then(function(browser) {
                 browser.newPage().then(function(page) {
