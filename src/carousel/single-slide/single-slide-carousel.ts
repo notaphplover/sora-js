@@ -445,12 +445,7 @@ export class SingleSlideCarousel extends CarouselBase {
         for (const innerPart of innerParts) {
             innerPartsMap[innerPart.alias] = innerPart;
         }
-
-        const innerGetPartByAlias = function(alias: string): IAnimationFlowPart {
-            return innerPartsMap[alias];
-        };
         const animationFlow: ITaskFlow<IAnimationFlowPart> = {
-            getPartByAlias: innerGetPartByAlias,
             parts: innerParts,
         };
 

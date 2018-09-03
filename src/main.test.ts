@@ -1,7 +1,7 @@
+import { AnimationEngineTests } from './test/animation/animation-engine.test';
 import { SingleSlideCarouselTests } from './test/carousel/single-slide-carousel.test';
 import { CollectionManagerTests } from './test/collection/collection-manager.test';
 import { TokenMapTests } from './test/collection/token-map.test';
-import { AnimationEngineTests } from './test/task/animation-engine.test';
 
 const soraTest = function() {
     return {

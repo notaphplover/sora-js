@@ -624,11 +624,7 @@ var SingleSlideCarousel = exports.SingleSlideCarousel = function (_CarouselBase)
                 }
             }
 
-            var innerGetPartByAlias = function innerGetPartByAlias(alias) {
-                return innerPartsMap[alias];
-            };
             var animationFlow = {
-                getPartByAlias: innerGetPartByAlias,
                 parts: innerParts
             };
             return animationFlow;
