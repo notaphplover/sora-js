@@ -7,3 +7,6 @@
 /dist/js/tmp
 /node_modules
 /samples/node_modules
+
+# iOS files
+.DS_Store
