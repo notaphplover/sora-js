@@ -13,7 +13,7 @@ const uglify = require('gulp-uglify');
 
 const BABEL_OPTIONS = {
     presets: [
-        ['env', {
+        ['@babel/preset-env', {
             targets: {
                 browsers: [
                     'ie >= 11',
@@ -24,7 +24,7 @@ const BABEL_OPTIONS = {
         }]
     ],
     plugins: [
-        'transform-runtime',
+        '@babel/transform-runtime',
     ],
     sourceMaps: true,
 };
