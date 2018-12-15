@@ -8,7 +8,7 @@ import { AnimationPlayStateValue } from './animation-play-state';
 import { IAnimationStateChangeEventArgs } from './animation-state-change-event-args';
 
 /**
- * Represenrts a single animation engine.
+ * Represents a single animation engine.
  */
 export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
 
@@ -54,7 +54,7 @@ export class SingleAnimationEngine extends TaskEngine<IAnimationFlowPart> {
         this.animationStateChangeManager.dispose();
     }
 
-        //#region Operations
+    //#region Operations
 
     /**
      * Cancels the animation.

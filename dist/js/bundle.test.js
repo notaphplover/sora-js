@@ -3489,7 +3489,7 @@ module.exports = function (NAME, wrapper, methods, common, IS_MAP, IS_WEAK) {
 };
 
 },{"./_an-instance":55,"./_array-methods":59,"./_descriptors":70,"./_export":74,"./_fails":75,"./_for-of":76,"./_global":77,"./_hide":79,"./_is-object":86,"./_meta":94,"./_object-dp":99,"./_redefine-all":113,"./_set-to-string-tag":119}],67:[function(require,module,exports){
-var core = module.exports = { version: '2.5.7' };
+var core = module.exports = { version: '2.6.0' };
 if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
 
 },{}],68:[function(require,module,exports){
