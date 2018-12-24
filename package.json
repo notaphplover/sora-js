@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "core-js": "^2.6.0",
-    "jasmine-core": "^3.3.0"
+    "jasmine-core": "^3.3.0",
+    "jovellanos": "^1.0.2"
   }
 }

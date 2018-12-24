@@ -3,12 +3,14 @@
         "noImplicitAny": true,
         "removeComments": true,
         "declaration": false,
+        "moduleResolution": "node",
         "target": "es6"
     },
     "exclude" : [
 
     ],
     "include": [
-        "src/**/*.ts"
+        "src/**/*.ts",
+        "node_modules/jovellanos"
     ]
 }

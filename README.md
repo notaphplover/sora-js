@@ -51,12 +51,6 @@ node ./node_modules/gulp/bin/gulp.js build
 
 Tests can be run using the run task defined in the gulpfile of the project:
 
-## Build process
-
-This library uses Gulp to perform the build task.
-
-This task can be performed calling the task 'build' defined in the gulpfile.js of the project:
-
 ```
 node ./node_modules/gulp/bin/gulp.js test
 ```

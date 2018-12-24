@@ -1,3 +1,5 @@
+import { ITaskFlowPartArgs } from 'jovellanos/src/task/flow/task-flow-part-event-args';
+import { IOperationManagerAccess } from 'jovellanos/src/task/operation/operation-manager-access';
 import { IAnimationFlowPart } from '../../animation/animation-flow-part';
 import { CAROUSEL_STYLES } from '../../carousel/carousel-base';
 import { ICarouselAnimation } from '../../carousel/single-slide/carousel-animation';
@@ -8,8 +10,6 @@ import {
     SINGLE_SLIDE_CAROUSEL_STYLES,
     SingleSlideCarousel,
 } from '../../carousel/single-slide/single-slide-carousel';
-import { ITaskFlowPartArgs } from '../../task/flow/task-flow-part-event-args';
-import { IOperationManagerAccess } from '../../task/operation/operation-manager-access';
 import { ITest } from '../ITest';
 
 interface IGoToAndCheckData {

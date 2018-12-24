@@ -1,11 +1,11 @@
+import { ITaskFlow } from 'jovellanos/src/task/flow/task-flow';
+import { ITaskFlowPartArgs } from 'jovellanos/src/task/flow/task-flow-part-event-args';
+import { TaskPartBeginConstraint } from 'jovellanos/src/task/flow/task-part-begin-constraint';
+import { TaskPartEndConstraint } from 'jovellanos/src/task/flow/task-part-end-constraint';
+import { TaskTimeConstraint } from 'jovellanos/src/task/flow/task-part-time-constraint';
+import { IOperationManagerAccess } from 'jovellanos/src/task/operation/operation-manager-access';
 import { SingleAnimationEngine } from '../../animation/animation-engine';
 import { IAnimationFlowPart } from '../../animation/animation-flow-part';
-import { ITaskFlow } from '../../task/flow/task-flow';
-import { ITaskFlowPartArgs } from '../../task/flow/task-flow-part-event-args';
-import { TaskPartBeginConstraint } from '../../task/flow/task-part-begin-constraint';
-import { TaskPartEndConstraint } from '../../task/flow/task-part-end-constraint';
-import { TaskTimeConstraint } from '../../task/flow/task-part-time-constraint';
-import { IOperationManagerAccess } from '../../task/operation/operation-manager-access';
 import { ITest } from '../ITest';
 
 export class AnimationEngineTests implements ITest {

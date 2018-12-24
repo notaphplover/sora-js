@@ -1,6 +1,6 @@
+import { OperationManager } from 'jovellanos/src/task/operation/operation-manager';
+import { TaskEngine } from 'jovellanos/src/task/task-engine';
 import { CAROUSEL_STYLES } from '../carousel/carousel-base';
-import { OperationManager } from '../task/operation/operation-manager';
-import { TaskEngine } from '../task/task-engine';
 import { IAnimationCancelEventArgs } from './animation-cancel-event-args';
 import { IAnimationFlowPart } from './animation-flow-part';
 import { ANIMATION_OPERATION_EVENTS } from './animation-operation-events';

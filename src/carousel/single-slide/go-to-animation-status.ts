@@ -1,9 +1,9 @@
-import { IAnimationFlowPart } from '../../animation/animation-flow-part';
 import {
     ITaskFlowPartEndArgs,
     ITaskFlowPartStartArgs,
-} from '../../task/flow/task-flow-part-event-args';
-import { IOperationManagerAccess } from '../../task/operation/operation-manager-access';
+} from 'jovellanos/src/task/flow/task-flow-part-event-args';
+import { IOperationManagerAccess } from 'jovellanos/src/task/operation/operation-manager-access';
+import { IAnimationFlowPart } from '../../animation/animation-flow-part';
 
 /**
  * Status of a GoTo animation

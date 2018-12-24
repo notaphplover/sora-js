@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import { ITaskFlow } from 'jovellanos/src/task/flow/task-flow';
 import { SingleAnimationEngine } from '../../animation/animation-engine';
 import { IAnimationFlowPart } from '../../animation/animation-flow-part';
 import { AnimationPlayStateValue } from '../../animation/animation-play-state';
@@ -6,7 +7,6 @@ import { CancelableCollectionChangeEventArgs } from '../../collection/cancelable
 import { CollectionChangeEventArgs } from '../../collection/collection-change-args';
 import { COLLECTION_MANAGER_EVENTS } from '../../collection/collection-manager';
 import { HtmlChildrenManager } from '../../collection/html-children-manager';
-import { ITaskFlow } from '../../task/flow/task-flow';
 import {
     CAROUSEL_STYLES,
     CarouselBase,
